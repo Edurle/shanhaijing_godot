@@ -11,6 +11,7 @@ const UiLogScript := preload("res://scripts/view/ui/log_panel.gd")
 const UiTargetInfoScript := preload("res://scripts/view/ui/target_info.gd")
 const MenuClassSelect := preload("res://scripts/view/ui/menu_class_select.gd")
 const MenuCharacter := preload("res://scripts/view/ui/menu_character.gd")
+const MenuAssign := preload("res://scripts/view/ui/menu_assign.gd")
 const MenuLearn := preload("res://scripts/view/ui/menu_learn.gd")
 const MenuExamine := preload("res://scripts/view/ui/menu_examine.gd")
 const UiHintBarScript := preload("res://scripts/view/ui/hint_bar.gd")
@@ -18,7 +19,7 @@ const UiHelpOverlayScript := preload("res://scripts/view/ui/help_overlay.gd")
 const UiHudVitalsScript := preload("res://scripts/view/ui/hud_vitals.gd")
 const UiSkillBarScript := preload("res://scripts/view/ui/skill_bar.gd")
 
-enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP }
+enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP, ASSIGN }
 
 const MOVE_REPEAT_MSEC := 130  # 长按连走节流
 const TRAVEL_STEP_INTERVAL := 0.075  # 点击旅行的步进节奏（秒/格）
@@ -33,6 +34,7 @@ var log_panel
 var target_info
 var menu_class: MenuClassSelect
 var menu_character: MenuCharacter
+var menu_assign: MenuAssign
 var menu_learn: MenuLearn
 var menu_examine: MenuExamine
 var hint_bar
@@ -75,20 +77,21 @@ func _ready() -> void:
 	target_info = UiTargetInfoScript.new()
 	menu_class = MenuClassSelect.new()
 	menu_character = MenuCharacter.new()
+	menu_assign = MenuAssign.new()
 	menu_learn = MenuLearn.new()
 	menu_examine = MenuExamine.new()
 	hint_bar = UiHintBarScript.new()
 	help_overlay = UiHelpOverlayScript.new()
 	hud_vitals = UiHudVitalsScript.new()
 	skill_bar = UiSkillBarScript.new()
-	for panel in [log_panel, target_info, menu_class, menu_character, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar]:
+	for panel in [log_panel, target_info, menu_class, menu_character, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar, menu_assign]:
 		ui.add_child(panel)
 	hint_bar.visible = false
 	help_overlay.visible = false
 	hud_vitals.visible = false
 	skill_bar.visible = false
 	target_info.hide_panel()
-	for panel in [log_panel, menu_character, menu_learn, menu_examine]:
+	for panel in [log_panel, menu_character, menu_learn, menu_examine, menu_assign]:
 		panel.visible = false
 
 	menu_class.setup_menu(content)
@@ -144,6 +147,11 @@ func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 			_handle_targeting(keycode)
 		Mode.DIRECTION:
 			_handle_direction(keycode)
+		Mode.ASSIGN:
+			if menu_assign.handle_key(keycode, shift):
+				if not menu_assign.visible:
+					_set_mode(Mode.PLAY)
+				_refresh()
 		Mode.HELP:
 			if keycode in [KEY_H, KEY_ESCAPE, KEY_ENTER, KEY_KP_ENTER]:
 				help_overlay.close()
@@ -164,6 +172,7 @@ func _start_game(class_pair: Array) -> void:
 	log_panel.visible = true
 	target_info.setup(engine)
 	menu_character.setup_menu(engine)
+	menu_assign.setup_menu(engine)
 	menu_learn.setup_menu(engine)
 	menu_examine.setup_menu(engine)
 	hint_bar.setup(engine)
@@ -227,7 +236,11 @@ func _handle_play(keycode: int, is_echo: bool, shift := false) -> void:
 				_sync_examine_marker()
 			board.queue_redraw()
 		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8:
-			_begin_cast(keycode - KEY_0 + (8 if shift else 0))
+			_cast_binding(keycode - KEY_0 + (8 if shift else 0))
+		KEY_B:
+			_stop_travel()
+			menu_assign.open()
+			_set_mode(Mode.ASSIGN)
 		KEY_H:
 			help_overlay.open()
 			_set_mode(Mode.HELP)
@@ -297,6 +310,9 @@ func _handle_click(pos: Vector2) -> void:
 		Mode.DIRECTION:
 			_exit_cast()
 			_refresh()
+		Mode.ASSIGN:
+			menu_assign.click_at(pos)
+			_refresh()
 		Mode.HELP:
 			help_overlay.click_at(pos)
 			if not help_overlay.visible:
@@ -309,11 +325,11 @@ func _handle_click(pos: Vector2) -> void:
 func _click_play(pos: Vector2) -> void:
 	if engine.game_over:
 		return
-	# 底部技能栏：槽位点击施放
+	# 底部技能栏：槽位点击施放（按绑定）
 	if skill_bar.visible and skill_bar.skill_slot_at(pos) > 0:
 		var slot: int = skill_bar.skill_slot_at(pos)
 		_stop_travel()
-		_begin_cast(slot)
+		_cast_binding(slot)
 		return
 	var cell := _screen_to_cell(pos)
 	if not state.current.in_bounds(cell.x, cell.y):
@@ -427,14 +443,17 @@ func _next_step_bfs(from: Vector2i, to: Vector2i) -> Vector2i:
 
 # ---- 施放 ----
 
-func _begin_cast(slot: int) -> void:
-	# 槽位 1-8 主修、9-16 辅修（与底部技能栏一致）
-	var pair: Array = UiSkillBar.slot_page(slot)
-	var class_id := String(state.player.class_ids[pair[0]])
-	var skill: Dictionary = content.skill_for_slot(class_id, pair[1])
+## 按绑定施放：空槽/未学/资源不足给出提示，需要目标/方向的技能进入对应模式。
+func _cast_binding(slot: int) -> void:
+	var skill_id := String(state.player.skill_bar[slot - 1]) if slot >= 1 and slot <= 16 else ""
+	if skill_id == "":
+		engine.log_message(content.text("slot_empty_skill"), "warn")
+		_refresh()
+		return
+	var skill: Dictionary = content.skill_by_id(skill_id)
 	if skill.is_empty():
 		return
-	if not state.player.skill_levels.has(skill["id"]):
+	if not state.player.skill_levels.has(skill_id):
 		engine.log_message(content.text("not_learned"), "warn")
 		_refresh()
 		return
@@ -611,6 +630,8 @@ func _on_viewport_resized() -> void:
 		menu_class.relayout(view)
 	if menu_character.visible:
 		menu_character.relayout(view)
+	if menu_assign.visible:
+		menu_assign.relayout(view)
 	if menu_learn.visible:
 		menu_learn.relayout(view)
 	if menu_examine.visible:
@@ -627,6 +648,8 @@ func _set_mode(new_mode: Mode) -> void:
 		menu_learn.close()
 	if new_mode != Mode.EXAMINE:
 		menu_examine.close()
+	if new_mode != Mode.ASSIGN:
+		menu_assign.close()
 
 
 func _refresh() -> void:

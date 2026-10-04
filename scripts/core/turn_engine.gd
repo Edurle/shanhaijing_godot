@@ -14,7 +14,27 @@ var events: Array = []  # 演出事件，视图层消费
 var game_over := false
 var turn_count := 0
 var smoke_turns := 0  # 烟障余威：期间敌怪感知不到玩家（贴身除外）
-var active_page := 0  # 技能页：0 主职业 / 1 副职业（Tab 切换）
+## 按技能栏绑定施放：槽位 1-16 → player.skill_bar；未绑定/未学返回错误串。
+func execute_bound_skill(slot: int, target = null) -> String:
+	if game_over:
+		return ""
+	if slot < 1 or slot > 16:
+		return ""
+	var skill_id := String(player().skill_bar[slot - 1])
+	if skill_id == "":
+		return content.text("slot_empty_skill")
+	if not player().skill_levels.has(skill_id):
+		return content.text("not_learned")
+	var skill: Dictionary = content.skill_by_id(skill_id)
+	if target == null:
+		var enemies := visible_enemies(player())
+		if not enemies.is_empty():
+			target = enemies[0]
+	var error: String = Skills.cast(self, player(), skill, target)
+	if not error.is_empty():
+		return error
+	end_turn()
+	return ""
 
 
 func _init(p_state: WorldState, p_content: ContentDb) -> void:
@@ -106,26 +126,6 @@ func player_step(delta: Vector2i) -> bool:
 	return true
 
 
-## 施放技能页第 slot 槽技能（需目标时自动瞄准最近可见敌）。
-func execute_skill(slot: int, target = null, page := -1) -> String:
-	if game_over:
-		return ""
-	var page_index := active_page if page < 0 else page
-	var class_id: String = player().class_ids[page_index]  # 阶段 4 接双职业页切换
-	var skill: Dictionary = content.skill_for_slot(class_id, slot)
-	if skill.is_empty():
-		return ""
-	if not player().skill_levels.has(skill["id"]):
-		return content.text("not_learned")
-	if target == null:
-		var enemies := visible_enemies(player())
-		if not enemies.is_empty():
-			target = enemies[0]
-	var error: String = Skills.cast(self, player(), skill, target)
-	if not error.is_empty():
-		return error
-	end_turn()
-	return ""
 
 
 # ---- 行囊与装备动作（成功即消耗回合） ----
@@ -214,6 +214,8 @@ func learn_skill(sid: String) -> String:
 	for pair in needs:
 		player_actor.inventory.take_material(pair[0], pair[1])
 	player_actor.skill_levels[sid] = level + 1
+	if not player_actor.skill_bar.has(sid) and player_actor.skill_bar.has(""):
+		player_actor.skill_bar[player_actor.skill_bar.find("")] = sid  # 自动入首个空槽
 	log_message(content.text("learn_ok").format({
 		"skill": content.localize(skill["name"]), "level": level + 1,
 	}), "levelup")
@@ -447,7 +449,9 @@ func enemy_turns() -> void:
 
 
 func _settle_actor_turn(actor: Actor) -> void:
-	var fighter := actor.fighter
+	var fighter = actor.fighter
+	if fighter == null:
+		return
 	if fighter.has_dot():
 		_tick_actor_dots(actor)
 		if not actor.is_alive():

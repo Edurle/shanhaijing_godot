@@ -133,7 +133,24 @@ func _init() -> void:
 	var rect12: Rect2 = skill_bar.slot_rect(12)
 	failed += _check(skill_bar.skill_slot_at(rect12.get_center()) == 12, "第12槽命中（辅修4）")
 	failed += _check(rect12.size.x == rect12.size.y, "技能格为正方形（%s）" % rect12.size)
-	failed += _check(UiSkillBar.slot_page(12) == [1, 4] and UiSkillBar.slot_page(5) == [0, 5], "槽位→主辅页映射")
+	failed += _check(String(state.player.skill_bar[11]) == "s_fushi_4", "默认编排：槽12=辅修4")
+	# 自由重排：绑定火符到槽 3，原槽清空逻辑由编排面板负责
+	state.player.skill_bar[2] = "s_fushi_1"
+	failed += _check(String(state.player.skill_bar[2]) == "s_fushi_1", "自由重排槽3=火符")
+	failed += _check(UiSkillBar.key_label(3) == "3" and UiSkillBar.key_label(12) == "S4", "键位标签 3/S4")
+
+	# ---- 技能编排面板：清单/绑定/清除 ----
+	var assign = load("res://scripts/view/ui/menu_assign.gd").new()
+	root.add_child.call_deferred(assign)
+	await process_frame
+	assign.setup_menu(engine)
+	assign.open()
+	failed += _check(assign.learned_skills.size() >= 1, "编排清单含已学技能（%d）" % assign.learned_skills.size())
+	assign.cursor = assign.learned_skills.size() - 1
+	assign._bind_by_slot(15)
+	failed += _check(String(state.player.skill_bar[14]) == String(assign.learned_skills[assign.learned_skills.size() - 1]), "绑定到槽15")
+	assign._clear_selected()
+	failed += _check(String(state.player.skill_bar[14]) == "", "X 清除该技能绑定")
 	var icon: String = skill_bar.icon_char(engine, content.skill_for_slot("leifa", 1))
 	failed += _check(icon.length() == 1, "技能图标占位为单字（%s）" % icon)
 

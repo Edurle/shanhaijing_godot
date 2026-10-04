@@ -37,7 +37,8 @@ func _init() -> void:
 	var xp0: int = player.level.current_xp
 	weak.fighter.apply_dot("wood", 99, 2)
 	for _i in range(3):
-		engine._settle_actor_turn(weak)
+		if weak.is_alive():
+			engine._settle_actor_turn(weak)
 	failed += _check(not weak.is_alive(), "弱怪被蛊毒致死")
 	failed += _check(player.level.current_xp > xp0, "DOT 击杀也获得经验（%d → %d）" % [xp0, player.level.current_xp])
 
@@ -68,8 +69,7 @@ func _init() -> void:
 	var equip0: String = content.random_equipment_id(0, rng)
 	failed += _check(equip0 != "" and int(content.items[equip0].get("tier", 1)) <= 2, "难度 0 掉落 tier≤2（%s）" % equip0)
 
-	# ---- 5. 副职业技能页：Tab 语义 + 跨页施法 ----
-	failed += _check(engine.active_page == 0, "初始技能页为主职业")
+	# ---- 5. 技能栏自由编排施法 ----
 	player.skill_points = 1
 	var learn_error: String = engine.learn_skill("s_fushi_1")  # 火符（副职业 slot1）
 	failed += _check(learn_error.is_empty(), "参悟副职业技能（%s）" % learn_error)
@@ -80,8 +80,9 @@ func _init() -> void:
 	fox.fighter.base_max_hp = 300
 	fox.fighter.heal(300)
 	var hp0: int = fox.fighter.hp()
-	var cast_error: String = engine.execute_skill(1, fox, 1)  # page=1 副职业页
-	failed += _check(cast_error.is_empty(), "副职业页施放火符（%s）" % cast_error)
+	player.skill_bar[0] = "s_fushi_1"  # 自由编排：槽1 绑火符
+	var cast_error: String = engine.execute_bound_skill(1, fox)
+	failed += _check(cast_error.is_empty(), "绑定施放火符（%s）" % cast_error)
 	failed += _check(fox.fighter.hp() < hp0, "火符造成伤害（%d → %d）" % [hp0, fox.fighter.hp()])
 	failed += _check(player.fighter.mp() < player.fighter.max_mp(), "扣真气")
 

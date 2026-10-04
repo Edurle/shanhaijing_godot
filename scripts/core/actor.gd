@@ -24,6 +24,7 @@ var tags: Array = []  # 风味/投放标签（dragon/boss/elite/serpent/bird/bea
 var class_ids: Array = []
 var skill_points := 0
 var skill_levels := {}
+var skill_bar: Array = []  # 16 槽动作条绑定（技能 id 或 ""；玩家自由编排）
 
 
 func _init(p_x: int, p_y: int, p_label := "") -> void:
