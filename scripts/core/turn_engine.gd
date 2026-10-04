@@ -116,10 +116,14 @@ func emit_noise(x: int, y: int, radius: int) -> void:
 
 # ---- 行者动作 ----
 
-## 走向一格：有敌则攻击，可走则移动（缠绕被拒）；返回是否消耗回合。
+## 走向一格：有敌则攻击，可走则移动（眩晕昏沉/缠绕被拒）；返回是否消耗回合。
 func player_step(delta: Vector2i) -> bool:
 	if game_over:
 		return false
+	if player().fighter.stun_turns > 0:
+		log_message(content.text("stunned_tick").format({"name": player().label}), "warn")
+		end_turn()
+		return true
 	var dest: Vector2i = state.player_xy() + delta
 	var victim = map().actor_at(dest.x, dest.y)
 	if victim != null and victim.is_alive() and victim.team != "player":
@@ -420,7 +424,7 @@ func end_turn() -> void:
 	update_fov()
 
 
-## 行者回合结束：元素 DOT、buff 递减、缠绕递减、契约兽时限。
+## 行者回合结束：元素 DOT、buff 递减、眩晕/缠绕递减、契约兽时限。
 func end_player_turn() -> void:
 	var fighter := player().fighter
 	if fighter.has_dot():
@@ -429,6 +433,8 @@ func end_player_turn() -> void:
 			return
 	if fighter.tick_buffs():
 		log_message(content.text("buff_fade"), "info")
+	if fighter.stun_turns > 0:
+		fighter.stun_turns -= 1
 	if fighter.rooted_turns > 0:
 		fighter.rooted_turns -= 1
 	if smoke_turns > 0:

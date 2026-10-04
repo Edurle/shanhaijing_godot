@@ -92,12 +92,13 @@ func _draw() -> void:
 		engine.content.text("element_" + target.element) if target.element != "" else "—",
 	], threat_colors.get(threat, INK), 16)
 	y += 28
-	# 抗性
+	# 抗性统一口径：点数经护甲式边际递减折算后显示（五行=减伤%，状态=免疫概率/效果折减%）
 	var resists: Array = []
 	for kind in ContentDb.RESIST_KINDS:
 		var value: int = fighter.resistance(kind)
 		if value > 0:
-			var label: String = engine.content.text("resist_" + kind).format({"v": value}).replace("+", "")
+			var shown := int(round(Fighter.resist_reduction_percent(value)))
+			var label: String = engine.content.text("resist_" + kind).format({"v": shown}).replace("+", "")
 			resists.append(label)
 	draw_text_line(Vector2(x, y), "抗性：" + (" ".join(resists) if not resists.is_empty() else "无"),
 		Color("4A7C59") if not resists.is_empty() else INK_SOFT, 15)

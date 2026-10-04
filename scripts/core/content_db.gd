@@ -11,7 +11,10 @@ const ELEMENT_BEATS := {
 	"water": "fire",
 	"fire": "metal",
 }
-const RESIST_KINDS: PackedStringArray = ["metal", "wood", "water", "fire", "earth", "stun"]
+const RESIST_KINDS: PackedStringArray = [
+	"metal", "wood", "water", "fire", "earth",
+	"stun", "root", "sunder", "daunt", "knockback",
+]
 const SKILL_EFFECT_TYPES: PackedStringArray = [
 	"damage_nearest", "damage_aoe_self", "buff_defense", "buff_power",
 	"teleport_step", "heal_self", "element_dot", "summon",
@@ -22,6 +25,7 @@ const VALID_AFFIX_IDS: PackedStringArray = [
 	"metal_damage", "wood_damage", "water_damage", "fire_damage", "earth_damage",
 	"aoe_damage", "heal_power", "mp_cost_reduce", "kill_heal",
 	"resist_metal", "resist_wood", "resist_water", "resist_fire", "resist_earth", "resist_stun",
+	"resist_root", "resist_sunder", "resist_daunt", "resist_knockback",
 ]
 const SLOT_ORDER: PackedStringArray = ["weapon", "armor", "boots", "amulet", "helm"]
 const SUPPORTED_LANGS: PackedStringArray = ["zh_CN", "en_US"]
@@ -202,6 +206,8 @@ func _validate_monsters(errors: PackedStringArray) -> void:
 		for kind in mdef.get("resistances", {}):
 			if not RESIST_KINDS.has(kind):
 				errors.append("怪物 %s 的抗性类型 %s 非法" % [mid, kind])
+			elif int(mdef["resistances"][kind]) < 1 or int(mdef["resistances"][kind]) > 80:
+				errors.append("怪物 %s 的抗性 %s=%d 超出 (0,80]" % [mid, kind, int(mdef["resistances"][kind])])
 
 
 func _validate_items(errors: PackedStringArray) -> void:

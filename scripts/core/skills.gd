@@ -167,32 +167,46 @@ static func apply_skill_dot(engine, actor: Actor, target: Actor, skill: Dictiona
 	return pair
 
 
-## 伤害技能的附带控制：破甲(金)/挫锐(火)/缠绕(木)/震退(土)。
+## 状态被抵御的提示（免疫掷骰未过，或折减归零）——效果类与消耗品共用。
+static func log_status_resisted(engine, actor: Actor, kind: String) -> void:
+	engine.log(engine.content.text("status_resisted").format({
+		"name": actor.label, "status": engine.content.text("status_" + kind)}), "combat")
+
+
+## 伤害技能的附带控制：破甲(金)/挫锐(火)/缠绕(木)/震退(土)——
+## 两段式抗性：先掷免疫（抗性=概率），未免疫再折减效果。
 static func apply_attached_controls(engine, caster: Actor, actor: Actor, skill: Dictionary) -> void:
 	var eff: Dictionary = skill["effect"]
 	if eff.has("sunder"):
 		var cfg: Dictionary = eff["sunder"]
-		var amount := int(cfg["amount"])
-		var turns := int(cfg["turns"])
-		actor.fighter.apply_buff("defense", -amount, turns)
-		engine.emit_event("sunder", actor.x, actor.y, {})
-		engine.log(engine.content.text("sunder_note").format({"name": actor.label, "amount": amount, "turns": turns}), "combat")
+		var amount: int = actor.fighter.apply_sunder(int(cfg["amount"]), int(cfg["turns"]), engine.state.rng)
+		if amount > 0:
+			engine.emit_event("sunder", actor.x, actor.y, {})
+			engine.log(engine.content.text("sunder_note").format({"name": actor.label, "amount": amount, "turns": int(cfg["turns"])}), "combat")
+		else:
+			log_status_resisted(engine, actor, "sunder")
 	if eff.has("daunt"):
 		var cfg: Dictionary = eff["daunt"]
-		var amount := int(cfg["amount"])
-		var turns := int(cfg["turns"])
-		actor.fighter.apply_buff("power", -amount, turns)
-		engine.emit_event("daunt", actor.x, actor.y, {})
-		engine.log(engine.content.text("daunt_note").format({"name": actor.label, "amount": amount, "turns": turns}), "combat")
+		var amount: int = actor.fighter.apply_daunt(int(cfg["amount"]), int(cfg["turns"]), engine.state.rng)
+		if amount > 0:
+			engine.emit_event("daunt", actor.x, actor.y, {})
+			engine.log(engine.content.text("daunt_note").format({"name": actor.label, "amount": amount, "turns": int(cfg["turns"])}), "combat")
+		else:
+			log_status_resisted(engine, actor, "daunt")
 	if eff.has("root"):
-		actor.fighter.apply_root(int(eff["root"]))
-		engine.emit_event("root", actor.x, actor.y, {})
-		engine.log(engine.content.text("root_note").format({"name": actor.label}), "combat")
+		if actor.fighter.apply_root(int(eff["root"]), engine.state.rng):
+			engine.emit_event("root", actor.x, actor.y, {})
+			engine.log(engine.content.text("root_note").format({"name": actor.label}), "combat")
+		else:
+			log_status_resisted(engine, actor, "root")
 	if eff.has("knockback"):
 		var dx := signi(actor.x - caster.x)
 		var dy := signi(actor.y - caster.y)
-		if engine.push_actor(actor, dx, dy, int(eff["knockback"])) > 0:
+		var cells: int = actor.fighter.reduce_push(int(eff["knockback"]), engine.state.rng)
+		if cells > 0 and engine.push_actor(actor, dx, dy, cells) > 0:
 			engine.log(engine.content.text("knockback_note").format({"name": actor.label}), "combat")
+		elif cells <= 0:
+			log_status_resisted(engine, actor, "knockback")
 
 
 ## 技能效果短摘要（侧栏用）；伤害按当前修为与装备词条折算。

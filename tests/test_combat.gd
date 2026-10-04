@@ -38,7 +38,7 @@ func _init() -> void:
 	failed += _check(f_metal.mitigate_incoming(100, ["fire", "wood"]) == 130, "多 tag 取第一个：火克金 ×1.3")
 	failed += _check(f_metal.mitigate_incoming(100, ["wood", "fire"]) == 75, "多 tag 取第一个：木在先被克 ×0.75")
 	var f_resist = mk_fighter.call("wood", {"metal": 50})
-	failed += _check(f_resist.mitigate_incoming(100, ["metal"]) == 65, "生克×抗性乘法叠加 100×1.3×0.5=65")
+	failed += _check(f_resist.mitigate_incoming(100, ["metal"]) == 87, "生克×护甲式抗性 100×1.3×(1-50/150)=87")
 	var f_cap = FighterScript.new(10, 1, 0, 0, 0, 0, {"metal": 95})
 	f_cap.owner = mk_fighter.call("wood").owner
 	failed += _check(f_cap.resistance("metal") == 80, "抗性封顶 80")
@@ -100,6 +100,7 @@ func _init() -> void:
 
 	# ---- DOT 多槽 ----
 	var dot_target = put.call("xingxing", 12, 10)
+	dot_target.fighter.base_resistances = {}  # 数据抗性与本用例无关，剥掉避免耦合
 	dot_target.fighter.base_max_hp = 500
 	dot_target.fighter.heal(500)
 	dot_target.fighter.apply_dot("wood", 4, 5)
@@ -116,7 +117,7 @@ func _init() -> void:
 	fox.fighter.apply_stun(1)
 	failed += _check(fox.fighter.stun_turns == 0, "定力 50 完全抵抗 1 回合眩晕")
 	fox.fighter.apply_root(2)
-	failed += _check(fox.fighter.rooted_turns == 1, "定力 50 缠绕 2→1 回合")
+	failed += _check(fox.fighter.rooted_turns == 1, "身法 40 缠绕 2→1 回合")
 	map.actors.erase(fox)
 
 	# ---- 破甲/挫锐随怪回合衰减 ----

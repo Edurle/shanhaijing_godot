@@ -94,18 +94,19 @@ static func _knockback(engine, cfg: Dictionary) -> String:
 	if target == null:
 		return engine.content.text("lightning_no_target")
 	var damage := int(cfg.get("damage", 5))
-	var push := int(cfg.get("push", 3))
 	var stun := int(cfg.get("stun", 2))
 	engine.emit_event("hit", target.x, target.y, {"amount": damage})
 	engine._apply_damage(player, target, damage)
 	engine.log_message(engine.content.text("knockback_used").format({"target": target.label}), "combat")
 	if not target.is_alive():
 		return ""
+	var push: int = target.fighter.reduce_push(int(cfg.get("push", 3)), engine.state.rng)
+	if push <= 0:
+		Skills.log_status_resisted(engine, target, "knockback")
 	var dx := signi(target.x - player.x)
 	var dy := signi(target.y - player.y)
-	var moved: int = engine.push_actor(target, dx, dy, push)
-	if moved < push and stun > 0:
-		target.fighter.apply_stun(stun)
+	var moved: int = engine.push_actor(target, dx, dy, push) if push > 0 else 0
+	if moved < push and stun > 0 and target.fighter.apply_stun(stun, engine.state.rng):
 		engine.emit_event("stun", target.x, target.y, {})
 		engine.log_message(engine.content.text("knockback_wall").format({"target": target.label}), "combat")
 	return ""
@@ -121,10 +122,14 @@ static func _stun_area(engine, turns: int, radius: int) -> String:
 				targets.append(actor)
 	if targets.is_empty():
 		return engine.content.text("lightning_no_target")
+	var landed := 0
 	for target in targets:
-		target.fighter.apply_stun(turns)
-		engine.emit_event("stun", target.x, target.y, {})
-	engine.log_message(engine.content.text("talisman_stun").format({"count": targets.size()}), "lightning")
+		if target.fighter.apply_stun(turns, engine.state.rng):
+			landed += 1
+			engine.emit_event("stun", target.x, target.y, {})
+		else:
+			Skills.log_status_resisted(engine, target, "stun")
+	engine.log_message(engine.content.text("talisman_stun").format({"count": landed}), "lightning")
 	return ""
 
 

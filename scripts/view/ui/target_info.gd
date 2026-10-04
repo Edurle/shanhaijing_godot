@@ -53,11 +53,12 @@ func _resist_note() -> String:
 		if skill.get("tags", []).has(kind):
 			var value: int = target.fighter.resistance(kind)
 			if value > best_value:
-				best_kind = String(kind)
+				best_kind = kind
 				best_value = value
 	if best_kind == "":
 		return ""
-	return "·" + engine.content.text("resist_" + best_kind).format({"v": best_value})
+	return "·" + engine.content.text("resist_" + best_kind).format({
+		"v": int(round(Fighter.resist_reduction_percent(best_value)))})
 
 
 func _counter_note() -> String:

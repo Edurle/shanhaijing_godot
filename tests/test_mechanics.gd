@@ -101,6 +101,40 @@ func _init() -> void:
 	var dot_summary: String = Skills.summary(engine, player, dot_skill)
 	failed += _check(dot_summary.find("蛊毒") >= 0, "元素 DOT 摘要含状态名（%s）" % dot_summary)
 
+	# ---- 状态抗性两段式+边际递减：点数经护甲式折算（50点→33%），先掷免疫再折减效果 ----
+	var roll := RandomNumberGenerator.new()
+	roll.seed = 20261004
+	var resist_case = load("res://scripts/core/fighter.gd").new(20, 5, 0)
+	resist_case.base_resistances = {"stun": 0, "root": 50, "sunder": 40, "daunt": 60, "knockback": 50}
+	resist_case.apply_stun(3, roll)
+	failed += _check(resist_case.stun_turns == 3, "定力0：必不免疫且不折减（实际 %d）" % resist_case.stun_turns)
+	var legacy = load("res://scripts/core/fighter.gd").new(20, 5, 0)
+	failed += _check(legacy.apply_root(4) and legacy.rooted_turns == 4 and legacy.reduce_push(3) == 3,
+		"无抗性缺省掷骰：旧调用路径效果不变")
+	var landed := 0
+	var resisted := 0
+	var bad_outcome := 0
+	for _i in range(80):
+		resist_case.rooted_turns = 0
+		if resist_case.apply_root(4, roll):
+			landed += 1
+			bad_outcome += 0 if resist_case.rooted_turns == 2 else 1
+		else:
+			resisted += 1
+			bad_outcome += 0 if resist_case.rooted_turns == 0 else 1
+	failed += _check(landed > 10 and resisted > 10, "身法50：免疫与落地两类均出现（%d/%d）" % [landed, resisted])
+	failed += _check(bad_outcome == 0, "身法50：落地必缩为2回合、抵御必为0")
+	var daunt_outcomes := {}
+	for _i in range(60):
+		daunt_outcomes[resist_case.apply_daunt(3, 3, roll)] = true
+	failed += _check(daunt_outcomes.has(0) and daunt_outcomes.has(2),
+		"心志60：挫锐3只出 0（免疫）或 2（折算37.5%）（%s）" % str(daunt_outcomes.keys()))
+	var push_outcomes := {}
+	for _i in range(60):
+		push_outcomes[resist_case.reduce_push(3, roll)] = true
+	failed += _check(push_outcomes.has(0) and push_outcomes.has(2),
+		"沉劲50：击退3只出 0（免疫）或 2（折减）（%s）" % str(push_outcomes.keys()))
+
 	if failed > 0:
 		print("FAIL 共 %d 项未过" % failed)
 		quit(1)

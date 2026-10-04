@@ -9,8 +9,8 @@
       "lore": "典故出处（可本地化）",
       "components.fighter": "战斗组件：hp/power/defense/xp_reward",
       "components.ai": "AI 行为，type 对应 ai.py 注册表",
-      "resistances": "抗性表 {thunder|fire|poison|stun: 百分比 0-80}：元素减伤 / 眩晕时长缩短",
-      "attack_tags": "普攻附带元素（thunder/fire/poison），命中按目标抗性折算"
+      "resistances": "抗性表：五行=减伤（护甲式边际递减）；stun/root 缩短时长、sunder/daunt 折减削弱量、knockback 缩击退（线性）；均 0-80。",
+      "attack_tags": "普攻附带元素（metal/wood/water/fire/earth），命中按目标抗性折算"
     },
     "element": "本命五行 {metal|wood|water|fire|earth}：受生克判定（攻元素克本命+30%/被克-25%）",
     "resistances": "抗性表 {metal|wood|water|fire|earth|stun: 百分比 0-80}：元素减伤 / 眩晕与缠绕时长缩短",
@@ -47,6 +47,9 @@
       "ai": {
         "type": "hostile"
       }
+    },
+    "resistances": {
+      "wood": 30
     },
     "element": "wood",
     "attack_tags": []
@@ -87,6 +90,11 @@
     "attack_tags": [
       "wood"
     ],
+    "resistances": {
+      "metal": 30,
+      "wood": 30,
+      "sunder": 30
+    },
     "element": "metal"
   },
   "jiuweihu": {
@@ -123,7 +131,8 @@
       }
     },
     "resistances": {
-      "stun": 50
+      "stun": 50,
+      "root": 40
     },
     "element": "fire",
     "attack_tags": []
@@ -162,7 +171,8 @@
     },
     "resistances": {
       "earth": 30,
-      "stun": 40
+      "stun": 40,
+      "sunder": 40
     },
     "element": "earth",
     "attack_tags": [
@@ -362,7 +372,8 @@
       "wood"
     ],
     "resistances": {
-      "wood": 60
+      "wood": 60,
+      "root": 50
     },
     "element": "water"
   },
@@ -404,7 +415,8 @@
     ],
     "resistances": {
       "fire": 60,
-      "metal": 60
+      "metal": 60,
+      "sunder": 40
     },
     "element": "fire"
   },
@@ -440,6 +452,9 @@
         "type": "hostile",
         "perception": 8
       }
+    },
+    "resistances": {
+      "fire": 40
     },
     "element": "fire",
     "attack_tags": []
@@ -518,6 +533,11 @@
         "perception": 8
       }
     },
+    "resistances": {
+      "metal": 40,
+      "wood": 30,
+      "sunder": 40
+    },
     "element": "metal",
     "attack_tags": []
   },
@@ -555,7 +575,8 @@
       }
     },
     "resistances": {
-      "stun": 40
+      "stun": 40,
+      "knockback": 40
     },
     "element": "earth",
     "attack_tags": []
@@ -635,6 +656,11 @@
         "type": "hostile",
         "perception": 8
       }
+    },
+    "resistances": {
+      "earth": 40,
+      "stun": 30,
+      "knockback": 50
     },
     "element": "earth",
     "attack_tags": []
@@ -797,7 +823,8 @@
     "element": "earth",
     "attack_tags": [],
     "resistances": {
-      "earth": 40
+      "earth": 40,
+      "knockback": 40
     }
   },
   "boss_jingwei": {
@@ -918,7 +945,8 @@
     },
     "resistances": {
       "fire": 40,
-      "metal": 50
+      "metal": 50,
+      "daunt": 40
     },
     "attack_tags": [
       "water",
@@ -962,7 +990,8 @@
     "resistances": {
       "earth": 50,
       "fire": 60,
-      "stun": 60
+      "stun": 60,
+      "sunder": 50
     },
     "attack_tags": [
       "fire"
@@ -1000,6 +1029,9 @@
         "type": "hostile"
       }
     },
+    "resistances": {
+      "earth": 30
+    },
     "element": "earth",
     "attack_tags": []
   },
@@ -1034,6 +1066,10 @@
         "type": "hostile",
         "perception": 7
       }
+    },
+    "resistances": {
+      "wood": 30,
+      "stun": 30
     },
     "element": "wood",
     "attack_tags": []
@@ -1152,7 +1188,8 @@
     "element": "water",
     "attack_tags": [],
     "resistances": {
-      "water": 40
+      "water": 40,
+      "root": 40
     }
   },
   "lushu": {
@@ -1185,6 +1222,9 @@
       "ai": {
         "type": "hostile"
       }
+    },
+    "resistances": {
+      "wood": 30
     },
     "element": "wood",
     "attack_tags": []
@@ -1219,6 +1259,11 @@
       "ai": {
         "type": "hostile"
       }
+    },
+    "resistances": {
+      "earth": 30,
+      "stun": 40,
+      "knockback": 30
     },
     "element": "earth",
     "attack_tags": []
@@ -1294,6 +1339,10 @@
         "type": "hostile",
         "perception": 7
       }
+    },
+    "resistances": {
+      "wood": 30,
+      "stun": 30
     },
     "element": "wood",
     "attack_tags": []
@@ -1373,7 +1422,8 @@
       "earth"
     ],
     "resistances": {
-      "earth": 30
+      "earth": 30,
+      "knockback": 40
     }
   },
   "dijiang": {
@@ -1450,6 +1500,10 @@
     "attack_tags": [
       "fire"
     ],
+    "resistances": {
+      "metal": 40,
+      "sunder": 40
+    },
     "element": "metal"
   },
   "zhuyan": {
@@ -1482,6 +1536,10 @@
       "ai": {
         "type": "hostile"
       }
+    },
+    "resistances": {
+      "metal": 30,
+      "daunt": 50
     },
     "element": "metal",
     "attack_tags": []
@@ -1517,6 +1575,9 @@
         "type": "hostile",
         "perception": 7
       }
+    },
+    "resistances": {
+      "water": 30
     },
     "element": "water",
     "attack_tags": []
@@ -1590,6 +1651,11 @@
       "ai": {
         "type": "hostile"
       }
+    },
+    "resistances": {
+      "metal": 30,
+      "stun": 40,
+      "daunt": 40
     },
     "element": "metal",
     "attack_tags": []
@@ -1667,6 +1733,9 @@
     "attack_tags": [
       "wood"
     ],
+    "resistances": {
+      "water": 40
+    },
     "element": "water"
   },
   "mengji": {
@@ -1699,6 +1768,10 @@
       "ai": {
         "type": "hostile"
       }
+    },
+    "resistances": {
+      "earth": 30,
+      "root": 30
     },
     "element": "earth",
     "attack_tags": []
@@ -1733,6 +1806,10 @@
       "ai": {
         "type": "hostile"
       }
+    },
+    "resistances": {
+      "wood": 30,
+      "root": 30
     },
     "element": "wood",
     "attack_tags": []
@@ -1771,7 +1848,8 @@
     "element": "earth",
     "attack_tags": [],
     "resistances": {
-      "earth": 30
+      "earth": 30,
+      "knockback": 30
     }
   },
   "suanyu": {
@@ -1843,6 +1921,9 @@
         "perception": 7
       }
     },
+    "resistances": {
+      "wood": 40
+    },
     "element": "wood",
     "attack_tags": []
   },
@@ -1877,6 +1958,10 @@
         "type": "hostile"
       }
     },
+    "resistances": {
+      "earth": 30,
+      "sunder": 30
+    },
     "element": "earth",
     "attack_tags": []
   },
@@ -1910,6 +1995,9 @@
       "ai": {
         "type": "hostile"
       }
+    },
+    "resistances": {
+      "metal": 40
     },
     "element": "metal",
     "attack_tags": []
@@ -2022,6 +2110,11 @@
         "type": "hostile"
       }
     },
+    "resistances": {
+      "metal": 40,
+      "stun": 30,
+      "root": 50
+    },
     "element": "metal",
     "attack_tags": []
   },
@@ -2057,7 +2150,8 @@
       }
     },
     "resistances": {
-      "wood": 50
+      "wood": 50,
+      "root": 40
     },
     "attack_tags": [
       "wood"
@@ -2103,7 +2197,8 @@
       "fire": 40,
       "metal": 40,
       "stun": 70,
-      "wood": 50
+      "wood": 50,
+      "knockback": 50
     },
     "attack_tags": [
       "metal"
@@ -2190,7 +2285,8 @@
     },
     "resistances": {
       "metal": 30,
-      "stun": 80
+      "stun": 80,
+      "daunt": 60
     },
     "attack_tags": [],
     "element": "metal"
@@ -2233,7 +2329,8 @@
       "fire": 50,
       "metal": 50,
       "stun": 60,
-      "wood": 30
+      "wood": 30,
+      "daunt": 60
     },
     "attack_tags": [
       "fire",

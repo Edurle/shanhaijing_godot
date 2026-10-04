@@ -4,7 +4,7 @@ extends RefCounted
 ## 资源池（气血/真气/灵力）、攻防聚合（基础+buff+装备）、五行生克折算、
 ## 状态机（buff/DOT 多槽/眩晕/缠绕）。死亡结算由回合引擎回调，组件保持哑数据。
 
-const RESIST_CAP := 80
+const RESIST_CAP := 80  # 抗性点数封顶；护甲式折算下 80 点 = 44% 减伤
 const COUNTER_BONUS := 0.30  # 攻击元素克目标本命：伤害 ×1.30
 const COUNTER_PENALTY := 0.25  # 目标本命克攻击元素：伤害 ×0.75
 
@@ -132,7 +132,14 @@ func resistance(kind: String) -> int:
 	return mini(RESIST_CAP, value)
 
 
-## 五行折算：先乘生克系数（攻元素 vs 自身本命），再按最高元素抗性减伤，下限 1 点。
+## 抗性点数 → 实际减伤百分比（MOBA 护甲式边际递减）：80 点 = 44.4%。
+## 每点抗性提供等量有效生命，边际递减；折算与 UI 显示共用此口径。
+static func resist_reduction_percent(resist: int) -> float:
+	return 100.0 * float(resist) / (100.0 + float(resist))
+
+
+## 五行折算：先乘生克系数（攻元素 vs 自身本命），再按最高元素抗性
+## 边际递减减伤（乘数 = 100/(100+抗性)），下限 1 点。
 func mitigate_incoming(damage: int, tags: Array) -> int:
 	var counter := counter_multiplier(tags)
 	var resist := 0
@@ -141,7 +148,7 @@ func mitigate_incoming(damage: int, tags: Array) -> int:
 			resist = maxi(resist, resistance(t))
 	if resist <= 0 and counter == 1.0:
 		return damage
-	return maxi(1, int(round(damage * counter * (100 - resist) / 100.0)))
+	return maxi(1, int(round(damage * counter * (100.0 - resist_reduction_percent(resist)) / 100.0)))
 
 
 ## 生克系数：攻击 tags 的首个五行元素 vs 自身本命（多元素取首个，数据排列即主元素）。
@@ -224,14 +231,62 @@ func tick_dots() -> Array:
 	return settled
 
 
-## 眩晕（含水系冰封）与缠绕（木系）：定力按比例缩短时长，可为 0（完全抵抗）。
-func apply_stun(turns: int) -> void:
-	turns = int(turns * (100 - resistance("stun")) / 100.0)
+## 状态免疫掷骰（两段式第一段）：抗性点数先经护甲式边际递减折算（80点=44%），
+## 折算值即完全抵御概率。rng 缺省（null）视为不掷——必进入状态，兼容旧调用。
+func status_resisted(kind: String, rng = null) -> bool:
+	if rng == null:
+		return false
+	return rng.randf() < resist_reduction_percent(resistance(kind)) / 100.0
+
+
+## 状态抗性折减系数（两段式第二段）：折算后百分比同边际递减——
+## 定力/身法缩时长、甲坚/心志折减削弱量、沉劲缩击退距离。
+func resist_scale(kind: String) -> float:
+	return (100.0 - resist_reduction_percent(resistance(kind))) / 100.0
+
+
+## 眩晕（含水系冰封）：先掷定力免疫；未免疫则时长按定力折减（可为0）。返回是否生效。
+func apply_stun(turns: int, rng = null) -> bool:
+	if status_resisted("stun", rng):
+		return false
+	turns = int(turns * resist_scale("stun"))
 	if turns > 0:
 		stun_turns = maxi(stun_turns, turns)
+		return true
+	return false
 
 
-func apply_root(turns: int) -> void:
-	turns = int(turns * (100 - resistance("stun")) / 100.0)
+## 缠绕（木系）：先掷身法免疫；未免疫则时长按身法折减（可为0=挣脱）。返回是否生效。
+func apply_root(turns: int, rng = null) -> bool:
+	if status_resisted("root", rng):
+		return false
+	turns = int(turns * resist_scale("root"))
 	if turns > 0:
 		rooted_turns = maxi(rooted_turns, turns)
+		return true
+	return false
+
+
+## 破甲（防降）：先掷甲坚免疫；未免疫则削弱量按甲坚折减，下限 1。返回实际削弱量（0=被抵御）。
+func apply_sunder(amount: int, turns: int, rng = null) -> int:
+	if status_resisted("sunder", rng):
+		return 0
+	var reduced := maxi(1, int(round(amount * resist_scale("sunder"))))
+	apply_buff("defense", -reduced, turns)
+	return reduced
+
+
+## 挫锐（攻降）：先掷心志免疫；未免疫则削弱量按心志折减，下限 1。返回实际削弱量（0=被抵御）。
+func apply_daunt(amount: int, turns: int, rng = null) -> int:
+	if status_resisted("daunt", rng):
+		return 0
+	var reduced := maxi(1, int(round(amount * resist_scale("daunt"))))
+	apply_buff("power", -reduced, turns)
+	return reduced
+
+
+## 击退距离：先掷沉劲免疫；未免疫则按沉劲折减。均可为 0（稳如泰山）。
+func reduce_push(cells: int, rng = null) -> int:
+	if status_resisted("knockback", rng):
+		return 0
+	return maxi(0, int(round(cells * resist_scale("knockback"))))

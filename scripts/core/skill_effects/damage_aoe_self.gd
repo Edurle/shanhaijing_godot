@@ -21,11 +21,13 @@ func perform(engine, actor: Actor, skill: Dictionary, _target = null) -> String:
 			Skills.apply_skill_dot(engine, actor, enemy, skill, [int(d["damage"]), int(d["turns"])])
 		Skills.apply_attached_controls(engine, actor, enemy, skill)
 		if eff.has("stun"):
-			enemy.fighter.apply_stun(int(eff["stun"]))
-			if skill.get("tags", []).has("water"):
-				engine.emit_event("freeze", enemy.x, enemy.y, {})
+			if enemy.fighter.apply_stun(int(eff["stun"]), engine.state.rng):
+				if skill.get("tags", []).has("water"):
+					engine.emit_event("freeze", enemy.x, enemy.y, {})
+				else:
+					engine.emit_event("stun", enemy.x, enemy.y, {})
 			else:
-				engine.emit_event("stun", enemy.x, enemy.y, {})
+				Skills.log_status_resisted(engine, enemy, "stun")
 	engine.log_message(engine.content.text("cast_aoe").format({
 		"skill": engine.content.localize(skill["name"]), "count": targets.size(),
 	}), "combat")
