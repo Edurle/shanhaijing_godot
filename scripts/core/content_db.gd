@@ -441,3 +441,10 @@ func roll_material_drop(monster_tags: Array, rng: RandomNumberGenerator) -> Stri
 				return String(entry["id"])
 			return ""
 	return ""
+
+
+## 职业显示名（本地化）。注：class_name 为 GDScript 保留字，故用此前缀命名。
+func class_display_name(class_id: String) -> String:
+	if not classes.has(class_id):
+		return class_id
+	return localize(classes[class_id]["name"])

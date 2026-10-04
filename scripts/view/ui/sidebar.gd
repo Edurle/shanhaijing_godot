@@ -72,7 +72,7 @@ func _draw() -> void:
 	# 技能栏（当前页 8 槽；Tab 切主/副职业）
 	var class_id := String(player.class_ids[engine.active_page])
 	var page_text: String = engine.content.text("hud_main_page" if engine.active_page == 0 else "hud_second_page")
-	draw_text_line(Vector2(x, y), "— %s · Tab 切页 —" % page_text.format({"name": engine.content.class_name(class_id)}), INK_SOFT, 14)
+	draw_text_line(Vector2(x, y), "— %s · Tab 切页 —" % page_text.format({"name": engine.content.class_display_name(class_id)}), INK_SOFT, 14)
 	y += 20
 	for slot in range(1, 9):
 		var skill: Dictionary = engine.content.skill_for_slot(class_id, slot)
@@ -104,16 +104,16 @@ func _draw() -> void:
 	# 装备五槽
 	y += 10
 	for slot in Equipment.SLOT_ORDER:
-		var item: Dictionary = player.equipment.slots.get(slot)
 		var slot_label: String = engine.content.text("slot_" + slot)
-		var text := "%s %s" % [slot_label, item["label"] if item != null else "——"]
-		if item != null and item.has("damage"):
+		var item: Dictionary = player.equipment.slots[slot] if player.equipment.slots.get(slot) != null else {}
+		var text := "%s %s" % [slot_label, item["label"] if not item.is_empty() else "——"]
+		if not item.is_empty() and item.has("damage"):
 			var d: Dictionary = item["damage"]
 			var summary := "物%d" % int(d["physical"])
 			if String(d.get("element", "")) != "":
 				summary += "·" + engine.content.text("element_" + String(d["element"]))
 			text += "  " + summary
-		draw_text_line(Vector2(x, y), text, INK if item != null else Color(170, 165, 155), 15)
+		draw_text_line(Vector2(x, y), text, INK if not item.is_empty() else Color(170, 165, 155), 15)
 		y += 20
 
 	# 底部操作提示

@@ -19,7 +19,7 @@ func _rebuild() -> void:
 	var essence: int = player.inventory.count_material("mat_elite_essence")
 	var core: int = player.inventory.count_material("mat_demon_core")
 	header_extra = "%s · 技能点 %d · 精魄×%d 魔核×%d" % [
-		engine.content.class_name(class_id), player.skill_points, essence, core,
+		engine.content.class_display_name(class_id), player.skill_points, essence, core,
 	]
 	rows.clear()
 	for skill in engine.content.skills_for_class(class_id):
