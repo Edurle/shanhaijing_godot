@@ -1,6 +1,6 @@
 class_name UiLogPanel
 extends UiPanel
-## 左下消息日志：纸面半透明 + 最近 5 条（旧行淡墨）。
+## 左下消息日志：无底透明，最近 5 条直接浮在地图上（旧行淡墨）。
 
 const KIND_COLORS := {
 	"combat": Color("2B2620"), "warn": Color("B4652A"), "death": Color("C3272B"),
@@ -31,7 +31,6 @@ func refresh() -> void:
 func _draw() -> void:
 	if engine == null:
 		return
-	draw_rect(Rect2(panel_rect.position - Vector2(2, 2), panel_rect.size + Vector2(4, 4)), Color(PAPER, 0.82))
 	var recent: Array = engine.messages.slice(maxi(0, engine.messages.size() - lines), engine.messages.size())
 	var y := panel_rect.position.y + 22
 	for i in range(recent.size()):

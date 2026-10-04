@@ -13,9 +13,15 @@ func setup_menu(p_engine) -> void:
 
 
 func relayout(view_size: Vector2) -> void:
-	setup_ui(Rect2(
-		view_size.x * 0.12, view_size.y * 0.12,
-		minf(640.0, view_size.x * 0.6), minf(480.0, view_size.y * 0.72)), "查看")
+	# 视口居中（同行囊/参悟菜单）。顶部避让左上资源 HUD（底衬236+标题章12→下限248）；
+	# 高度收缩避让底部技能栏（其上沿 视口高-76，留 12 缝）；极矮窗口兜底完整入屏。
+	# 矮窗口下与左下消息日志的交叠同其他大菜单（行囊/参悟），模态卡遮日志可接受。
+	var w := minf(640.0, view_size.x - 60.0)
+	var h := minf(480.0, view_size.y - 336.0)
+	var y := (view_size.y - h) / 2.0
+	y = maxf(y, 248.0)
+	y = minf(y, view_size.y - h - 20.0)
+	setup_ui(Rect2((view_size.x - w) / 2.0, y, w, h), "查看")
 
 
 ## 面板内点击：吞掉（棋盘点击换目标由主场景路由处理）。
