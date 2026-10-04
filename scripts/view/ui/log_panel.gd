@@ -15,7 +15,11 @@ var lines := 5
 
 func setup(p_engine) -> void:
 	engine = p_engine
-	setup_ui(Rect2(12, 768 - 132, 640, 120))
+	relayout(Vector2(1280, 768))
+
+
+func relayout(view_size: Vector2) -> void:
+	setup_ui(Rect2(12, view_size.y - 132, minf(640.0, view_size.x - 320), 120))
 
 
 func refresh() -> void:

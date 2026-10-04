@@ -3,7 +3,7 @@ extends RefCounted
 ## 秘境地牢生成——Python 版 procgen.py 的移植：随机房间 + L 形走廊 + 上下山径。
 ## 阶段 2 范围：地形与楼梯（怪物/物品/资源点投放待阶段 3 实体模型接入）。
 
-const MAX_ROOMS := 10
+const MAX_ROOMS := 14  # 生成尝试数（相机视口下提升每层房间与遭遇密度）
 const ROOM_MIN_SIZE := 6
 const ROOM_MAX_SIZE := 8
 const DUNGEON_WIDTH := 44

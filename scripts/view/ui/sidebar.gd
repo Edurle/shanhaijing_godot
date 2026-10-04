@@ -12,7 +12,17 @@ var state
 func setup(p_engine) -> void:
 	engine = p_engine
 	state = p_engine.state
-	setup_ui(Rect2(1280 - WIDTH, 0, WIDTH, 768))
+	relayout(Vector2(1280, 768))
+
+
+func relayout(view_size: Vector2) -> void:
+	var height: float = view_size.y
+	setup_ui(Rect2(view_size.x - WIDTH, 0, WIDTH, height))
+	_panel_height = height
+	queue_redraw()
+
+
+var _panel_height := 768.0
 
 
 func refresh() -> void:
@@ -104,7 +114,7 @@ func _draw() -> void:
 		y += 20
 
 	# 底部操作提示
-	draw_text_line(Vector2(x, 768 - 24),
+	draw_text_line(Vector2(x, _panel_height - 24),
 		"移动 WASD · 技能 1-8 · 行囊 I · 参悟 K · 查看 X · 拾取 G · 踏入 E/Q", INK_SOFT, 13)
 
 
@@ -113,3 +123,15 @@ func draw_paper_dim() -> void:
 	draw_rect(panel_rect, PAPER, false, 0.0)
 	draw_rect(Rect2(panel_rect.position, panel_rect.size), Color(PAPER, 0.92))
 	draw_rect(panel_rect, INK, false, 2.0)
+
+
+## 技能行命中检测（主场景点击路由）：返回槽位 1-8，未命中 0。
+func skill_row_at(pos: Vector2) -> int:
+	var x := panel_rect.position.x + 16
+	var y := panel_rect.position.y + 34 + 26 + 30 + 18 + 18 + 28  # 到技能标题行的累积高度
+	y += 20  # 标题行
+	for slot in range(1, 9):
+		if Rect2(x - 8, y - 16, WIDTH - 16, 21).has_point(pos):
+			return slot
+		y += 21
+	return 0

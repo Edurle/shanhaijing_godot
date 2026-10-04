@@ -18,8 +18,30 @@ func open(center := true) -> void:
 	cursor = 0
 	_rebuild()
 	if center:
-		setup_ui(Rect2((1280 - 520) / 2.0, (768 - 540) / 2.0, 520, 540), title)
+		relayout(Vector2(1280, 768))
 	queue_redraw()
+
+
+func relayout(view_size: Vector2) -> void:
+	setup_ui(Rect2(
+		(view_size.x - minf(520.0, view_size.x - 80)) / 2.0,
+		(view_size.y - minf(540.0, view_size.y - 60)) / 2.0,
+		minf(520.0, view_size.x - 80), minf(540.0, view_size.y - 60)), title)
+
+
+## 行点击命中：设游标并触发确认；返回是否命中。
+func click_at(pos: Vector2) -> bool:
+	if not visible or not panel_rect.has_point(pos):
+		return false
+	var y := panel_rect.position.y + 34 + (24 if header_extra != "" else 0)
+	for i in range(rows.size()):
+		if Rect2(panel_rect.position.x + 12, y - 16, panel_rect.size.x - 24, 24).has_point(pos):
+			cursor = i
+			queue_redraw()
+			confirmed.emit(rows[i].get("meta"))
+			return true
+		y += 24
+	return true  # 面板内但未点中行：吞掉点击
 
 
 func close() -> void:

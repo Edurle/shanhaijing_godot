@@ -9,7 +9,18 @@ var index := 0
 
 func setup_menu(p_engine) -> void:
 	engine = p_engine
-	setup_ui(Rect2(120, 100, 640, 480), "查看")
+	relayout(Vector2(1280, 768))
+
+
+func relayout(view_size: Vector2) -> void:
+	setup_ui(Rect2(
+		view_size.x * 0.12, view_size.y * 0.12,
+		minf(640.0, view_size.x * 0.6), minf(480.0, view_size.y * 0.72)), "查看")
+
+
+## 面板内点击：吞掉（棋盘点击换目标由主场景路由处理）。
+func click_at(pos: Vector2) -> bool:
+	return visible and panel_rect.has_point(pos)
 
 
 func open() -> void:

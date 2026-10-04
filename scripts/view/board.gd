@@ -37,6 +37,7 @@ var map: GameMap
 var player: Actor
 var target_cell := Vector2i(-1, -1)  # 瞄准/查看高亮格
 var landing_cell := Vector2i(-1, -1)  # 择向落点预览
+var travel_cell := Vector2i(-1, -1)  # 点击旅行目标（淡金虚框）
 var _jitter := {}  # Vector2i -> 0..2 纸面颗粒抖动，避免大色块呆板
 
 
@@ -89,6 +90,15 @@ func _draw_overlays() -> void:
 			draw_line(corner[2], corner[3], color, 2.0)
 	if landing_cell.x >= 0:
 		draw_rect(Rect2(landing_cell.x * CELL + 2, landing_cell.y * CELL + 2, CELL - 4, CELL - 4), Color("C9A662"), false, 2.0)
+	if travel_cell.x >= 0:
+		var tpos := Vector2(travel_cell.x * CELL + 6, travel_cell.y * CELL + 6)
+		var tsize := Vector2(CELL - 12, CELL - 12)
+		var dash: Color = Color("C9A662", 0.55)
+		for seg in range(0, 4):
+			draw_line(tpos + Vector2(seg * tsize.x / 4.0, 0), tpos + Vector2((seg + 0.6) * tsize.x / 4.0, 0), dash, 1.5)
+			draw_line(tpos + Vector2(0, seg * tsize.y / 4.0), tpos + Vector2(0, (seg + 0.6) * tsize.y / 4.0), dash, 1.5)
+			draw_line(tpos + Vector2(tsize.x, seg * tsize.y / 4.0), tpos + Vector2(tsize.x, (seg + 0.6) * tsize.y / 4.0), dash, 1.5)
+			draw_line(tpos + Vector2(seg * tsize.x / 4.0, tsize.y), tpos + Vector2((seg + 0.6) * tsize.x / 4.0, tsize.y), dash, 1.5)
 
 
 func _terrain_color(kind: int, x: int, y: int, seen: bool) -> Color:

@@ -1,7 +1,7 @@
 extends Node2D
 ## 主场景：内容库 → 世界状态机 → 回合引擎 → 棋盘 + 水墨 UI。
 ## 模式状态机：职业选择 / 游历 / 行囊 / 参悟 / 查看 / 瞄准 / 择向。
-## E=踏入/深入，Q=回返；阶段 5 前保持程序化水墨占位视觉。
+## 操作双轨：古典（键盘回合制）+ 现代（鼠标点击旅行/攻击/施法、滚轮缩放、按键长按连走）。
 
 const CoreContentDb := preload("res://scripts/core/content_db.gd")
 const CoreWorldState := preload("res://scripts/core/world_state.gd")
@@ -16,6 +16,9 @@ const MenuLearn := preload("res://scripts/view/ui/menu_learn.gd")
 const MenuExamine := preload("res://scripts/view/ui/menu_examine.gd")
 
 enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION }
+
+const MOVE_REPEAT_MSEC := 130  # 长按连走节流
+const TRAVEL_STEP_INTERVAL := 0.075  # 点击旅行的步进节奏（秒/格）
 
 var content: CoreContentDb
 var state: CoreWorldState
@@ -37,6 +40,12 @@ var pending_skill: Dictionary = {}
 var target_candidates: Array = []
 var target_index := 0
 var dir_delta := Vector2i.ZERO
+
+# 现代操作：点击旅行 / 长按连走
+var travel_target := Vector2i(-1, -1)
+var travel_attack := false
+var _travel_clock := 0.0
+var _last_move_msec := -100000
 
 
 func _ready() -> void:
@@ -71,21 +80,34 @@ func _ready() -> void:
 
 	menu_class.setup_menu(content)
 	menu_class.open()
+	get_viewport().size_changed.connect(_on_viewport_resized)
+	set_process(true)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.is_echo():
-		_dispatch(event.keycode)
+	if event is InputEventMouseButton and event.pressed:
+		match event.button_index:
+			MOUSE_BUTTON_WHEEL_UP:
+				_zoom_by(1.12)
+			MOUSE_BUTTON_WHEEL_DOWN:
+				_zoom_by(1.0 / 1.12)
+			MOUSE_BUTTON_LEFT:
+				_handle_click(event.position)
+			MOUSE_BUTTON_RIGHT:
+				_handle_right_click()
+		return
+	if event is InputEventKey and event.pressed:
+		_dispatch(event.keycode, event.is_echo())
 
 
-func _dispatch(keycode: int) -> void:
+func _dispatch(keycode: int, is_echo: bool) -> void:
 	match mode:
 		Mode.CLASS_SELECT:
 			menu_class.handle_key(keycode)
 			if menu_class.done:
 				_start_game([menu_class.picked_primary, menu_class.picked_secondary])
 		Mode.PLAY:
-			_handle_play(keycode)
+			_handle_play(keycode, is_echo)
 		Mode.INVENTORY:
 			menu_inventory.handle_key(keycode)
 			if not menu_inventory.visible:
@@ -133,20 +155,31 @@ func _start_game(class_pair: Array) -> void:
 	_refresh()
 
 
-# ---- 游历模式 ----
+# ---- 游历模式（键盘） ----
 
-func _handle_play(keycode: int) -> void:
+func _handle_play(keycode: int, is_echo: bool) -> void:
 	if engine.game_over:
 		return
+	var delta := Vector2i.ZERO
 	match keycode:
 		KEY_UP, KEY_W:
-			_act(engine.player_step(Vector2i(0, -1)))
+			delta = Vector2i(0, -1)
 		KEY_DOWN, KEY_S:
-			_act(engine.player_step(Vector2i(0, 1)))
+			delta = Vector2i(0, 1)
 		KEY_LEFT, KEY_A:
-			_act(engine.player_step(Vector2i(-1, 0)))
+			delta = Vector2i(-1, 0)
 		KEY_RIGHT, KEY_D:
-			_act(engine.player_step(Vector2i(1, 0)))
+			delta = Vector2i(1, 0)
+	if delta != Vector2i.ZERO:
+		if is_echo and Time.get_ticks_msec() - _last_move_msec < MOVE_REPEAT_MSEC:
+			return
+		_last_move_msec = Time.get_ticks_msec()
+		_stop_travel()
+		_act(engine.player_step(delta))
+		return
+	if is_echo:
+		return
+	match keycode:
 		KEY_G:
 			_act(engine.player_pickup())
 		KEY_E:
@@ -154,12 +187,15 @@ func _handle_play(keycode: int) -> void:
 		KEY_Q:
 			_interact_up()
 		KEY_I:
+			_stop_travel()
 			menu_inventory.open()
 			_set_mode(Mode.INVENTORY)
 		KEY_K:
+			_stop_travel()
 			menu_learn.open()
 			_set_mode(Mode.LEARN)
 		KEY_X:
+			_stop_travel()
 			menu_examine.open()
 			if menu_examine.visible:
 				_set_mode(Mode.EXAMINE)
@@ -173,7 +209,192 @@ func _act(_acted: bool) -> void:
 	_refresh()
 
 
-## 发起施放：按效果类型决定 直放 / 瞄准 / 择向。
+# ---- 鼠标（现代操作） ----
+
+func _zoom_by(factor: float) -> void:
+	var z := clampf(camera.zoom.x * factor, 0.55, 1.6)
+	camera.zoom = Vector2(z, z)
+
+
+func _handle_right_click() -> void:
+	match mode:
+		Mode.TARGETING, Mode.DIRECTION:
+			_exit_cast()
+			_refresh()
+		Mode.INVENTORY, Mode.LEARN, Mode.EXAMINE:
+			menu_inventory.close()
+			menu_learn.close()
+			menu_examine.close()
+			board.target_cell = Vector2i(-1, -1)
+			_set_mode(Mode.PLAY)
+			board.queue_redraw()
+		Mode.PLAY:
+			_stop_travel()
+
+
+func _handle_click(pos: Vector2) -> void:
+	match mode:
+		Mode.CLASS_SELECT:
+			menu_class.click_at(pos)
+			if menu_class.done:
+				_start_game([menu_class.picked_primary, menu_class.picked_secondary])
+		Mode.INVENTORY:
+			menu_inventory.click_at(pos)
+			if not menu_inventory.visible:
+				_set_mode(Mode.PLAY)
+			_refresh()
+		Mode.LEARN:
+			menu_learn.click_at(pos)
+			if not menu_learn.visible:
+				_set_mode(Mode.PLAY)
+			_refresh()
+		Mode.EXAMINE:
+			if not menu_examine.click_at(pos):
+				var cell := _screen_to_cell(pos)
+				for i in range(menu_examine.targets.size()):
+					var t = menu_examine.targets[i]
+					if Vector2i(t.x, t.y) == cell:
+						menu_examine.index = i
+						menu_examine.queue_redraw()
+						_sync_examine_marker()
+						break
+		Mode.TARGETING:
+			var cell := _screen_to_cell(pos)
+			for i in range(target_candidates.size()):
+				var t = target_candidates[i]
+				if Vector2i(t.x, t.y) == cell:
+					target_index = i
+					_finish_cast(t)
+					return
+		Mode.DIRECTION:
+			_exit_cast()
+			_refresh()
+		Mode.PLAY:
+			_click_play(pos)
+
+
+func _click_play(pos: Vector2) -> void:
+	if engine.game_over:
+		return
+	# 侧栏区：技能行点击施放
+	if sidebar.visible and pos.x >= sidebar.panel_rect.position.x:
+		var slot: int = sidebar.skill_row_at(pos)
+		if slot > 0:
+			_stop_travel()
+			_begin_cast(slot)
+		return
+	var cell := _screen_to_cell(pos)
+	if not state.current.in_bounds(cell.x, cell.y):
+		return
+	if not state.current.is_explored(cell.x, cell.y):
+		return
+	# 点击可见敌 → 走过去并攻击一次；点击已探索可走格/门/山径/物品 → 旅行
+	var victim = state.current.actor_at(cell.x, cell.y)
+	if victim != null and victim.team != "player" and state.current.is_visible(cell.x, cell.y):
+		travel_target = cell
+		travel_attack = true
+		board.travel_cell = cell
+		board.queue_redraw()
+		return
+	if state.current.is_walkable(cell.x, cell.y):
+		travel_target = cell
+		travel_attack = false
+		board.travel_cell = cell
+		board.queue_redraw()
+
+
+func _screen_to_cell(pos: Vector2) -> Vector2i:
+	var view := get_viewport().get_visible_rect().size
+	var world: Vector2 = (pos - view / 2.0) / camera.zoom.x + camera.position
+	return Vector2i(floori(world.x / ViewBoard.CELL), floori(world.y / ViewBoard.CELL))
+
+
+# ---- 点击旅行（现代操作） ----
+
+func _stop_travel() -> void:
+	travel_target = Vector2i(-1, -1)
+	board.travel_cell = Vector2i(-1, -1)
+	board.queue_redraw()
+
+
+func _process(delta: float) -> void:
+	if mode != Mode.PLAY or engine == null or engine.game_over or travel_target.x < 0:
+		return
+	_travel_clock += delta
+	if _travel_clock < TRAVEL_STEP_INTERVAL:
+		return
+	_travel_clock = 0.0
+	var here := state.player_xy()
+	if here == travel_target:
+		if travel_attack:
+			var victim = state.current.actor_at(here.x, here.y)  # 与玩家同格不可能；攻击在相邻时触发
+		_stop_travel()
+		return
+	# 非攻击旅行途中遇敌即停（现代手感的安全绳）
+	if not travel_attack and not engine.visible_enemies(state.player).is_empty():
+		_stop_travel()
+		return
+	var next := _next_step_bfs(here, travel_target)
+	if next == Vector2i(-1, -1):
+		_stop_travel()
+		return
+	if next == travel_target and travel_attack:
+		var victim = state.current.actor_at(next.x, next.y)
+		if victim != null and victim.team != "player":
+			var dx := signi(next.x - here.x)
+			var dy := signi(next.y - here.y)
+			engine.player_step(Vector2i(dx, dy))
+			_stop_travel()
+			_refresh()
+			return
+	var dx := signi(next.x - here.x)
+	var dy := signi(next.y - here.y)
+	if not engine.player_step(Vector2i(dx, dy)):
+		_stop_travel()
+		return
+	if state.player_xy() == travel_target and travel_attack:
+		_stop_travel()
+	_refresh()
+
+
+## BFS 下一格（玩家旅行用）：同伴占位视为障碍，目标格除外；限 900 展开防爆扫。
+func _next_step_bfs(from: Vector2i, to: Vector2i) -> Vector2i:
+	var map = state.current
+	if not map.in_bounds(to.x, to.y):
+		return Vector2i(-1, -1)
+	var came_from := {from: from}
+	var queue: Array = [from]
+	var expansions := 0
+	while not queue.is_empty() and expansions < 900:
+		expansions += 1
+		var cell: Vector2i = queue.pop_front()
+		if cell == to:
+			break
+		for dx in range(-1, 2):
+			for dy in range(-1, 2):
+				if dx == 0 and dy == 0:
+					continue
+				var nxt := Vector2i(cell.x + dx, cell.y + dy)
+				if not map.in_bounds(nxt.x, nxt.y) or came_from.has(nxt):
+					continue
+				if not map.is_walkable(nxt.x, nxt.y):
+					continue
+				if nxt != to and map.actor_at(nxt.x, nxt.y) != null:
+					continue
+				came_from[nxt] = cell
+				queue.append(nxt)
+	if not came_from.has(to):
+		return Vector2i(-1, -1)
+	var cur := to
+	while came_from[cur] != from:
+		cur = came_from[cur]
+		if cur == from:
+			break
+	return cur if cur != from else Vector2i(-1, -1)
+
+
+# ---- 施放 ----
+
 func _begin_cast(slot: int) -> void:
 	var skill: Dictionary = content.skill_for_slot(String(state.player.class_ids[0]), slot)
 	if skill.is_empty():
@@ -313,11 +534,13 @@ func _interact_down() -> void:
 	if state.current.map_type == "world":
 		var gate: Dictionary = state.current.gate_at(xy.x, xy.y)
 		if not gate.is_empty():
+			_stop_travel()
 			state.known_gates[xy] = true
 			state.enter_realm(String(gate["realm_id"]), xy)
 			_after_map_switch()
 		return
 	if xy == state.current.downstairs_xy:
+		_stop_travel()
 		state.next_floor()
 		engine.update_fov()
 		_after_map_switch()
@@ -327,14 +550,32 @@ func _interact_up() -> void:
 	if state.current.map_type != "realm":
 		return
 	if state.player_xy() == state.current.upstairs_xy:
+		_stop_travel()
 		state.previous_floor()
 		engine.update_fov()
 		_after_map_switch()
 
 
 func _after_map_switch() -> void:
+	travel_target = Vector2i(-1, -1)
 	board.setup(state.current, state.player)
 	_refresh()
+
+
+# ---- 视口自适应 ----
+
+func _on_viewport_resized() -> void:
+	var view := get_viewport().get_visible_rect().size
+	sidebar.relayout(view)
+	log_panel.relayout(view)
+	if menu_class.visible:
+		menu_class.relayout(view)
+	if menu_inventory.visible:
+		menu_inventory.relayout(view)
+	if menu_learn.visible:
+		menu_learn.relayout(view)
+	if menu_examine.visible:
+		menu_examine.relayout(view)
 
 
 # ---- 刷新 ----

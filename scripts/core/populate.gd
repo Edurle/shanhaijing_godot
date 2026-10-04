@@ -3,12 +3,12 @@ extends RefCounted
 ## 投放——Python 版 worldgen._populate_world / procgen._populate_room 的移植。
 ## 世界按区域难度低密度游荡投放（出生点安全区）；秘境按房间概率投放。
 
-const MONSTER_DENSITY := 1.0 / 320.0  # 每可走格游荡异兽密度（旅行可绕行）
-const CENTER_MONSTER_DENSITY := 1.0 / 700.0  # 中山经腹地更安宁
+const MONSTER_DENSITY := 1.0 / 240.0  # 每可走格游荡异兽密度（旅行可绕行）
+const CENTER_MONSTER_DENSITY := 1.0 / 500.0  # 中山经腹地更安宁
 const ITEM_DENSITY := 1.0 / 500.0
 const WORLD_ELITE_CHANCE := 0.08
 const REALM_ELITE_CHANCE := 0.1
-const SPAWN_SAFE_RADIUS := 18  # 出生点曼哈顿距离内不投放任何异兽
+const SPAWN_SAFE_RADIUS := 14  # 出生点曼哈顿距离内不投放任何异兽
 
 
 ## 大世界投放：游荡异兽 + 散落物品（按区域难度，中心区更稀）。
@@ -27,7 +27,7 @@ static func populate_world(map: GameMap, content: ContentDb, rng: RandomNumberGe
 			break
 		var x: int = cell.x
 		var y: int = cell.y
-		if map.actor_at(x, y) != null or map.item_at(x, y) != null:
+		if map.actor_at(x, y) != null or not map.item_at(x, y).is_empty():
 			continue
 		var near_spawn := absi(x - player.x) + absi(y - player.y) <= SPAWN_SAFE_RADIUS
 		var in_center := map.region_at(x, y) == center_index
@@ -79,7 +79,7 @@ static func _place_in_room(
 	for _try in range(16):
 		var x := rng.randi_range(room.position.x + 1, room.end.x - 1)
 		var y := rng.randi_range(room.position.y + 1, room.end.y - 1)
-		if map.is_walkable(x, y) and map.actor_at(x, y) == null and map.item_at(x, y) == null:
+		if map.is_walkable(x, y) and map.actor_at(x, y) == null and map.item_at(x, y).is_empty():
 			if is_monster:
 				map.actors.append(content.build_monster(
 					content.random_monster_id(difficulty, rng), x, y,

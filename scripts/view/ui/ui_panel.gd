@@ -19,7 +19,13 @@ func setup_ui(rect: Rect2, panel_title := "") -> void:
 	title = panel_title
 	position = rect.position
 	custom_minimum_size = rect.size
+	mouse_filter = Control.MOUSE_FILTER_IGNORE  # 点击统一由主场景路由
 	queue_redraw()
+
+
+## 视口尺寸变化时重排（子类按锚点策略重算 panel_rect）。
+func relayout(_view_size: Vector2) -> void:
+	pass
 
 
 ## 纸面 + 墨框 + 标题章。
