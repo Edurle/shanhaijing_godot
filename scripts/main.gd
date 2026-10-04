@@ -16,6 +16,7 @@ const MenuLearn := preload("res://scripts/view/ui/menu_learn.gd")
 const MenuExamine := preload("res://scripts/view/ui/menu_examine.gd")
 const UiHintBarScript := preload("res://scripts/view/ui/hint_bar.gd")
 const UiHelpOverlayScript := preload("res://scripts/view/ui/help_overlay.gd")
+const UiHudVitalsScript := preload("res://scripts/view/ui/hud_vitals.gd")
 
 enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP }
 
@@ -37,6 +38,7 @@ var menu_learn: MenuLearn
 var menu_examine: MenuExamine
 var hint_bar
 var help_overlay
+var hud_vitals
 var mode := Mode.CLASS_SELECT
 
 # 瞄准/择向的进行中技能
@@ -78,10 +80,12 @@ func _ready() -> void:
 	menu_examine = MenuExamine.new()
 	hint_bar = UiHintBarScript.new()
 	help_overlay = UiHelpOverlayScript.new()
-	for panel in [sidebar, log_panel, target_info, menu_class, menu_inventory, menu_learn, menu_examine, hint_bar, help_overlay]:
+	hud_vitals = UiHudVitalsScript.new()
+	for panel in [sidebar, log_panel, target_info, menu_class, menu_inventory, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals]:
 		ui.add_child(panel)
 	hint_bar.visible = false
 	help_overlay.visible = false
+	hud_vitals.visible = false
 	target_info.hide_panel()
 	for panel in [sidebar, log_panel, menu_inventory, menu_learn, menu_examine]:
 		panel.visible = false
@@ -165,6 +169,8 @@ func _start_game(class_pair: Array) -> void:
 	menu_examine.setup_menu(engine)
 	hint_bar.setup(engine)
 	hint_bar.visible = true
+	hud_vitals.setup(engine)
+	hud_vitals.visible = true
 	help_overlay.setup_panel(engine)
 	menu_class.visible = false
 	board.setup(state.current, state.player)
@@ -599,6 +605,7 @@ func _on_viewport_resized() -> void:
 	sidebar.relayout(view)
 	log_panel.relayout(view)
 	hint_bar.relayout(view)
+	hud_vitals.relayout(view)
 	if help_overlay.visible:
 		help_overlay.relayout(view)
 	if menu_class.visible:
@@ -640,6 +647,7 @@ func _refresh() -> void:
 	)
 	sidebar.refresh()
 	log_panel.refresh()
+	hud_vitals.refresh()
 	hint_bar.visible = mode == Mode.PLAY or mode == Mode.HELP
 	hint_bar.refresh()
 	board.queue_redraw()
