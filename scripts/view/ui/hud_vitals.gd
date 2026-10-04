@@ -16,7 +16,7 @@ func setup(p_engine) -> void:
 
 
 func relayout(view_size: Vector2) -> void:
-	setup_ui(Rect2(16, 14, minf(330.0, view_size.x - 340.0), 196))
+	setup_ui(Rect2(16, 14, minf(340.0, view_size.x - 60.0), 214))
 	queue_redraw()
 
 
@@ -35,8 +35,18 @@ func _draw() -> void:
 	var x := panel_rect.position.x + 6
 	var y := panel_rect.position.y + 24
 
-	# 行者名
+	# 行者名 + 地名与状态（原侧栏职责并入）
 	draw_text_line(Vector2(x, y), player.label, INK, 22)
+	var status := ""
+	if fighter.has_dot():
+		status += "·蚀"
+	if fighter.stun_turns > 0:
+		status += "·冰"
+	if fighter.rooted_turns > 0:
+		status += "·缠"
+	if engine.smoke_turns > 0:
+		status += "·烟"
+	draw_text_line(Vector2(x + 130, y - 2), engine.state.location_name() + status, INK_SOFT, 13)
 	y += 38
 
 	# 气血（朱砂）

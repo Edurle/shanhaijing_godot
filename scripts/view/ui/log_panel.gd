@@ -20,9 +20,8 @@ func setup(p_engine) -> void:
 
 func relayout(view_size: Vector2) -> void:
 	# 底部栈自下而上：技能栏(88) → 提示条(30) → 本日志；地图区居中
-	var map_width: float = view_size.x - 300.0
-	var log_width: float = minf(640.0, map_width - 24.0)
-	setup_ui(Rect2((map_width - log_width) / 2.0, view_size.y - 88 - 30 - 120 - 14.0, log_width, 120))
+	var log_width: float = minf(680.0, view_size.x - 24.0)
+	setup_ui(Rect2((view_size.x - log_width) / 2.0, view_size.y - 106 - 30 - 120 - 14.0, log_width, 120))
 
 
 func refresh() -> void:

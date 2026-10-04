@@ -38,6 +38,8 @@ func click_at(_pos: Vector2) -> bool:
 
 
 func _draw() -> void:
+	if engine == null:
+		return
 	draw_paper()
 	var x := panel_rect.position.x + 26
 	var y := panel_rect.position.y + 42

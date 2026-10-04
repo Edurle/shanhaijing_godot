@@ -7,11 +7,10 @@ const CoreContentDb := preload("res://scripts/core/content_db.gd")
 const CoreWorldState := preload("res://scripts/core/world_state.gd")
 const CoreTurnEngine := preload("res://scripts/core/turn_engine.gd")
 const ViewBoard := preload("res://scripts/view/board.gd")
-const UiSidebarScript := preload("res://scripts/view/ui/sidebar.gd")
 const UiLogScript := preload("res://scripts/view/ui/log_panel.gd")
 const UiTargetInfoScript := preload("res://scripts/view/ui/target_info.gd")
 const MenuClassSelect := preload("res://scripts/view/ui/menu_class_select.gd")
-const MenuInventory := preload("res://scripts/view/ui/menu_inventory.gd")
+const MenuCharacter := preload("res://scripts/view/ui/menu_character.gd")
 const MenuLearn := preload("res://scripts/view/ui/menu_learn.gd")
 const MenuExamine := preload("res://scripts/view/ui/menu_examine.gd")
 const UiHintBarScript := preload("res://scripts/view/ui/hint_bar.gd")
@@ -30,11 +29,10 @@ var engine: CoreTurnEngine
 var board: ViewBoard
 var camera: Camera2D
 var ui: CanvasLayer
-var sidebar
 var log_panel
 var target_info
 var menu_class: MenuClassSelect
-var menu_inventory: MenuInventory
+var menu_character: MenuCharacter
 var menu_learn: MenuLearn
 var menu_examine: MenuExamine
 var hint_bar
@@ -73,25 +71,24 @@ func _ready() -> void:
 
 	ui = CanvasLayer.new()
 	add_child(ui)
-	sidebar = UiSidebarScript.new()
 	log_panel = UiLogScript.new()
 	target_info = UiTargetInfoScript.new()
 	menu_class = MenuClassSelect.new()
-	menu_inventory = MenuInventory.new()
+	menu_character = MenuCharacter.new()
 	menu_learn = MenuLearn.new()
 	menu_examine = MenuExamine.new()
 	hint_bar = UiHintBarScript.new()
 	help_overlay = UiHelpOverlayScript.new()
 	hud_vitals = UiHudVitalsScript.new()
 	skill_bar = UiSkillBarScript.new()
-	for panel in [sidebar, log_panel, target_info, menu_class, menu_inventory, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar]:
+	for panel in [log_panel, target_info, menu_class, menu_character, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar]:
 		ui.add_child(panel)
 	hint_bar.visible = false
 	help_overlay.visible = false
 	hud_vitals.visible = false
 	skill_bar.visible = false
 	target_info.hide_panel()
-	for panel in [sidebar, log_panel, menu_inventory, menu_learn, menu_examine]:
+	for panel in [log_panel, menu_character, menu_learn, menu_examine]:
 		panel.visible = false
 
 	menu_class.setup_menu(content)
@@ -126,8 +123,8 @@ func _dispatch(keycode: int, is_echo: bool) -> void:
 		Mode.PLAY:
 			_handle_play(keycode, is_echo)
 		Mode.INVENTORY:
-			menu_inventory.handle_key(keycode)
-			if not menu_inventory.visible:
+			menu_character.handle_key(keycode)
+			if not menu_character.visible:
 				_set_mode(Mode.PLAY)
 			_refresh()
 		Mode.LEARN:
@@ -163,12 +160,10 @@ func _start_game(class_pair: Array) -> void:
 		get_tree().quit(1)
 		return
 	engine = CoreTurnEngine.new(state, content)
-	sidebar.setup(engine)
-	sidebar.visible = true
 	log_panel.setup(engine)
 	log_panel.visible = true
 	target_info.setup(engine)
-	menu_inventory.setup_menu(engine)
+	menu_character.setup_menu(engine)
 	menu_learn.setup_menu(engine)
 	menu_examine.setup_menu(engine)
 	hint_bar.setup(engine)
@@ -218,7 +213,7 @@ func _handle_play(keycode: int, is_echo: bool) -> void:
 			_interact_up()
 		KEY_I:
 			_stop_travel()
-			menu_inventory.open()
+			menu_character.open()
 			_set_mode(Mode.INVENTORY)
 		KEY_K:
 			_stop_travel()
@@ -258,7 +253,7 @@ func _handle_right_click() -> void:
 			_exit_cast()
 			_refresh()
 		Mode.INVENTORY, Mode.LEARN, Mode.EXAMINE:
-			menu_inventory.close()
+			menu_character.close()
 			menu_learn.close()
 			menu_examine.close()
 			board.target_cell = Vector2i(-1, -1)
@@ -275,8 +270,8 @@ func _handle_click(pos: Vector2) -> void:
 			if menu_class.done:
 				_start_game([menu_class.picked_primary, menu_class.picked_secondary])
 		Mode.INVENTORY:
-			menu_inventory.click_at(pos)
-			if not menu_inventory.visible:
+			menu_character.click_at(pos)
+			if not menu_character.visible:
 				_set_mode(Mode.PLAY)
 			_refresh()
 		Mode.LEARN:
@@ -322,9 +317,6 @@ func _click_play(pos: Vector2) -> void:
 		var slot: int = skill_bar.skill_slot_at(pos)
 		_stop_travel()
 		_begin_cast(slot)
-		return
-	# 侧栏区：吞掉点击（避免穿透成移动指令）
-	if sidebar.visible and pos.x >= sidebar.panel_rect.position.x:
 		return
 	var cell := _screen_to_cell(pos)
 	if not state.current.in_bounds(cell.x, cell.y):
@@ -610,7 +602,6 @@ func _after_map_switch() -> void:
 
 func _on_viewport_resized() -> void:
 	var view := get_viewport().get_visible_rect().size
-	sidebar.relayout(view)
 	log_panel.relayout(view)
 	hint_bar.relayout(view)
 	hud_vitals.relayout(view)
@@ -619,8 +610,8 @@ func _on_viewport_resized() -> void:
 		help_overlay.relayout(view)
 	if menu_class.visible:
 		menu_class.relayout(view)
-	if menu_inventory.visible:
-		menu_inventory.relayout(view)
+	if menu_character.visible:
+		menu_character.relayout(view)
 	if menu_learn.visible:
 		menu_learn.relayout(view)
 	if menu_examine.visible:
@@ -631,20 +622,12 @@ func _on_viewport_resized() -> void:
 
 func _set_mode(new_mode: Mode) -> void:
 	mode = new_mode
-	match new_mode:
-		Mode.INVENTORY:
-			menu_learn.close()
-			menu_examine.close()
-		Mode.LEARN:
-			menu_inventory.close()
-			menu_examine.close()
-		Mode.EXAMINE:
-			menu_inventory.close()
-			menu_learn.close()
-		_:
-			menu_inventory.close()
-			menu_learn.close()
-			menu_examine.close()
+	if new_mode != Mode.INVENTORY:
+		menu_character.close()
+	if new_mode != Mode.LEARN:
+		menu_learn.close()
+	if new_mode != Mode.EXAMINE:
+		menu_examine.close()
 
 
 func _refresh() -> void:
@@ -654,7 +637,6 @@ func _refresh() -> void:
 		(state.player.x + 0.5) * ViewBoard.CELL,
 		(state.player.y + 0.5) * ViewBoard.CELL
 	)
-	sidebar.refresh()
 	log_panel.refresh()
 	hud_vitals.refresh()
 	skill_bar.refresh()

@@ -290,5 +290,9 @@
   "help_row_item": "Items: G pickup · I inventory (Tab pages · Enter use/equip · U unequip)",
   "help_row_grow": "Growth: K learn (cores & essences gate ults) · X examine (resist/element/threat)",
   "help_row_interact": "Interact: E enter sealed gates / descend · Q return · stand on the stair",
-  "help_row_view": "View: wheel zoom · right-click stop travel / close menus / cancel aim"
+  "help_row_view": "View: wheel zoom · right-click stop travel / close menus / cancel aim",
+  "char_title": "Inventory · Gear",
+  "char_hint": "↑↓ select · Enter/click use·equip · click gear tile or 1-5 to unequip · Esc close",
+  "char_equipped": "Equipped",
+  "char_bag": "Bag"
 }

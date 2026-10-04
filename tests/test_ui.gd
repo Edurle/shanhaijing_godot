@@ -40,22 +40,31 @@ func _init() -> void:
 	learn._rebuild()
 	failed += _check(learn.rows.size() == 8, "参悟副职业页应 8 技能（实际 %d）" % learn.rows.size())
 
-	# ---- 行囊菜单：三页计数与模型一致 ----
-	var inv_menu = load("res://scripts/view/ui/menu_inventory.gd").new()
-	root.add_child.call_deferred(inv_menu)
+	# ---- 角色面板（装备+行囊 2合1）：清单混排、装备格命中 ----
+	var char_menu = load("res://scripts/view/ui/menu_character.gd").new()
+	root.add_child.call_deferred(char_menu)
 	await process_frame
-	inv_menu.setup_menu(engine)
+	char_menu.setup_menu(engine)
 	state.player.inventory.add(content.build_item("lingzhi"))
 	state.player.inventory.add(content.build_item("w_kunwu"))
 	state.player.inventory.add(content.build_item("mat_demon_core"))
-	inv_menu.open()
-	failed += _check(inv_menu.rows.size() == 1, "行囊消耗品页 1 件（实际 %d）" % inv_menu.rows.size())
-	inv_menu.page = 1
-	inv_menu._rebuild()
-	failed += _check(inv_menu.rows.size() == 1, "行囊装备页 1 件（实际 %d）" % inv_menu.rows.size())
-	inv_menu.page = 2
-	inv_menu._rebuild()
-	failed += _check(inv_menu.rows.size() == 1, "行囊材料页 1 件（实际 %d）" % inv_menu.rows.size())
+	char_menu.open()
+	failed += _check(char_menu.bag_items.size() == 3, "行囊混排 3 件（实际 %d）" % char_menu.bag_items.size())
+	# 装备武器后行囊少一件、装备格非空
+	state.player.inventory.add(content.build_item("w_taomu"))
+	char_menu._rebuild()
+	char_menu._use_bag_item(char_menu.bag_items.size() - 1)
+	failed += _check(char_menu.bag_items.size() == 3, "装备后行囊归位 3 件（实际 %d）" % char_menu.bag_items.size())
+	failed += _check(state.player.equipment.weapon_damage() == [3, "wood"], "桃木剑武器面 物3木")
+	# 点击装备格卸下
+	char_menu.equip_rects.clear()
+	char_menu._rebuild()
+	char_menu.queue_redraw()
+	await process_frame  # 触发 _draw 填充 equip_rects
+	failed += _check(char_menu.equip_rects.has("weapon"), "装备格命中区已生成")
+	if char_menu.equip_rects.has("weapon"):
+		char_menu.click_at(char_menu.equip_rects["weapon"].get_center())
+		failed += _check(state.player.equipment.weapon_damage() == [0, ""], "点击装备格卸下武器")
 
 	# ---- 查看菜单：有可见敌时打开非空 ----
 	var monster = content.build_monster("zhulong", 11, 10)
@@ -77,15 +86,6 @@ func _init() -> void:
 	state.player.skill_levels[skill["id"]] = 1
 	target_info.show_target(skill, monster)
 	failed += _check(target_info.visible, "瞄准面板显示目标")
-
-	# ---- 侧栏：刷新不崩（_draw 逻辑靠渲染帧，此处覆盖数据准备路径） ----
-	var sidebar = load("res://scripts/view/ui/sidebar.gd").new()
-	root.add_child.call_deferred(sidebar)
-	await process_frame
-	sidebar.setup(engine)
-	engine.active_page = 1
-	sidebar.refresh()
-	failed += _check(true, "")  # 到此无运行时错误即通过
 
 	# ---- 上下文提示条：情境切换 ----
 	var hint_bar = load("res://scripts/view/ui/hint_bar.gd").new()

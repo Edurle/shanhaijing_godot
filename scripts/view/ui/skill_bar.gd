@@ -6,7 +6,7 @@ extends UiPanel
 
 const SLOT := 56.0
 const GAP := 6.0
-const BAR_HEIGHT := 78.0
+const BAR_HEIGHT := 96.0  # 含页眉行
 
 var engine
 var slot_origin := Vector2.ZERO  # 首槽左上角（点击命中用）
@@ -18,10 +18,9 @@ func setup(p_engine) -> void:
 
 
 func relayout(view_size: Vector2) -> void:
-	var map_width: float = view_size.x - 300.0
 	var total := 8.0 * SLOT + 7.0 * GAP
-	setup_ui(Rect2((map_width - total) / 2.0, view_size.y - BAR_HEIGHT - 10.0, total, BAR_HEIGHT))
-	slot_origin = panel_rect.position
+	setup_ui(Rect2((view_size.x - total) / 2.0, view_size.y - BAR_HEIGHT - 10.0, total, BAR_HEIGHT))
+	slot_origin = panel_rect.position + Vector2(0, 18)  # 页眉行下方
 	queue_redraw()
 
 
@@ -53,6 +52,10 @@ func _draw() -> void:
 		return
 	var player = engine.state.player
 	var class_id := String(player.class_ids[engine.active_page])
+	# 页眉：当前职业页 + Tab 切页（原侧栏职责并入）
+	var page_text: String = engine.content.text("hud_main_page" if engine.active_page == 0 else "hud_second_page")
+	draw_text_line(panel_rect.position + Vector2(0, 12),
+		"— %s · Tab 切页 —" % page_text.format({"name": engine.content.class_display_name(class_id)}), INK_SOFT, 13)
 	for slot in range(1, 9):
 		var skill: Dictionary = engine.content.skill_for_slot(class_id, slot)
 		if skill.is_empty():

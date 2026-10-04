@@ -56,7 +56,11 @@ func draw_bar(pos: Vector2, width: float, ratio: float, fill: Color, height := 1
 	draw_rect(Rect2(pos, Vector2(width, height)), INK, false, 1.0)
 
 
-## 当前视口尺寸（headless 无窗口时回退基准尺寸）。
+## 当前视口尺寸；headless/异常小视口（<200px，如无窗口时的 64×64）回退基准尺寸，
+## 避免布局计算出负宽高面板。
 func _viewport_size() -> Vector2:
 	var vp := get_viewport()
-	return vp.get_visible_rect().size if vp != null else Vector2(1280, 768)
+	var size: Vector2 = vp.get_visible_rect().size if vp != null else Vector2.ZERO
+	if size.x < 200.0 or size.y < 200.0:
+		return Vector2(1280, 768)
+	return size

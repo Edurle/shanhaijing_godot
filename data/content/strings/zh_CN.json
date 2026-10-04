@@ -291,5 +291,9 @@
   "help_row_item": "物品：G 拾取脚下 · I 行囊（Tab 翻页 · Enter 使用/装备 · U 卸下）",
   "help_row_grow": "成长：K 参悟（大招需魔核，5/10 重需精魄） · X 查看敌情（抗性/五行/威胁）",
   "help_row_interact": "交互：E 踏入朱印秘境门/深入下层 · Q 回返 · 站上山径三角处生效",
-  "help_row_view": "视角：滚轮缩放 · 右键 停止旅行/关闭菜单/取消瞄准"
+  "help_row_view": "视角：滚轮缩放 · 右键 停止旅行/关闭菜单/取消瞄准",
+  "char_title": "行囊 · 装备",
+  "char_hint": "↑↓ 选物 · Enter/点击 使用·装备 · 点击装备格或 1-5 卸下 · Esc 关闭",
+  "char_equipped": "已装备",
+  "char_bag": "行囊"
 }
