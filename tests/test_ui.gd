@@ -121,6 +121,17 @@ func _init() -> void:
 	help.click_at(Vector2(50, 50))
 	failed += _check(not help.visible, "帮助浮层点击关闭")
 
+	# ---- 底部技能栏：槽位/命中/图标占位 ----
+	var skill_bar = load("res://scripts/view/ui/skill_bar.gd").new()
+	root.add_child.call_deferred(skill_bar)
+	await process_frame
+	skill_bar.setup(engine)
+	var hit_slot: int = skill_bar.skill_slot_at(skill_bar.slot_rect(3).get_center())
+	failed += _check(hit_slot == 3, "技能槽命中检测（点第3槽得%d）" % hit_slot)
+	failed += _check(skill_bar.skill_slot_at(Vector2(5, 5)) == 0, "槽外点击不命中")
+	var icon: String = skill_bar.icon_char(engine, content.skill_for_slot("leifa", 1))
+	failed += _check(icon.length() == 1, "技能图标占位为单字（%s）" % icon)
+
 	# ---- 技能摘要：主副职业首技能均非空 ----
 	var s1: String = Skills.summary(engine, state.player, content.skill_for_slot("leifa", 1))
 	var s2: String = Skills.summary(engine, state.player, content.skill_for_slot("fushi", 1))

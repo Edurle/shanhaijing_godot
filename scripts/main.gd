@@ -17,6 +17,7 @@ const MenuExamine := preload("res://scripts/view/ui/menu_examine.gd")
 const UiHintBarScript := preload("res://scripts/view/ui/hint_bar.gd")
 const UiHelpOverlayScript := preload("res://scripts/view/ui/help_overlay.gd")
 const UiHudVitalsScript := preload("res://scripts/view/ui/hud_vitals.gd")
+const UiSkillBarScript := preload("res://scripts/view/ui/skill_bar.gd")
 
 enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP }
 
@@ -39,6 +40,7 @@ var menu_examine: MenuExamine
 var hint_bar
 var help_overlay
 var hud_vitals
+var skill_bar
 var mode := Mode.CLASS_SELECT
 
 # 瞄准/择向的进行中技能
@@ -81,11 +83,13 @@ func _ready() -> void:
 	hint_bar = UiHintBarScript.new()
 	help_overlay = UiHelpOverlayScript.new()
 	hud_vitals = UiHudVitalsScript.new()
-	for panel in [sidebar, log_panel, target_info, menu_class, menu_inventory, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals]:
+	skill_bar = UiSkillBarScript.new()
+	for panel in [sidebar, log_panel, target_info, menu_class, menu_inventory, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar]:
 		ui.add_child(panel)
 	hint_bar.visible = false
 	help_overlay.visible = false
 	hud_vitals.visible = false
+	skill_bar.visible = false
 	target_info.hide_panel()
 	for panel in [sidebar, log_panel, menu_inventory, menu_learn, menu_examine]:
 		panel.visible = false
@@ -171,6 +175,8 @@ func _start_game(class_pair: Array) -> void:
 	hint_bar.visible = true
 	hud_vitals.setup(engine)
 	hud_vitals.visible = true
+	skill_bar.setup(engine)
+	skill_bar.visible = true
 	help_overlay.setup_panel(engine)
 	menu_class.visible = false
 	board.setup(state.current, state.player)
@@ -311,12 +317,14 @@ func _handle_click(pos: Vector2) -> void:
 func _click_play(pos: Vector2) -> void:
 	if engine.game_over:
 		return
-	# 侧栏区：技能行点击施放
+	# 底部技能栏：槽位点击施放
+	if skill_bar.visible and skill_bar.skill_slot_at(pos) > 0:
+		var slot: int = skill_bar.skill_slot_at(pos)
+		_stop_travel()
+		_begin_cast(slot)
+		return
+	# 侧栏区：吞掉点击（避免穿透成移动指令）
 	if sidebar.visible and pos.x >= sidebar.panel_rect.position.x:
-		var slot: int = sidebar.skill_row_at(pos)
-		if slot > 0:
-			_stop_travel()
-			_begin_cast(slot)
 		return
 	var cell := _screen_to_cell(pos)
 	if not state.current.in_bounds(cell.x, cell.y):
@@ -606,6 +614,7 @@ func _on_viewport_resized() -> void:
 	log_panel.relayout(view)
 	hint_bar.relayout(view)
 	hud_vitals.relayout(view)
+	skill_bar.relayout(view)
 	if help_overlay.visible:
 		help_overlay.relayout(view)
 	if menu_class.visible:
@@ -648,6 +657,7 @@ func _refresh() -> void:
 	sidebar.refresh()
 	log_panel.refresh()
 	hud_vitals.refresh()
+	skill_bar.refresh()
 	hint_bar.visible = mode == Mode.PLAY or mode == Mode.HELP
 	hint_bar.refresh()
 	board.queue_redraw()

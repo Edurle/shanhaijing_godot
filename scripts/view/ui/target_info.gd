@@ -9,7 +9,14 @@ var target: Actor
 
 func setup(p_engine) -> void:
 	engine = p_engine
-	setup_ui(Rect2(12, 12, 560, 74))
+	relayout(_viewport_size())
+
+
+func relayout(view_size: Vector2) -> void:
+	# 顶部居中于地图区（左上角是资源 HUD，不能重叠）
+	var map_width: float = view_size.x - 300.0
+	var w := minf(560.0, map_width - 40.0)
+	setup_ui(Rect2((map_width - w) / 2.0, 12.0, w, 74))
 
 
 func show_target(p_skill: Dictionary, p_target: Actor) -> void:

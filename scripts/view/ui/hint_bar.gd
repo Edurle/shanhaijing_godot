@@ -16,11 +16,11 @@ func setup(p_engine) -> void:
 
 
 func relayout(view_size: Vector2) -> void:
-	# 地图区（去掉右侧栏）底部居中、悬于消息日志上方
+	# 底部栈：技能栏(88) 之上、消息日志之下，地图区居中
 	var map_width: float = view_size.x - 300.0
 	setup_ui(Rect2(
 		(map_width - minf(BAR_WIDTH, map_width - 24.0)) / 2.0,
-		view_size.y - 148.0,
+		view_size.y - 88.0 - BAR_HEIGHT - 12.0,
 		minf(BAR_WIDTH, map_width - 24.0), BAR_HEIGHT))
 	queue_redraw()
 
