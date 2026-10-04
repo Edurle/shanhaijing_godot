@@ -32,6 +32,7 @@ var classes: Dictionary = {}
 var skills: Dictionary = {}
 var spawn_monsters: Array = []
 var spawn_items: Array = []
+var per_room := {}  # 房间投放配置（chance/min/max）
 var regions: Array = []
 var realms: Dictionary = {}
 var recipes: Array = []
@@ -65,6 +66,7 @@ func load_all(dir_path: String, p_lang := "zh_CN") -> PackedStringArray:
 	recipes = crafting_root.get("recipes", [])
 	spawn_monsters = spawn_root.get("monsters", [])
 	spawn_items = spawn_root.get("items", [])
+	per_room = spawn_root.get("per_room", {})
 	_load_strings(dir_path.path_join("strings"), errors)
 	if errors.is_empty():
 		_validate(errors)
@@ -241,3 +243,167 @@ func _validate_spawn(errors: PackedStringArray) -> void:
 	for entry in spawn_items:
 		if not items.has(entry.get("id", "")):
 			errors.append("投放表引用了不存在的物品 %s" % entry.get("id", ""))
+
+
+# ---- 实体工厂（Python 版 build_monster/build_item/build_player 的移植） ----
+
+## 异兽实体：Fighter/attack_tags/element/AI 全装配；elite 数值放大 + 名前缀。
+func build_monster(mid: String, x: int, y: int, p_elite := false) -> Actor:
+	var mdef: Dictionary = monsters[mid]
+	var fdata: Dictionary = mdef["components"]["fighter"]
+	var monster_label := localize(mdef["name"])
+	var hp := int(fdata["hp"])
+	var power := int(fdata["power"])
+	var xp_reward := int(fdata.get("xp_reward", 0))
+	if p_elite:
+		hp = int(hp * 1.8)
+		power = int(power * 1.4)
+		xp_reward = int(xp_reward * 3)
+		monster_label = text("elite_prefix") + monster_label
+	var actor := Actor.new(x, y, monster_label)
+	actor.monster_id = mid
+	actor.char = String(mdef["char"])
+	actor.color = Color(mdef["color"][0] / 255.0, mdef["color"][1] / 255.0, mdef["color"][2] / 255.0)
+	actor.team = "wild"
+	actor.elite = p_elite
+	actor.attack_tags = PackedStringArray(mdef.get("attack_tags", []))
+	actor.element = String(mdef.get("element", ""))
+	actor.fighter = Fighter.new(
+		hp, power, int(fdata["defense"]), xp_reward,
+		0, 0, mdef.get("resistances", {})
+	)
+	actor.fighter.owner = actor
+	actor.ai = AIHostile.new(int(mdef["components"]["ai"].get("perception", 6)))
+	actor.ai.owner = actor
+	return actor
+
+
+## 物品 dict（模型层通用形态：装备/消耗品/材料统一）。
+func build_item(iid: String, x := -1, y := -1) -> Dictionary:
+	var idef: Dictionary = items[iid]
+	var item := {
+		"id": iid,
+		"label": localize(idef["name"]),
+		"char": String(idef["char"]),
+		"x": x,
+		"y": y,
+		"stack": 1,
+	}
+	if idef.has("equipment"):
+		var gear: Dictionary = idef["equipment"]
+		item["slot"] = String(gear["slot"])
+		item["bonuses"] = gear.get("bonuses", {})
+		item["affixes"] = gear.get("affixes", [])
+		if gear.has("damage"):
+			item["damage"] = gear["damage"]
+	if idef.has("consumable"):
+		item["consumable"] = idef["consumable"]
+	return item
+
+
+## 行者实体：双职业合并（主全量 + 副气血/真气/灵力各半）。
+func build_player(class_ids: Array, x: int, y: int) -> Actor:
+	var primary: Dictionary = classes[class_ids[0]]
+	var secondary: Dictionary = classes[class_ids[1]]
+	var hp := int(primary["hp"]) + (int(secondary["hp"]) + 1) / 2
+	var mp := int(primary["mp"]) + (int(secondary["mp"]) + 1) / 2
+	var sp := int(primary.get("sp", 0)) + (int(secondary.get("sp", 0)) + 1) / 2
+	var player := Actor.new(x, y, localize(player_def["name"]))
+	player.team = "player"
+	player.class_ids = class_ids.duplicate()
+	player.skill_points = 2
+	player.fighter = Fighter.new(hp, int(primary["power"]), int(primary["defense"]), 0, mp, sp)
+	player.fighter.owner = player
+	player.equipment = Equipment.new()
+	var level_data: Dictionary = player_def["level"]
+	player.level = Level.new()
+	player.level.base_xp = int(level_data["base_xp"])
+	player.level.step_xp = int(level_data["step_xp"])
+	player.level.bonuses = level_data.get("per_level", {})
+	player.level.owner = player
+	return player
+
+
+# ---- 投放表查询 ----
+
+## 难度轴过滤后的候选 id 列表。
+func monster_ids_for_difficulty(difficulty: int) -> PackedStringArray:
+	return _pick_ids(spawn_monsters, difficulty)
+
+
+func item_ids_for_difficulty(difficulty: int) -> PackedStringArray:
+	return _pick_ids(spawn_items, difficulty)
+
+
+func _pick_ids(table: Array, difficulty: int) -> PackedStringArray:
+	var matched := PackedStringArray()
+	for entry in table:
+		var lo := int(entry["min_difficulty"])
+		var hi = entry["max_difficulty"]
+		if lo <= difficulty and (hi == null or difficulty <= int(hi)):
+			matched.append(String(entry["id"]))
+	return matched
+
+
+## 按权重随机抽取投放 id（难度过滤后）；空池返回 ""。
+func random_monster_id(difficulty: int, rng: RandomNumberGenerator) -> String:
+	return _weighted_pick(spawn_monsters, difficulty, rng)
+
+
+func random_item_id(difficulty: int, rng: RandomNumberGenerator) -> String:
+	return _weighted_pick(spawn_items, difficulty, rng)
+
+
+func _weighted_pick(table: Array, difficulty: int, rng: RandomNumberGenerator) -> String:
+	var ids: Array = []
+	var weights: Array = []
+	for entry in table:
+		var lo := int(entry["min_difficulty"])
+		var hi = entry["max_difficulty"]
+		if lo <= difficulty and (hi == null or difficulty <= int(hi)):
+			ids.append(String(entry["id"]))
+			weights.append(int(entry["weight"]))
+	if ids.is_empty():
+		return ""
+	var total := 0
+	for w in weights:
+		total += w
+	var roll := rng.randi_range(1, total)
+	for i in range(ids.size()):
+		roll -= int(weights[i])
+		if roll <= 0:
+			return ids[i]
+	return ids[ids.size() - 1]
+
+
+## 职业按槽位取技能（带 id 注入）；无则返回空 Dictionary。
+func skill_for_slot(class_id: String, slot: int) -> Dictionary:
+	for sid in skills:
+		var sdef: Dictionary = skills[sid]
+		if String(sdef["class"]) == class_id and int(sdef["slot"]) == slot:
+			var result: Dictionary = {"id": String(sid)}
+			result.merge(sdef, true)
+			return result
+	return {}
+
+
+## 技能 id 直接取（带 id 注入）。
+func skill_by_id(sid: String) -> Dictionary:
+	if not skills.has(sid):
+		return {}
+	var result: Dictionary = {"id": sid}
+	result.merge(skills[sid], true)
+	return result
+
+
+## 职业技能清单（按 slot 排序，带 id 注入）。
+func skills_for_class(class_id: String) -> Array:
+	var result: Array = []
+	for sid in skills:
+		var sdef: Dictionary = skills[sid]
+		if String(sdef["class"]) == class_id:
+			var entry: Dictionary = {"id": String(sid)}
+			entry.merge(sdef, true)
+			result.append(entry)
+	result.sort_custom(func(a, b): return int(a["slot"]) < int(b["slot"]))
+	return result

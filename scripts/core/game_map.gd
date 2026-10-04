@@ -38,6 +38,8 @@ var spawn_xy := Vector2i(-1, -1)
 var region_ids: PackedByteArray  # 世界：每格所属区域索引（regions.json 顺序）
 var landmarks: Array = []  # [{x, y, region_id, name}]
 var gates: Array = []  # 秘境入口 [{realm_id, x, y, sealed}]
+var actors: Array = []  # Actor 实例（含玩家，由 world_state 维护挂载）
+var items: Array = []  # 地面物品 dict
 
 
 func _init(map_width: int = 80, map_height: int = 45, p_fov_radius := 14) -> void:
@@ -82,6 +84,22 @@ func is_explored(x: int, y: int) -> bool:
 
 func is_visible(x: int, y: int) -> bool:
 	return in_bounds(x, y) and visible[x * height + y] == 1
+
+
+## 指定格上的存活 actor（玩家也在 actors 内）。
+func actor_at(x: int, y: int) -> Actor:
+	for actor in actors:
+		if actor.is_alive() and actor.x == x and actor.y == y:
+			return actor
+	return null
+
+
+## 指定格上的地面物品。
+func item_at(x: int, y: int) -> Dictionary:
+	for item in items:
+		if item["x"] == x and item["y"] == y:
+			return item
+	return {}
 
 
 func gate_at(x: int, y: int) -> Dictionary:

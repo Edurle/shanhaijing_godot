@@ -1,0 +1,39 @@
+class_name Actor
+extends RefCounted
+## 战斗单位模型——Python 版 entity.Actor 战斗子集的移植。
+## team："player"（行者与契约兽）/"wild"（异兽）；AI 据此选取敌对目标。
+
+var x: int
+var y: int
+var label := ""
+var team := "wild"
+var monster_id := ""
+var char := "?"
+var color := Color.WHITE
+var attack_tags: PackedStringArray = []
+var element := ""  # 本命五行（怪专属；玩家为空 = 不受生克影响）
+var fighter: Fighter
+var ai  # BaseAI 或 null
+var equipment: Equipment
+var level  # Level（玩家专用）
+var inventory: Array = []  # 物品 dict 列表（阶段 4 接 UI）
+var summon_ttl := -1  # -1 = 非召唤
+var elite := false
+# 玩家专用：双职业与技能（skill_levels：1-10，0=未学）
+var class_ids: Array = []
+var skill_points := 0
+var skill_levels := {}
+
+
+func _init(p_x: int, p_y: int, p_label := "") -> void:
+	x = p_x
+	y = p_y
+	label = p_label
+
+
+func is_alive() -> bool:
+	return fighter != null
+
+
+func distance_to(other: Actor) -> float:
+	return Vector2(x - other.x, y - other.y).length()

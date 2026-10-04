@@ -34,12 +34,13 @@ const ELEMENT_COLORS := {
 }
 
 var map: GameMap
-var actors: Array = []  # [{x, y, element, is_player}]
+var player: Actor
 var _jitter := {}  # Vector2i -> 0..2 纸面颗粒抖动，避免大色块呆板
 
 
-func setup(p_map: GameMap) -> void:
+func setup(p_map: GameMap, p_player: Actor = null) -> void:
 	map = p_map
+	player = p_player
 	_jitter.clear()
 	for x in range(map.width):
 		for y in range(map.height):
@@ -63,8 +64,10 @@ func _draw() -> void:
 				_draw_mountain_stroke(x, y)
 	_draw_stairs()
 	_draw_gates()
-	for actor in actors:
-		_draw_actor(actor)
+	_draw_items()
+	for actor in map.actors:
+		if actor.is_alive():
+			_draw_actor(actor)
 
 
 func _terrain_color(kind: int, x: int, y: int, seen: bool) -> Color:
@@ -130,18 +133,40 @@ func _cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell.x * CELL + CELL / 2.0, cell.y * CELL + CELL / 2.0)
 
 
-func _draw_actor(actor: Dictionary) -> void:
-	if not map.is_visible(actor["x"], actor["y"]) and not actor.get("is_player", false):
+## 地面物品：赭墨小方点（拾取交互阶段 4 接入）。
+func _draw_items() -> void:
+	for item in map.items:
+		var x: int = item["x"]
+		var y: int = item["y"]
+		if not map.is_visible(x, y):
+			continue
+		var c := _cell_center(Vector2i(x, y))
+		draw_rect(Rect2(c - Vector2(4, 4), Vector2(8, 8)), Color("8C5A3C"))
+		draw_rect(Rect2(c - Vector2(4, 4), Vector2(8, 8)), INK_DEEP, false, 1.0)
+
+
+func _draw_actor(actor: Actor) -> void:
+	if not map.is_visible(actor.x, actor.y) and actor != player:
 		return
-	var center := _cell_center(Vector2i(actor["x"], actor["y"]))
-	if actor.get("is_player", false):
+	var center := _cell_center(Vector2i(actor.x, actor.y))
+	if actor == player:
 		draw_circle(center, 9.0, PLAYER_INK)
 		draw_arc(center, 11.0, 0, TAU, 24, PAPER, 1.5)
 		# 行者朝向剑锋（占位：一短笔）
 		draw_line(center + Vector2(4, -4), center + Vector2(11, -11), INK_DEEP, 2.0)
+		return
+	var radius := 8.0 if not actor.elite else 10.0
+	if actor.elite:
+		draw_circle(center, radius, Color("D9A404").darkened(0.25))
 	else:
-		draw_circle(center, 8.0, INK_DEEP)
-		var ring: Color = ELEMENT_COLORS.get(String(actor.get("element", "")), INK_MID)
-		draw_arc(center, 11.0, 0, TAU, 24, ring, 2.0)
-		# 点睛：异兽唯一的亮色
-		draw_circle(center + Vector2(-2, -2), 1.6, VERMILION)
+		draw_circle(center, radius, INK_DEEP)
+	var ring: Color = ELEMENT_COLORS.get(actor.element, INK_MID)
+	draw_arc(center, radius + 3.0, 0, TAU, 24, ring, 2.0)
+	# 点睛：异兽唯一的亮色
+	draw_circle(center + Vector2(-2, -2), 1.6, VERMILION)
+	# 血条细线（受伤才显示）
+	var hp_ratio := float(actor.fighter.hp()) / maxf(1.0, actor.fighter.max_hp())
+	if hp_ratio < 1.0:
+		var bar_w := 22.0
+		draw_rect(Rect2(center - Vector2(bar_w / 2, radius + 7), Vector2(bar_w, 3)), INK_LIGHT)
+		draw_rect(Rect2(center - Vector2(bar_w / 2, radius + 7), Vector2(bar_w * hp_ratio, 3)), VERMILION)

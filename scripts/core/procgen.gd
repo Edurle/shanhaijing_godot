@@ -51,6 +51,7 @@ static func generate_floor(
 		"map": map,
 		"player_start": player_start,
 		"boss_spot": _rect_center(rooms[rooms.size() - 1]),
+		"rooms": rooms,
 	}
 
 
