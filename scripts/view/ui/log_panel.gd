@@ -19,9 +19,9 @@ func setup(p_engine) -> void:
 
 
 func relayout(view_size: Vector2) -> void:
-	# 底部栈自下而上：技能栏(88) → 提示条(30) → 本日志；地图区居中
-	var log_width: float = minf(680.0, view_size.x - 24.0)
-	setup_ui(Rect2((view_size.x - log_width) / 2.0, view_size.y - 106 - 30 - 120 - 14.0, log_width, 120))
+	# 贴最左侧（与左上资源 HUD 同列）；纵向仍在底部居中栈（技能栏→提示条）之上
+	var log_width: float = minf(680.0, view_size.x - 32.0)
+	setup_ui(Rect2(16.0, view_size.y - 106 - 30 - 120 - 14.0, log_width, 120))
 
 
 func refresh() -> void:
@@ -32,7 +32,6 @@ func _draw() -> void:
 	if engine == null:
 		return
 	draw_rect(Rect2(panel_rect.position - Vector2(2, 2), panel_rect.size + Vector2(4, 4)), Color(PAPER, 0.82))
-	draw_rect(panel_rect, INK, false, 1.5)
 	var recent: Array = engine.messages.slice(maxi(0, engine.messages.size() - lines), engine.messages.size())
 	var y := panel_rect.position.y + 22
 	for i in range(recent.size()):
