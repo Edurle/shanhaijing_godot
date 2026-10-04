@@ -15,9 +15,11 @@ var title := ""
 
 
 func setup_ui(rect: Rect2, panel_title := "") -> void:
+	## Control 固定在原点：panel_rect 即屏幕绝对坐标，_draw 与点击命中共用一套。
+	## （若把 position 也设为 rect.position，绘制坐标会被叠加两次、面板飞出屏幕。）
 	panel_rect = rect
 	title = panel_title
-	position = rect.position
+	position = Vector2.ZERO
 	custom_minimum_size = rect.size
 	mouse_filter = Control.MOUSE_FILTER_IGNORE  # 点击统一由主场景路由
 	queue_redraw()
