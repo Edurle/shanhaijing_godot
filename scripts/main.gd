@@ -146,16 +146,19 @@ func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 				_set_mode(Mode.PLAY)
 			_refresh()
 		Mode.LEARN:
-			# 键盘编排：数字键把光标技能绑到对应槽（Shift=9-16）
-			if keycode in [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8] and not menu_learn.rows.is_empty():
-				var bind_sid: String = String(menu_learn.rows[menu_learn.cursor].get("meta", ""))
+			# 键盘编排：数字键把游标技能绑到对应槽（Shift=9-16）
+			if keycode in [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8]:
+				var bind_sid: String = menu_learn.cursor_skill_id()
 				if bind_sid != "":
 					var bind_slot: int = keycode - KEY_0 + (8 if shift else 0)
-					state.player.skill_bar[bind_slot - 1] = bind_sid
-					engine.log_message(content.text("assign_bound").format({
-						"skill": content.localize(content.skills[bind_sid]["name"]),
-						"slot": UiSkillBar.key_label(bind_slot),
-					}), "info")
+					var bind_error: String = engine.bind_skill(bind_slot, bind_sid)
+					if bind_error.is_empty():
+						engine.log_message(content.text("assign_bound").format({
+							"skill": content.localize(content.skills[bind_sid]["name"]),
+							"slot": UiSkillBar.key_label(bind_slot),
+						}), "info")
+					else:
+						engine.log_message(bind_error, "warn")
 					_refresh()
 					return
 			menu_learn.handle_key(keycode)
@@ -283,7 +286,7 @@ func _update_tooltip(pos: Vector2) -> void:
 			tooltip.show_skill(content.skill_by_id(sid), state.player, pos, UiSkillBar.key_label(bottom_slot))
 			return
 	if mode == Mode.LEARN and menu_learn.visible:
-		var learn_sid := menu_learn.row_skill_at(pos)
+		var learn_sid := menu_learn.node_skill_at(pos)
 		if learn_sid != "":
 			var bound := ""
 			for i in range(16):
@@ -295,7 +298,7 @@ func _update_tooltip(pos: Vector2) -> void:
 	tooltip.hide_panel()
 
 
-## 拖拽收尾：释放于技能栏槽位/编排槽位格 → 绑定；其余视为取消（保留所选）。
+## 拖拽收尾：释放于技能栏槽位 → 绑定（未参悟拒绝）；面板内原地释放 = 参悟；其余视为取消。
 func _end_drag(pos: Vector2) -> void:
 	if dragging_skill == "":
 		return
@@ -304,11 +307,14 @@ func _end_drag(pos: Vector2) -> void:
 	drag_ghost.end_drag()
 	var slot: int = skill_bar.skill_slot_at(pos)
 	if slot > 0:
-		state.player.skill_bar[slot - 1] = sid
-		engine.log_message(content.text("assign_bound").format({
-			"skill": content.localize(content.skills[sid]["name"]),
-			"slot": UiSkillBar.key_label(slot),
-		}), "info")
+		var bind_error: String = engine.bind_skill(slot, sid)
+		if bind_error.is_empty():
+			engine.log_message(content.text("assign_bound").format({
+				"skill": content.localize(content.skills[sid]["name"]),
+				"slot": UiSkillBar.key_label(slot),
+			}), "info")
+		else:
+			engine.log_message(bind_error, "warn")
 	elif mode == Mode.LEARN and menu_learn.visible and menu_learn.panel_rect.has_point(pos):
 		menu_learn.confirmed.emit(sid)  # 原地释放 = 参悟该技能（等价点击）
 	_refresh()
@@ -356,12 +362,12 @@ func _handle_click(pos: Vector2) -> void:
 				_set_mode(Mode.PLAY)
 			_refresh()
 		Mode.LEARN:
-			# 按下技能行 → 起拖（拖到技能栏绑定；原地点击仍走参悟确认）
-			var press_sid: String = menu_learn.row_skill_at(pos)
+			# 按下技能格 → 起拖（拖到技能栏绑定；原地点击仍走参悟确认）
+			var press_sid: String = menu_learn.node_skill_at(pos)
 			if press_sid != "":
-				var row_index: int = menu_learn.row_index_at(pos)
-				if row_index >= 0:
-					menu_learn.cursor = row_index
+				var node_index: int = menu_learn.node_index_at(pos)
+				if node_index >= 0:
+					menu_learn.cursor = node_index
 					menu_learn.queue_redraw()
 				dragging_skill = press_sid
 				drag_ghost.begin_drag(content.skill_by_id(press_sid))

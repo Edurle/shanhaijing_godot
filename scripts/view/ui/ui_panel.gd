@@ -10,6 +10,15 @@ const INK_SOFT := Color("6E675C")
 const VERMILION := Color("C3272B")
 const GOLD := Color("C9A662")
 
+## 五行元素 → 图标用色（技能栏/技能树共用；素材期换贴图后仍作描边色）。
+const ELEMENT_COLORS := {
+	"metal": Color("C9A662"),
+	"wood": Color("4A7C59"),
+	"water": Color("2E5977"),
+	"fire": Color("C3272B"),
+	"earth": Color("8C5A3C"),
+}
+
 var panel_rect := Rect2(0, 0, 400, 300)
 var title := ""
 

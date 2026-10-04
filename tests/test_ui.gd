@@ -24,26 +24,31 @@ func _init() -> void:
 	var engine = load("res://scripts/core/turn_engine.gd").new(state, content)
 	state.rng.seed = 5
 
-	# ---- 参悟菜单：两页各 8 行，页眉含职业名 ----
+	# ---- 参悟菜单（技能树）：两页各 8 节点，页眉含职业名，深度分列 + 前置连线 ----
 	var learn = load("res://scripts/view/ui/menu_learn.gd").new()
 	root.add_child.call_deferred(learn)  # 挂树获得 viewport（headless 回退基准尺寸）
 	await process_frame
 	learn.setup_menu(engine)
 	learn.open()
-	failed += _check(learn.rows.size() == 8, "参悟主职业页应 8 技能（实际 %d）" % learn.rows.size())
+	failed += _check(learn.nodes.size() == 8, "参悟主职业树应 8 技能（实际 %d）" % learn.nodes.size())
 	failed += _check(
 		String(learn.header_extra).find(content.class_display_name("leifa")) >= 0,
 		"参悟页眉含职业名（%s）" % learn.header_extra
 	)
+	# 雷法树形：深度 0-3 共 4 列；8 技能中 5 个有前置 → 5 条连线
+	failed += _check(learn.columns.size() == 4, "雷法技能树分 4 列（实际 %d）" % learn.columns.size())
+	failed += _check(learn.links.size() == 5, "雷法前置连线 5 条（实际 %d）" % learn.links.size())
 	learn.page = 1
 	learn.cursor = 0
 	learn._rebuild()
-	failed += _check(learn.rows.size() == 8, "参悟副职业页应 8 技能（实际 %d）" % learn.rows.size())
-	# 行命中（悬浮路由用）
-	# 行命中区为基线 y-16..y+8：首行中心 ≈ 34+24-4
-	var row0: int = learn.row_index_at(Vector2(learn.panel_rect.position.x + 60, learn.panel_rect.position.y + 34 + 24 - 4))
-	failed += _check(row0 == 0, "参悟首行命中（%d）" % row0)
-	failed += _check(String(learn.rows[0]["meta"]) == learn.row_skill_at(Vector2(learn.panel_rect.position.x + 60, learn.panel_rect.position.y + 34 + 24 - 4)), "行→技能id命中")
+	failed += _check(learn.nodes.size() == 8, "参悟副职业树应 8 技能（实际 %d）" % learn.nodes.size())
+	# 格命中（拖拽起拖/悬浮路由用）：首格中心 → 索引 0 与技能 id
+	var cell0: Rect2 = learn.nodes[0]["rect"]
+	var node0: int = learn.node_index_at(cell0.get_center())
+	failed += _check(node0 == 0, "参悟首格命中（%d）" % node0)
+	failed += _check(String(learn.nodes[0]["sid"]) == learn.node_skill_at(cell0.get_center()), "格→技能id命中")
+	failed += _check(learn.cursor_skill_id() != "", "游标技能可作数字键绑定源")
+	failed += _check(learn.node_skill_at(cell0.get_center()) != "", "参悟格可作拖拽源")
 
 	# ---- 角色面板（装备+行囊 2合1）：清单混排、装备格命中 ----
 	var char_menu = load("res://scripts/view/ui/menu_character.gd").new()
@@ -134,18 +139,15 @@ func _init() -> void:
 	var hit_slot: int = skill_bar.skill_slot_at(skill_bar.slot_rect(3).get_center())
 	failed += _check(hit_slot == 3, "技能槽命中检测（点第3槽得%d）" % hit_slot)
 	failed += _check(skill_bar.skill_slot_at(Vector2(5, 5)) == 0, "槽外点击不命中")
-	# 16 格平铺 + 正方形 + 主辅页映射
+	# 16 格平铺 + 正方形 + 初始全空（学习后拖入才绑定）
 	var rect12: Rect2 = skill_bar.slot_rect(12)
-	failed += _check(skill_bar.skill_slot_at(rect12.get_center()) == 12, "第12槽命中（辅修4）")
+	failed += _check(skill_bar.skill_slot_at(rect12.get_center()) == 12, "第12槽命中（Shift组）")
 	failed += _check(rect12.size.x == rect12.size.y, "技能格为正方形（%s）" % rect12.size)
-	failed += _check(String(state.player.skill_bar[11]) == "s_fushi_4", "默认编排：槽12=辅修4")
+	failed += _check(String(state.player.skill_bar[11]) == "", "初始技能栏全空（槽12未绑定，无悬浮）")
 	# 自由重排：绑定火符到槽 3，原槽清空逻辑由编排面板负责
 	state.player.skill_bar[2] = "s_fushi_1"
 	failed += _check(String(state.player.skill_bar[2]) == "s_fushi_1", "自由重排槽3=火符")
 	failed += _check(UiSkillBar.key_label(3) == "3" and UiSkillBar.key_label(12) == "S4", "键位标签 3/S4")
-
-	# ---- 参悟面板拖拽源：行→技能 + 数字键绑定路径数据 ----
-	failed += _check(learn.row_skill_at(Vector2(learn.panel_rect.position.x + 60, learn.panel_rect.position.y + 34 + 24 - 4)) != "", "参悟行可作拖拽源")
 
 	# 悬浮说明行：标题/摘要/描述折行
 	var tip = load("res://scripts/view/ui/ui_tooltip.gd").new()

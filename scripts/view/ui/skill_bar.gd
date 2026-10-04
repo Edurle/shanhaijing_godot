@@ -1,6 +1,6 @@
 class_name UiSkillBar
 extends UiPanel
-## 底部技能栏（RPG 动作条）：16 个正方形槽，绑定完全由玩家编排（B 键）。
+## 底部技能栏（RPG 动作条）：16 个正方形槽，学习技能后拖入槽位才绑定。
 ## 槽内：汉字图标（元素色）/ 左上键位号 / 右上重数 / 格内底部耗尾；
 ## 未绑定 = 空槽虚框，资源不足 = 图标压灰、耗字转朱。
 
@@ -108,12 +108,3 @@ func _draw() -> void:
 		if cost != "":
 			draw_string(font, rect.position + Vector2(SLOT / 2.0 - cost.length() * 4.5, SLOT - 3), cost,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 10, INK_SOFT if affordable else VERMILION)
-
-
-const ELEMENT_COLORS := {
-	"metal": Color("C9A662"),
-	"wood": Color("4A7C59"),
-	"water": Color("2E5977"),
-	"fire": Color("C3272B"),
-	"earth": Color("8C5A3C"),
-}

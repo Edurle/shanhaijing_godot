@@ -14,6 +14,16 @@ var events: Array = []  # 演出事件，视图层消费
 var game_over := false
 var turn_count := 0
 var smoke_turns := 0  # 烟障余威：期间敌怪感知不到玩家（贴身除外）
+## 绑定技能入槽：未参悟的技能禁止绑定（返回错误串，成功返回 ""）。
+func bind_skill(slot: int, sid: String) -> String:
+	if slot < 1 or slot > 16:
+		return ""
+	if not player().skill_levels.has(sid):
+		return content.text("not_learned")
+	player().skill_bar[slot - 1] = sid
+	return ""
+
+
 ## 按技能栏绑定施放：槽位 1-16 → player.skill_bar；未绑定/未学返回错误串。
 func execute_bound_skill(slot: int, target = null) -> String:
 	if game_over:
@@ -214,8 +224,6 @@ func learn_skill(sid: String) -> String:
 	for pair in needs:
 		player_actor.inventory.take_material(pair[0], pair[1])
 	player_actor.skill_levels[sid] = level + 1
-	if not player_actor.skill_bar.has(sid) and player_actor.skill_bar.has(""):
-		player_actor.skill_bar[player_actor.skill_bar.find("")] = sid  # 自动入首个空槽
 	log_message(content.text("learn_ok").format({
 		"skill": content.localize(skill["name"]), "level": level + 1,
 	}), "levelup")

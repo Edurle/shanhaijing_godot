@@ -73,6 +73,12 @@ func _init() -> void:
 	player.skill_points = 1
 	var learn_error: String = engine.learn_skill("s_fushi_1")  # 火符（副职业 slot1）
 	failed += _check(learn_error.is_empty(), "参悟副职业技能（%s）" % learn_error)
+	failed += _check(String(player.skill_bar[0]) == "", "参悟后不自动入槽")
+	var reject_error: String = engine.bind_skill(1, "s_fushi_2")  # 未参悟技能
+	failed += _check(not reject_error.is_empty(), "未参悟技能拒绝绑定（%s）" % reject_error)
+	failed += _check(String(player.skill_bar[0]) == "", "拒绝后槽保持为空")
+	var bind_error: String = engine.bind_skill(1, "s_fushi_1")  # 自由编排：槽1 绑火符
+	failed += _check(bind_error.is_empty() and String(player.skill_bar[0]) == "s_fushi_1", "已参悟技能可绑定（%s）" % bind_error)
 	var mp0: int = player.fighter.mp()
 	player.fighter.base_max_mp = 50
 	player.fighter.restore_mp(50)
@@ -80,7 +86,6 @@ func _init() -> void:
 	fox.fighter.base_max_hp = 300
 	fox.fighter.heal(300)
 	var hp0: int = fox.fighter.hp()
-	player.skill_bar[0] = "s_fushi_1"  # 自由编排：槽1 绑火符
 	var cast_error: String = engine.execute_bound_skill(1, fox)
 	failed += _check(cast_error.is_empty(), "绑定施放火符（%s）" % cast_error)
 	failed += _check(fox.fighter.hp() < hp0, "火符造成伤害（%d → %d）" % [hp0, fox.fighter.hp()])

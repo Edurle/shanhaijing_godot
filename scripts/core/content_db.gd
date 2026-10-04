@@ -318,13 +318,10 @@ func build_player(class_ids: Array, x: int, y: int) -> Actor:
 	player.team = "player"
 	player.class_ids = class_ids.duplicate()
 	player.skill_points = 2
+	# 初始 16 槽全空：学习了技能并拖入槽位才绑定（图标/悬浮/施法随绑定出现）
 	player.skill_bar.resize(16)
 	for i in range(16):
 		player.skill_bar[i] = ""
-	# 默认编排：主修 1-8 + 辅修 1-8（仅作起点，B 键可自由重排）
-	for slot in range(1, 9):
-		player.skill_bar[slot - 1] = "s_%s_%d" % [class_ids[0], slot]
-		player.skill_bar[slot + 7] = "s_%s_%d" % [class_ids[1], slot]
 	player.fighter = Fighter.new(hp, int(primary["power"]), int(primary["defense"]), 0, mp, sp)
 	player.fighter.owner = player
 	player.equipment = Equipment.new()
