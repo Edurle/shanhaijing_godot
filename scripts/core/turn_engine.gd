@@ -471,6 +471,12 @@ func _settle_actor_turn(actor: Actor) -> void:
 		if not actor.is_alive():
 			return
 	fighter.tick_buffs()  # 破甲/挫锐等减益按怪回合递减
+	for sid in actor.skill_cooldowns.keys().duplicate():
+		var left := int(actor.skill_cooldowns[sid]) - 1
+		if left <= 0:
+			actor.skill_cooldowns.erase(sid)
+		else:
+			actor.skill_cooldowns[sid] = left
 	if fighter.stun_turns > 0:
 		fighter.stun_turns -= 1
 		if fighter.rooted_turns > 0:

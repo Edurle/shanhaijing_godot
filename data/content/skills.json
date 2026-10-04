@@ -2044,5 +2044,52 @@
       "scale": 2.5,
       "stun": 1
     }
+  },
+  "m_leiyin_zhua": {
+    "class": "",
+    "name": {
+      "zh_CN": "雷音爪",
+      "en_US": "Thunderclaw"
+    },
+    "desc": {
+      "zh_CN": "蛊雕长唳，利爪挟金雷之声，直取眼前之敌。",
+      "en_US": "The gu-diao shrieks; talons strike with a clangor of thunder."
+    },
+    "tags": [
+      "metal"
+    ],
+    "mp": 4,
+    "cooldown": 3,
+    "cast_range": 7,
+    "effect": {
+      "type": "damage_nearest",
+      "power": 7,
+      "scale": 1,
+      "hits": 1
+    }
+  },
+  "m_kuteng_chan": {
+    "class": "",
+    "name": {
+      "zh_CN": "枯藤缠身",
+      "en_US": "Withering Bind"
+    },
+    "desc": {
+      "zh_CN": "掷出老藤缠敌足胫，使之寸步难行。",
+      "en_US": "Hurls an old vine that coils about the foe's legs."
+    },
+    "tags": [
+      "wood"
+    ],
+    "mp": 3,
+    "cooldown": 4,
+    "cast_range": 6,
+    "effect": {
+      "type": "damage_nearest",
+      "power": 3,
+      "scale": 1,
+      "hits": 1,
+      "root": 2
+    }
   }
 }

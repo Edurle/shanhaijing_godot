@@ -168,6 +168,19 @@ func _test_spec_registry(store) -> void:
 	)
 	var refs_none := EntitySpec.find_references(store.data, "id_that_never_exists_42")
 	failed += _check(refs_none.is_empty(), "不存在的 id 引用扫描应为空")
+	# 怪物技能绑定也算引用：删除被绑定的怪物技能应被阻止
+	var bound_skill_refs := EntitySpec.find_references(store.data, "m_leiyin_zhua")
+	var bound_hit := false
+	for r in bound_skill_refs:
+		if r.contains("怪物") and r.contains("绑定"):
+			bound_hit = true
+	failed += _check(bound_hit, "m_leiyin_zhua 的怪物绑定应被引用扫描捕获: %s" % str(bound_skill_refs))
+	# 怪物表单应含技能绑定与真气字段；怪物技能变体应含冷却字段
+	var monster_spec: Array = EntitySpec.fields_for("monster")
+	failed += _check(monster_spec.any(func(field): return String(field.get("key")) == "skills"), "怪物字段表应含 skills 绑定")
+	failed += _check(monster_spec.any(func(field): return String(field.get("key")) == "components.fighter.mp"), "怪物字段表应含 fighter.mp")
+	var monster_skill_spec: Array = EntitySpec.fields_for("skill_monster")
+	failed += _check(monster_skill_spec.any(func(field): return String(field.get("key")) == "cooldown"), "怪物技能字段表应含 cooldown")
 
 
 	# 4. 新建模板合法：交给 ContentDb 校验应能通过基本结构（字段路径齐全）
@@ -191,7 +204,14 @@ func _sample_entities(store, entity_type: String) -> Array:
 			out.append(store.file_data("player"))
 		"skill":
 			for id in JsonStore.entity_ids(store.file_data("skills")):
-				out.append(store.file_data("skills")[id])
+				var sdef: Dictionary = store.file_data("skills")[id]
+				if String(sdef.get("class", "")) != "":
+					out.append(sdef)
+		"skill_monster":
+			for id in JsonStore.entity_ids(store.file_data("skills")):
+				var sdef: Dictionary = store.file_data("skills")[id]
+				if String(sdef.get("class", "")) == "":
+					out.append(sdef)
 		"item_weapon":
 			for id in JsonStore.entity_ids(store.file_data("items")):
 				var idef: Dictionary = store.file_data("items")[id]

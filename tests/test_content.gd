@@ -64,7 +64,29 @@ func _init() -> void:
 	for key in ["hud_sp", "counter_up", "weapon_summary_element", "element_metal"]:
 		failed += _check(content.strings.has(key), "文案缺少 %s" % key)
 
-	# 6. 地图模型：FOV 对称性冒烟
+	# 6. 怪物专属技能：存在性 + 校验拒绝（绑空 id / 绑职业技能）
+	failed += _check(
+		content.skills.has("m_leiyin_zhua") and String(content.skills["m_leiyin_zhua"].get("class", "")) == "",
+		"怪物专属技能 m_leiyin_zhua 应存在且 class 为空"
+	)
+	var probe = load("res://scripts/core/content_db.gd").new()
+	probe.load_all("res://data/content")
+	probe.monsters["xingxing"]["skills"] = ["skill_not_exist_42"]
+	var probe_errors := PackedStringArray()
+	probe._validate(probe_errors)
+	failed += _check(
+		_probe_errors_has(probe_errors, "绑定了不存在的技能"),
+		"绑定不存在技能应报错: %s" % str(probe_errors)
+	)
+	probe.monsters["xingxing"]["skills"] = ["s_leifa_1"]
+	probe_errors.clear()
+	probe._validate(probe_errors)
+	failed += _check(
+		_probe_errors_has(probe_errors, "绑定了职业技能"),
+		"绑定职业技能应报错: %s" % str(probe_errors)
+	)
+
+	# 7. 地图模型：FOV 对称性冒烟
 	var map = load("res://scripts/core/game_map.gd").new(21, 21, 8)
 	for x in range(21):
 		for y in range(21):
@@ -81,6 +103,13 @@ func _init() -> void:
 	else:
 		print("PASS 全部冒烟测试")
 		quit(0)
+
+
+func _probe_errors_has(errors: PackedStringArray, needle: String) -> bool:
+	for e in errors:
+		if e.contains(needle):
+			return true
+	return false
 
 
 func _check(ok: bool, what: String) -> int:

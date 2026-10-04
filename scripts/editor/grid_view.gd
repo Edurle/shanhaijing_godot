@@ -153,6 +153,7 @@ func _monster_columns() -> Array:
 		{"title": "气血", "path": "components.fighter.hp", "kind": "int", "min": 1, "max": 9999},
 		{"title": "攻击", "path": "components.fighter.power", "kind": "int", "min": 0, "max": 999},
 		{"title": "防御", "path": "components.fighter.defense", "kind": "int", "min": 0, "max": 99},
+		{"title": "耗气", "path": "components.fighter.mp", "kind": "int", "min": 0, "max": 999, "create": true, "omit_zero": true, "width": 56},
 		{"title": "经验", "path": "components.fighter.xp_reward", "kind": "int", "min": 0, "max": 9999, "create": true, "omit_zero": true},
 	]
 	var element_values: Array = Array(preload("res://scripts/core/content_db.gd").ELEMENTS).duplicate()

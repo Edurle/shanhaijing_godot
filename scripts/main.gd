@@ -584,7 +584,10 @@ func _precheck_cost(skill: Dictionary) -> String:
 
 func _finish_cast(target) -> void:
 	var error: String = Skills.cast(engine, state.player, pending_skill, target)
-	if not error.is_empty() and error != "need_target" and error != "need_direction":
+	if error.is_empty():
+		# 施法成功即消耗回合（与移动/攻击一致；此前漏掉导致技能栏施法不推进怪物回合）
+		engine.end_turn()
+	elif error != "need_target" and error != "need_direction":
 		engine.log_message(error, "warn")
 	_exit_cast()
 	_refresh()

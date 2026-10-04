@@ -13,15 +13,17 @@ const COPY_FILES: PackedStringArray = ["theme", "regions", "realms"]
 const CHECK_DIR := "user://editor_check"
 
 var base_dir := ""
-var _raw: Dictionary = {}   # file -> 原始文本（保存时对齐行尾/结尾换行的基线）
-var _orig: Dictionary = {}  # file -> 解析出的原始数据（语义比对基线，判"是否真的改了"）
-var data: Dictionary = {}   # file -> 当前编辑数据（_schema 说明键原样保留）
+var _raw: Dictionary = {}    # file -> 原始文本（保存时对齐行尾/结尾换行的基线）
+var _use_crlf: Dictionary = {}  # file -> 是否以 CRLF 为主（按多数派行尾判定，容忍个别混杂）
+var _orig: Dictionary = {}   # file -> 解析出的原始数据（语义比对基线，判"是否真的改了"）
+var data: Dictionary = {}    # file -> 当前编辑数据（_schema 说明键原样保留）
 
 
 ## 加载目录下全部相关 JSON；返回错误清单（空 = 通过）。
 func load_all(p_base_dir: String) -> PackedStringArray:
 	base_dir = p_base_dir
 	_raw.clear()
+	_use_crlf.clear()
 	_orig.clear()
 	data.clear()
 	var errors := PackedStringArray()
@@ -45,6 +47,10 @@ func _load_one(path: String, file_key: String) -> PackedStringArray:
 	_raw[file_key] = text
 	_orig[file_key] = parsed
 	data[file_key] = parsed.duplicate(true)
+	# 行尾按多数派判定：Godot IDE 等工具偶尔会把整文件另存为另一行尾，
+	# 与 autocrlf 叠加后 git 无感知，逐字节对齐原文件即可保持 diff 干净
+	var total_lf := text.count("\n")
+	_use_crlf[file_key] = total_lf > 0 and text.count("\r\n") * 2 >= total_lf
 	return errors
 
 
@@ -80,12 +86,12 @@ func reload_all() -> void:
 		data[file_key] = (_orig[file_key] as Dictionary).duplicate(true)
 
 
-## 序列化当前数据：2 空格缩进、整数值 float 规整为 int、行尾与结尾换行对齐原文件。
+## 序列化当前数据：2 空格缩进、整数值 float 规整为 int、行尾按多数派、结尾换行对齐原文件。
 func serialize(file_key: String) -> String:
 	var out := JSON.stringify(_normalize_numbers(data[file_key]), "  ", false, false)
 	if _raw[file_key].ends_with("\n"):
 		out += "\n"
-	if _raw[file_key].contains("\r\n"):
+	if _use_crlf.get(file_key, false):
 		out = out.replace("\n", "\r\n")
 	return out
 

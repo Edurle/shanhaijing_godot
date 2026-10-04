@@ -56,6 +56,8 @@ func perform(engine) -> void:
 		if Vector2(owner.x - home.x, owner.y - home.y).length() > LEASH_DISTANCE:
 			state = STATE_RETURNING  # 离巢过远：纵然看见也收心回巢
 			return
+		if _try_skills(engine, target):
+			return  # 已施法：本回合到此为止
 		_step_to(engine, Vector2i(target.x, target.y), true)
 		return
 	if state == STATE_HUNTING:
@@ -70,6 +72,42 @@ func perform(engine) -> void:
 			state = STATE_IDLE
 			return
 		_step_to(engine, home, false)
+
+
+## 依绑定顺序尝试技能（monsters.json skills）：冷却就绪 + 意愿门控 → 施法。
+## 任一成功即返回 true（消耗本回合）；全败回落移动/普攻。
+func _try_skills(engine, target: Actor) -> bool:
+	if owner.skill_ids.is_empty():
+		return false
+	for sid in owner.skill_ids:
+		var id_text := String(sid)
+		if int(owner.skill_cooldowns.get(id_text, 0)) > 0:
+			continue
+		var skill: Dictionary = engine.content.skill_by_id(id_text)
+		if skill.is_empty():
+			continue
+		if not _wants_cast(skill, target):
+			continue
+		if Skills.cast(engine, owner, skill, target).is_empty():
+			engine.log_message(engine.content.text("monster_cast").format({
+				"actor": owner.label,
+				"skill": engine.content.localize(skill["name"]),
+			}), "combat")
+			return true
+	return false
+
+
+## 施法意愿门控：方向技能 AI 不用；自愈仅半血以下；cast_range 距离限制（缺省=感知半径）。
+func _wants_cast(skill: Dictionary, target: Actor) -> bool:
+	var effect_type := String(skill.get("effect", {}).get("type", ""))
+	if Skills.effect_flags(effect_type).get("needs_direction", false):
+		return false
+	if effect_type == "heal_self" and owner.fighter.hp() > owner.fighter.max_hp() * 0.5:
+		return false
+	var cast_range: int = int(skill.get("cast_range", 0))
+	if cast_range <= 0:
+		cast_range = perception
+	return owner.distance_to(target) <= cast_range
 
 
 ## 感知半径内、视线通畅的最近敌对存活 actor。

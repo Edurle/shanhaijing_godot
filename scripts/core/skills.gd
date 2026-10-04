@@ -148,7 +148,19 @@ static func cast(engine, actor: Actor, skill: Dictionary, target = null) -> Stri
 	if hp_cost > 0:
 		actor.fighter.hurt(hp_cost)
 		engine.emit_event("hit", actor.x, actor.y, {"amount": hp_cost, "victim": "self"})
+	var cooldown := int(skill.get("cooldown", 0))
+	if cooldown > 0:
+		actor.skill_cooldowns[String(skill.get("id", ""))] = cooldown
 	return ""
+
+
+## 效果行为标志查询（AI/输入层用）：needs_target / needs_direction。
+static func effect_flags(effect_type: String) -> Dictionary:
+	_ensure_registry()
+	var effect = EFFECTS.get(effect_type)
+	if effect == null:
+		return {}
+	return {"needs_target": effect.needs_target, "needs_direction": effect.needs_direction}
 
 
 # ---- 公共结算（效果类与引擎共用） ----
@@ -169,7 +181,7 @@ static func apply_skill_dot(engine, actor: Actor, target: Actor, skill: Dictiona
 
 ## 状态被抵御的提示（免疫掷骰未过，或折减归零）——效果类与消耗品共用。
 static func log_status_resisted(engine, actor: Actor, kind: String) -> void:
-	engine.log(engine.content.text("status_resisted").format({
+	engine.log_message(engine.content.text("status_resisted").format({
 		"name": actor.label, "status": engine.content.text("status_" + kind)}), "combat")
 
 
@@ -182,7 +194,7 @@ static func apply_attached_controls(engine, caster: Actor, actor: Actor, skill: 
 		var amount: int = actor.fighter.apply_sunder(int(cfg["amount"]), int(cfg["turns"]), engine.state.rng)
 		if amount > 0:
 			engine.emit_event("sunder", actor.x, actor.y, {})
-			engine.log(engine.content.text("sunder_note").format({"name": actor.label, "amount": amount, "turns": int(cfg["turns"])}), "combat")
+			engine.log_message(engine.content.text("sunder_note").format({"name": actor.label, "amount": amount, "turns": int(cfg["turns"])}), "combat")
 		else:
 			log_status_resisted(engine, actor, "sunder")
 	if eff.has("daunt"):
@@ -190,13 +202,13 @@ static func apply_attached_controls(engine, caster: Actor, actor: Actor, skill: 
 		var amount: int = actor.fighter.apply_daunt(int(cfg["amount"]), int(cfg["turns"]), engine.state.rng)
 		if amount > 0:
 			engine.emit_event("daunt", actor.x, actor.y, {})
-			engine.log(engine.content.text("daunt_note").format({"name": actor.label, "amount": amount, "turns": int(cfg["turns"])}), "combat")
+			engine.log_message(engine.content.text("daunt_note").format({"name": actor.label, "amount": amount, "turns": int(cfg["turns"])}), "combat")
 		else:
 			log_status_resisted(engine, actor, "daunt")
 	if eff.has("root"):
 		if actor.fighter.apply_root(int(eff["root"]), engine.state.rng):
 			engine.emit_event("root", actor.x, actor.y, {})
-			engine.log(engine.content.text("root_note").format({"name": actor.label}), "combat")
+			engine.log_message(engine.content.text("root_note").format({"name": actor.label}), "combat")
 		else:
 			log_status_resisted(engine, actor, "root")
 	if eff.has("knockback"):
@@ -204,7 +216,7 @@ static func apply_attached_controls(engine, caster: Actor, actor: Actor, skill: 
 		var dy := signi(actor.y - caster.y)
 		var cells: int = actor.fighter.reduce_push(int(eff["knockback"]), engine.state.rng)
 		if cells > 0 and engine.push_actor(actor, dx, dy, cells) > 0:
-			engine.log(engine.content.text("knockback_note").format({"name": actor.label}), "combat")
+			engine.log_message(engine.content.text("knockback_note").format({"name": actor.label}), "combat")
 		elif cells <= 0:
 			log_status_resisted(engine, actor, "knockback")
 

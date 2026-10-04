@@ -263,7 +263,11 @@ func _tab_entries() -> Array:
 				"item_material": marker = "[材] "
 			var prefix := ""
 			if current_tab == TAB_SKILL:
-				prefix = "%s · " % Spec.display_name(store.file_data("classes").get(String(edef.get("class", "")), {}))
+				var owner_class := String(edef.get("class", ""))
+				if owner_class == "":
+					prefix = "[怪] "
+				else:
+					prefix = "%s · " % Spec.display_name(store.file_data("classes").get(owner_class, {}))
 			var label := "%s%s · %s" % [prefix, eid, Spec.display_name(edef)]
 			if filter_text != "" and not label.to_lower().contains(filter_text) and not _tags_text(edef).contains(filter_text):
 				continue
@@ -324,12 +328,17 @@ func _current_entity() -> Dictionary:
 func _current_entity_type() -> String:
 	if current_tab == TAB_ITEM:
 		return Spec.item_kind(_current_entity())
-	return _tab_entity_type() if current_tab != TAB_CLASS else ("player" if current_id == "player" else "class")
+	if current_tab == TAB_CLASS:
+		return "player" if current_id == "player" else "class"
+	var entity_type := _tab_entity_type()
+	if entity_type == "skill" and String(_current_entity().get("class", "")) == "":
+		return "skill_monster"
+	return entity_type
 
 
 func _fields_for_current(entity: Dictionary, entity_type: String) -> Array:
 	var fields: Array = Spec.fields_for(entity_type)
-	if entity_type == "skill" and entity.has("effect"):
+	if entity_type in ["skill", "skill_monster"] and entity.has("effect"):
 		fields += Spec.effect_param_fields("effect", String(entity["effect"].get("type", "")))
 	elif entity_type == "item_consumable" and entity.has("consumable"):
 		fields += Spec.effect_param_fields("consumable", String(entity["consumable"].get("type", "")))
@@ -403,7 +412,7 @@ func _on_new_entity() -> void:
 		TAB_ITEM:
 			_prompt_new_item()
 		TAB_SKILL:
-			_prompt_new_skill({})
+			_prompt_choose_skill_kind()
 		TAB_CLASS:
 			_prompt_new("新建职业", "class", {})
 
@@ -419,9 +428,57 @@ func _on_duplicate_entity() -> void:
 			var kind := Spec.item_kind(entity)
 			_prompt_new_item_with(kind, entity.duplicate(true))
 		TAB_SKILL:
-			_prompt_new_skill({"template": entity.duplicate(true)})
+			if _current_entity_type() == "skill_monster":
+				_prompt_new_monster_skill(entity.duplicate(true))
+			else:
+				_prompt_new_skill({"template": entity.duplicate(true)})
 		TAB_CLASS:
 			_prompt_new("复制职业（源自 %s）" % current_id, "class", {"template": entity.duplicate(true)})
+
+
+## 新建技能先选归属：职业技能（需职业+空槽）/ 怪物专属（免槽位）。
+func _prompt_choose_skill_kind() -> void:
+	var dialog := ConfirmationDialog.new()
+	dialog.title = "新建技能"
+	var vbox: Node = dialog
+	var caption := Label.new()
+	caption.text = "技能归属："
+	vbox.add_child(caption)
+	var kind_button := OptionButton.new()
+	kind_button.add_item("职业技能（占职业槽位 1-8）")
+	kind_button.set_item_metadata(0, "skill")
+	kind_button.add_item("怪物专属（通过怪物 skills 绑定施放）")
+	kind_button.set_item_metadata(1, "skill_monster")
+	vbox.add_child(kind_button)
+	dialog.ok_button_text = "下一步"
+	dialog.confirmed.connect(func() -> void:
+		var kind := String(kind_button.get_item_metadata(kind_button.selected))
+		dialog.queue_free()
+		if kind == "skill_monster":
+			_prompt_new_monster_skill({})
+		else:
+			_prompt_new_skill({})
+	)
+	dialog.close_requested.connect(func() -> void: dialog.queue_free())
+	add_child(dialog)
+	dialog.popup_centered()
+
+
+## 怪物专属技能的新建/复制：只需 id（无职业槽位约束）。
+func _prompt_new_monster_skill(template: Dictionary) -> void:
+	var dialog := _make_id_dialog(
+		"怪物技能（源自 %s）" % current_id if not template.is_empty() else "新建怪物技能",
+		func(id_text: String) -> void:
+			var entry: Dictionary = template if not template.is_empty() else Spec.new_entity_template("skill_monster", {})
+			entry["class"] = ""
+			store.file_data("skills")[id_text] = entry
+			current_id = id_text
+			_rebuild_entity_list()
+			_select_list_id(id_text)
+			_refresh_status()
+	)
+	add_child(dialog)
+	dialog.popup_centered()
 
 
 func _on_delete_entity() -> void:
@@ -779,6 +836,13 @@ func _rebuild_enum_context() -> void:
 		for eid in JsonStore.entity_ids(table):
 			options.append([String(eid), Spec.display_name(table[eid])])
 		context[ref_name] = options
+	# 怪物专属技能：skills 中 class 为空者（供怪物绑定下拉）
+	var skills_table: Dictionary = store.file_data("skills")
+	var monster_skill_options: Array = []
+	for sid in JsonStore.entity_ids(skills_table):
+		if String(skills_table[sid].get("class", "")) == "":
+			monster_skill_options.append([String(sid), Spec.display_name(skills_table[sid])])
+	context["monster_skills"] = monster_skill_options
 	form.enum_context = context
 
 

@@ -75,6 +75,7 @@
   "cast_stun": "你施展「{skill}」，{count} 名敌人神魂受震，僵立原地。",
   "cast_mp": "你施展「{skill}」，回复 {amount} 点真气。",
   "stunned_tick": "{name}神魂受震，动弹不得。",
+  "monster_cast": "{actor}施展了「{skill}」！",
   "buff_fade": "一股借来的力量从你身上悄然退去。",
   "summon_fade": "{name}契约时尽，化作流光散去。",
   "learn_ok": "你参悟了「{skill}」。",

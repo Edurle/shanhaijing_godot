@@ -40,6 +40,10 @@ func _add_field_row(container: VBoxContainer, entity: Dictionary, field: Diction
 		var block := _make_struct_list(entity, field)
 		container.add_child(block)
 		return
+	if String(field.get("kind", "")) == "id_list":
+		var id_block := _make_id_list(entity, field)
+		container.add_child(id_block)
+		return
 	if String(field.get("kind", "")) == "subdict":
 		var sub_block := _make_subdict(entity, field)
 		container.add_child(sub_block)
@@ -368,6 +372,81 @@ func _make_item_control(row_data: Dictionary, item_def: Dictionary) -> Control:
 		_notify(item_def)
 	)
 	return input
+
+
+## id_list：纯字符串引用数组（如怪物 skills 绑定），行内下拉 + 升降序（顺序即优先级）。
+func _make_id_list(entity: Dictionary, field: Dictionary) -> VBoxContainer:
+	var block := VBoxContainer.new()
+	var path: String = field["key"]
+	var options: Array = enum_context.get(String(field.get("ref", "")), [])
+	var had_origin := Spec.has_path(entity, path)
+	var rebuild: Callable
+	rebuild = func() -> void:
+		_clear_children(block)
+		var entries: Array = Spec.read_path(entity, path) if Spec.has_path(entity, path) else []
+		for index in range(entries.size()):
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 4)
+			row.add_child(_make_list_spacer())
+			var id_button := OptionButton.new()
+			id_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			for option in options:
+				id_button.add_item("%s · %s" % [option[0], option[1]] if String(option[1]) != "" else String(option[0]))
+				id_button.set_item_metadata(id_button.item_count - 1, String(option[0]))
+				if String(option[0]) == String(entries[index]):
+					id_button.select(id_button.item_count - 1)
+			id_button.item_selected.connect(func(item_index: int) -> void:
+				entries[index] = String(id_button.get_item_metadata(item_index))
+				_notify(field)
+			)
+			row.add_child(id_button)
+			for pair in [["↑", -1], ["↓", 1]]:
+				var shift_button := Button.new()
+				shift_button.text = String(pair[0])
+				shift_button.tooltip_text = "调整优先级"
+				var delta: int = pair[1]
+				shift_button.pressed.connect(func() -> void:
+					var other := index + delta
+					if other < 0 or other >= entries.size():
+						return
+					var swapped = entries[index]
+					entries[index] = entries[other]
+					entries[other] = swapped
+					_notify(field)
+					rebuild.call()
+				)
+				row.add_child(shift_button)
+			var remove_button := Button.new()
+			remove_button.text = "删"
+			remove_button.pressed.connect(func() -> void:
+				entries.remove_at(index)
+				if entries.is_empty() and not had_origin:
+					Spec.erase_path(entity, path)
+				else:
+					Spec.write_path(entity, path, entries)
+				_notify(field)
+				rebuild.call()
+			)
+			row.add_child(remove_button)
+			block.add_child(row)
+		var add_button := Button.new()
+		add_button.text = "＋ 添加%s" % String(field.get("label", "条目"))
+		add_button.disabled = options.is_empty()
+		add_button.pressed.connect(func() -> void:
+			entries.append(String(options[0][0]))
+			Spec.write_path(entity, path, entries)
+			_notify(field)
+			rebuild.call()
+		)
+		block.add_child(add_button)
+	rebuild.call()
+	return block
+
+
+func _clear_children(box: Node) -> void:
+	for child in box.get_children():
+		box.remove_child(child)
+		child.queue_free()
 
 
 ## subdict：开关 + 子字段（如技能附带的 dot/sunder 控制块）。

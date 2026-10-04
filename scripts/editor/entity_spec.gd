@@ -5,9 +5,9 @@ extends RefCounted
 
 const ContentDbScript := preload("res://scripts/core/content_db.gd")
 
-## 实体类型（物品按 equipment/consumable/material 分三个子型）。
+## 实体类型（物品按 equipment/consumable/material 分三个子型；技能按归属分职业/怪物两型）。
 const TYPES: PackedStringArray = [
-	"monster", "class", "player", "skill",
+	"monster", "class", "player", "skill", "skill_monster",
 	"item_weapon", "item_gear", "item_consumable", "item_material",
 ]
 
@@ -54,6 +54,8 @@ static func fields_for(entity_type: String) -> Array:
 			return player_fields()
 		"skill":
 			return skill_fields()
+		"skill_monster":
+			return skill_monster_fields()
 		"item_weapon":
 			return item_common_fields(true) + item_weapon_fields()
 		"item_gear":
@@ -77,10 +79,12 @@ static func monster_fields() -> Array:
 		f("components.fighter.power", "攻击", "int", "战斗", {"min": 0, "max": 999}),
 		f("components.fighter.defense", "防御", "int", "战斗", {"min": 0, "max": 99}),
 		f("components.fighter.xp_reward", "经验奖励", "int", "战斗", {"min": 0, "max": 9999, "optional": true, "omit_zero": true}),
+		f("components.fighter.mp", "真气(技能池)", "int", "战斗", {"min": 0, "max": 999, "optional": true, "omit_zero": true}),
 		f("components.ai.type", "AI 行为", "enum", "战斗", {"enum_values": ["hostile"]}),
 		f("components.ai.perception", "感知半径", "int", "战斗", {"min": 1, "max": 20, "optional": true, "omit_equals": 6}),
 	]
 	fields.append_array(element_fields())
+	fields.append(f("skills", "绑定技能(顺序=AI优先级)", "id_list", "技能", {"ref": "monster_skills"}))
 	return fields
 
 
@@ -145,6 +149,19 @@ static func skill_fields() -> Array:
 		f("mp", "耗气", "int", "消耗", {"min": 0, "max": 999}),
 		f("cost", "行动点(1/2)", "int", "消耗", {"min": 1, "max": 2}),
 		f("requires", "前置技能(逗号分隔id)", "tags", "消耗", {"optional": true, "omit_empty": true, "ref": "skills"}),
+		f("effect.type", "效果类型", "enum", "效果", {"enum_values": Array(ContentDbScript.SKILL_EFFECT_TYPES).duplicate(), "shape": true}),
+	]
+
+
+## 怪物专属技能（class 为空）：无职业/槽位/学习消耗/前置，多冷却与 AI 施法距离。
+static func skill_monster_fields() -> Array:
+	return [
+		f("name", "名称", "localized", "基础"),
+		f("desc", "描述", "localized", "基础"),
+		f("tags", "标签(逗号分隔)", "tags", "基础", {"optional": true, "omit_empty": true}),
+		f("mp", "耗气(怪物真气池门槛)", "int", "消耗", {"min": 0, "max": 999}),
+		f("cooldown", "冷却回合", "int", "消耗", {"min": 1, "max": 99}),
+		f("cast_range", "施法距离(0=感知半径)", "int", "消耗", {"min": 0, "max": 20, "optional": true, "omit_zero": true}),
 		f("effect.type", "效果类型", "enum", "效果", {"enum_values": Array(ContentDbScript.SKILL_EFFECT_TYPES).duplicate(), "shape": true}),
 	]
 
@@ -445,6 +462,13 @@ static func find_references(all_data: Dictionary, entity_id: String) -> PackedSt
 		for req in sdef.get("requires", []):
 			if String(req) == entity_id:
 				refs.append("技能 %s 的前置" % sid)
+	var monsters: Dictionary = all_data.get("monsters", {})
+	for mid in monsters:
+		if String(mid).begins_with("_"):
+			continue
+		for bound_skill in monsters[mid].get("skills", []):
+			if String(bound_skill) == entity_id:
+				refs.append("怪物 %s 绑定了该技能" % mid)
 	return refs
 
 
@@ -525,6 +549,13 @@ static func new_entity_template(entity_type: String, ctx := {}) -> Dictionary:
 				"name": {"zh_CN": "新技能", "en_US": ""}, "desc": blank_name.duplicate(),
 				"tags": [], "mp": 4, "cost": 1, "requires": [],
 				"effect": {"type": "damage_nearest", "power": 5, "scale": 1.5, "hits": 1},
+			}
+		"skill_monster":
+			return {
+				"class": "",
+				"name": {"zh_CN": "新怪物技能", "en_US": ""}, "desc": blank_name.duplicate(),
+				"tags": [], "mp": 3, "cooldown": 3, "cast_range": 6,
+				"effect": {"type": "damage_nearest", "power": 5, "scale": 1, "hits": 1},
 			}
 		"item_weapon":
 			return _item_blank({

@@ -166,15 +166,21 @@ func _validate_skills(errors: PackedStringArray) -> void:
 	for sid in skills:
 		var sdef: Dictionary = skills[sid]
 		var owner: String = sdef.get("class", "")
+		var eff_type: String = sdef.get("effect", {}).get("type", "")
+		if not SKILL_EFFECT_TYPES.has(eff_type):
+			errors.append("技能 %s 的效果类型 %s 未注册" % [sid, eff_type])
+		if owner == "":
+			# 怪物专属技能（class 为空）：不占职业槽位，免学习消耗/前置，只校验冷却
+			var cooldown = sdef.get("cooldown", 1)
+			if not (cooldown is float) or cooldown < 1:
+				errors.append("怪物技能 %s 的 cooldown 必须是 ≥1 的整数" % sid)
+			continue
 		if not classes.has(owner):
 			errors.append("技能 %s 引用了不存在的职业 %s" % [sid, owner])
 			continue
 		var slot = sdef.get("slot")
 		if not (slot is float) or slot < 1 or slot > 8:
 			errors.append("技能 %s 的 slot 必须是 1-8" % sid)
-		var eff_type: String = sdef.get("effect", {}).get("type", "")
-		if not SKILL_EFFECT_TYPES.has(eff_type):
-			errors.append("技能 %s 的效果类型 %s 未注册" % [sid, eff_type])
 		var cost = sdef.get("cost", 1)
 		if not (cost == 1 or cost == 2):
 			errors.append("技能 %s 的 cost 必须是 1 或 2" % sid)
@@ -208,6 +214,12 @@ func _validate_monsters(errors: PackedStringArray) -> void:
 				errors.append("怪物 %s 的抗性类型 %s 非法" % [mid, kind])
 			elif int(mdef["resistances"][kind]) < 1 or int(mdef["resistances"][kind]) > 80:
 				errors.append("怪物 %s 的抗性 %s=%d 超出 (0,80]" % [mid, kind, int(mdef["resistances"][kind])])
+		for bound_skill in mdef.get("skills", []):
+			var bound_def = skills.get(String(bound_skill))
+			if bound_def == null:
+				errors.append("怪物 %s 绑定了不存在的技能 %s" % [mid, bound_skill])
+			elif String(bound_def.get("class", "")) != "":
+				errors.append("怪物 %s 绑定了职业技能 %s（须为怪物专属技能）" % [mid, bound_skill])
 
 
 func _validate_items(errors: PackedStringArray) -> void:
@@ -275,13 +287,14 @@ func build_monster(mid: String, x: int, y: int, p_elite := false) -> Actor:
 	actor.team = "wild"
 	actor.elite = p_elite
 	actor.attack_tags = PackedStringArray(mdef.get("attack_tags", []))
+	actor.skill_ids = PackedStringArray(mdef.get("skills", []))
 	actor.element = String(mdef.get("element", ""))
 	actor.tags = (mdef.get("tags", []) as Array).duplicate()
 	if p_elite:
 		actor.tags.append("elite")
 	actor.fighter = Fighter.new(
 		hp, power, int(fdata["defense"]), xp_reward,
-		0, 0, mdef.get("resistances", {})
+		int(fdata.get("mp", 0)), 0, mdef.get("resistances", {})
 	)
 	actor.fighter.owner = actor
 	actor.ai = AIHostile.new(int(mdef["components"]["ai"].get("perception", 6)))

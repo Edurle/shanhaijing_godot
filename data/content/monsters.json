@@ -10,7 +10,9 @@
       "components.fighter": "战斗组件：hp/power/defense/xp_reward",
       "components.ai": "AI 行为，type 对应 ai.py 注册表",
       "resistances": "抗性表：五行=减伤（护甲式边际递减）；stun/root 缩短时长、sunder/daunt 折减削弱量、knockback 缩击退（线性）；均 0-80。",
-      "attack_tags": "普攻附带元素（metal/wood/water/fire/earth），命中按目标抗性折算"
+      "attack_tags": "普攻附带元素（metal/wood/water/fire/earth），命中按目标抗性折算",
+      "components.fighter.mp": "真气池（可选，默认 0）：供绑定技能的耗气门槛",
+      "skills": "绑定的怪物专属技能 id 列表（skills.json 中 class 为空者）；顺序即 AI 使用优先级，冷却在技能定义上"
     },
     "element": "本命五行 {metal|wood|water|fire|earth}：受生克判定（攻元素克本命+30%/被克-25%）",
     "resistances": "抗性表 {metal|wood|water|fire|earth|stun: 百分比 0-80}：元素减伤 / 眩晕与缠绕时长缩短",
@@ -42,7 +44,8 @@
         "hp": 8,
         "power": 3,
         "defense": 0,
-        "xp_reward": 30
+        "xp_reward": 30,
+        "mp": 6
       },
       "ai": {
         "type": "hostile"
@@ -52,7 +55,10 @@
       "wood": 30
     },
     "element": "wood",
-    "attack_tags": []
+    "attack_tags": [],
+    "skills": [
+      "m_kuteng_chan"
+    ]
   },
   "gudiao": {
     "name": {
@@ -80,7 +86,8 @@
         "hp": 14,
         "power": 5,
         "defense": 1,
-        "xp_reward": 90
+        "xp_reward": 90,
+        "mp": 8
       },
       "ai": {
         "type": "hostile",
@@ -95,7 +102,10 @@
       "wood": 30,
       "sunder": 30
     },
-    "element": "metal"
+    "element": "metal",
+    "skills": [
+      "m_leiyin_zhua"
+    ]
   },
   "jiuweihu": {
     "name": {

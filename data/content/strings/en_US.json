@@ -74,6 +74,7 @@
   "cast_stun": "You cast {skill}; {count} enemies stand frozen.",
   "cast_mp": "You cast {skill} and recover {amount} qi.",
   "stunned_tick": "{name} is stunned and cannot act.",
+  "monster_cast": "{actor} unleashes {skill}!",
   "buff_fade": "A borrowed strength quietly leaves you.",
   "summon_fade": "{name}'s pact runs out; it fades into light.",
   "learn_ok": "You have learned {skill}.",
