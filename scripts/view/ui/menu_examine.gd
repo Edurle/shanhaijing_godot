@@ -27,6 +27,7 @@ func open() -> void:
 	targets = engine.visible_enemies(engine.player())
 	index = 0
 	visible = not targets.is_empty()
+	relayout(_viewport_size())
 	queue_redraw()
 
 

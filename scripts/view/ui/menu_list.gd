@@ -18,8 +18,9 @@ func open(center := true) -> void:
 	cursor = 0
 	_rebuild()
 	if center:
-		relayout(Vector2(1280, 768))
+		relayout(_viewport_size())
 	queue_redraw()
+
 
 
 func relayout(view_size: Vector2) -> void:

@@ -81,6 +81,7 @@ func _ready() -> void:
 	menu_class.setup_menu(content)
 	menu_class.open()
 	get_viewport().size_changed.connect(_on_viewport_resized)
+	_on_viewport_resized()
 	set_process(true)
 
 
@@ -152,6 +153,7 @@ func _start_game(class_pair: Array) -> void:
 	menu_class.visible = false
 	board.setup(state.current, state.player)
 	_set_mode(Mode.PLAY)
+	_on_viewport_resized()  # 窗口启动即最大化时 size_changed 不会触发，主动按真实视口排布
 	_refresh()
 
 
