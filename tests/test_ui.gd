@@ -40,9 +40,10 @@ func _init() -> void:
 	learn._rebuild()
 	failed += _check(learn.rows.size() == 8, "参悟副职业页应 8 技能（实际 %d）" % learn.rows.size())
 	# 行命中（悬浮路由用）
-	var row0: int = learn.row_index_at(Vector2(learn.panel_rect.position.x + 60, learn.panel_rect.position.y + 34 + 24 + 12))
+	# 行命中区为基线 y-16..y+8：首行中心 ≈ 34+24-4
+	var row0: int = learn.row_index_at(Vector2(learn.panel_rect.position.x + 60, learn.panel_rect.position.y + 34 + 24 - 4))
 	failed += _check(row0 == 0, "参悟首行命中（%d）" % row0)
-	failed += _check(String(learn.rows[0]["meta"]) == learn.row_skill_at(Vector2(learn.panel_rect.position.x + 60, learn.panel_rect.position.y + 70)), "行→技能id命中")
+	failed += _check(String(learn.rows[0]["meta"]) == learn.row_skill_at(Vector2(learn.panel_rect.position.x + 60, learn.panel_rect.position.y + 34 + 24 - 4)), "行→技能id命中")
 
 	# ---- 角色面板（装备+行囊 2合1）：清单混排、装备格命中 ----
 	var char_menu = load("res://scripts/view/ui/menu_character.gd").new()
