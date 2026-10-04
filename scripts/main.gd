@@ -283,6 +283,11 @@ func _update_tooltip(pos: Vector2) -> void:
 		if sid != "":
 			tooltip.show_skill(content.skill_by_id(sid), state.player, pos, UiSkillBar.key_label(bottom_slot))
 			return
+	if mode == Mode.LEARN and menu_learn.visible:
+		var learn_sid := menu_learn.row_skill_at(pos)
+		if learn_sid != "":
+			tooltip.show_skill(content.skill_by_id(learn_sid), state.player, pos, "")
+			return
 	if mode == Mode.ASSIGN and menu_assign.visible:
 		var icon_sid := menu_assign.icon_at(pos)
 		if icon_sid != "":

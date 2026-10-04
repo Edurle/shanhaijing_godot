@@ -46,6 +46,15 @@ func build_lines(skill: Dictionary, player: Actor, bound_label := "") -> Array:
 		tags_line += ("  " if tags_line != "" else "") + "已绑 " + bound_label
 	if tags_line != "":
 		out.append({"text": tags_line, "color": INK_SOFT, "size": 12})
+	# 未学技能：前置链提示
+	var skill_id := String(skill.get("id", ""))
+	if not player.skill_levels.has(skill_id) and skill.has("requires"):
+		var names: Array = []
+		for req in skill["requires"]:
+			if not player.skill_levels.has(String(req)) and engine.content.skills.has(String(req)):
+				names.append(engine.content.localize(engine.content.skills[String(req)]["name"]))
+		if not names.is_empty():
+			out.append({"text": "前置：" + "、".join(names), "color": VERMILION, "size": 12})
 	# 描述折行（CJK 按字符宽折）
 	var desc: String = engine.content.localize(skill.get("desc", ""))
 	for line in _wrap_cjk(desc, 20):

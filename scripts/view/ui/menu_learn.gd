@@ -55,3 +55,11 @@ func _on_confirm(meta) -> void:
 		engine.log_message(error, "warn")
 	_rebuild()
 	queue_redraw()
+
+
+## 悬浮命中：行 → 技能 id（空串 = 未命中）。
+func row_skill_at(pos: Vector2) -> String:
+	var index := row_index_at(pos)
+	if index < 0 or index >= rows.size():
+		return ""
+	return String(rows[index].get("meta", ""))

@@ -104,3 +104,15 @@ func _draw() -> void:
 	if rows.is_empty():
 		draw_text_line(Vector2(x + 16, y), "（空）", INK_SOFT, 15)
 	draw_text_line(Vector2(x, panel_rect.end.y - 18), "↑↓ 选择 · Tab 翻页 · Enter 确认 · Esc 关闭", INK_SOFT, 13)
+
+
+## 行命中查询（悬浮提示等用）：返回行号，未命中 -1。几何与 _draw 保持一致。
+func row_index_at(pos: Vector2) -> int:
+	if not visible or not panel_rect.has_point(pos):
+		return -1
+	var y := panel_rect.position.y + 34 + (24 if header_extra != "" else 0)
+	for i in range(rows.size()):
+		if Rect2(panel_rect.position.x + 12, y - 16, panel_rect.size.x - 24, 24).has_point(pos):
+			return i
+		y += 24
+	return -1

@@ -39,6 +39,10 @@ func _init() -> void:
 	learn.cursor = 0
 	learn._rebuild()
 	failed += _check(learn.rows.size() == 8, "参悟副职业页应 8 技能（实际 %d）" % learn.rows.size())
+	# 行命中（悬浮路由用）
+	var row0: int = learn.row_index_at(Vector2(learn.panel_rect.position.x + 60, learn.panel_rect.position.y + 34 + 24 + 12))
+	failed += _check(row0 == 0, "参悟首行命中（%d）" % row0)
+	failed += _check(String(learn.rows[0]["meta"]) == learn.row_skill_at(Vector2(learn.panel_rect.position.x + 60, learn.panel_rect.position.y + 70)), "行→技能id命中")
 
 	# ---- 角色面板（装备+行囊 2合1）：清单混排、装备格命中 ----
 	var char_menu = load("res://scripts/view/ui/menu_character.gd").new()
@@ -163,6 +167,15 @@ func _init() -> void:
 	var lines: Array = tip.build_lines(content.skill_by_id("s_leifa_1"), state.player, "S4")
 	failed += _check(String(lines[0]["text"]).find("掌心雷") >= 0, "说明标题含技能名")
 	failed += _check(lines.size() >= 4, "说明含摘要/五行/描述多行（%d 行）" % lines.size())
+	# 未学技能：前置行（雷池需掌心雷）
+	state.player.skill_levels.erase("s_leifa_1")
+	state.player.skill_levels.erase("s_leifa_3")
+	var locked_lines: Array = tip.build_lines(content.skill_by_id("s_leifa_3"), state.player, "")
+	var has_prereq := false
+	for line in locked_lines:
+		if String(line["text"]).find("前置") >= 0 and String(line["text"]).find("掌心雷") >= 0:
+			has_prereq = true
+	failed += _check(has_prereq, "未学技能说明含前置行")
 	var icon: String = skill_bar.icon_char(engine, content.skill_for_slot("leifa", 1))
 	failed += _check(icon.length() == 1, "技能图标占位为单字（%s）" % icon)
 
