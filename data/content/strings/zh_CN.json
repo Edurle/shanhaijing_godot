@@ -286,7 +286,7 @@
   "help_close": "H / Esc / 点击 关闭",
   "help_row_move": "移动：方向键 / WASD / 左键点击寻路（长按连走；途中遇敌自停）",
   "help_row_combat": "战斗：走向异兽即攻击；点击异兽自动接近并攻击一次",
-  "help_row_skill": "技能：1-8 施放当前页 · Tab 切主/副职业 · 资源不足时侧栏转灰",
+  "help_row_skill": "技能：1-8 主修 · Shift+1-8 辅修（底部两排平铺） · 资源不足时图标压灰",
   "help_row_target": "瞄准：↑↓/Tab 换目标 · Enter/点击 施放 · Esc/右键 取消",
   "help_row_item": "物品：G 拾取脚下 · I 行囊（Tab 翻页 · Enter 使用/装备 · U 卸下）",
   "help_row_grow": "成长：K 参悟（大招需魔核，5/10 重需精魄） · X 查看敌情（抗性/五行/威胁）",

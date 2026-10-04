@@ -285,7 +285,7 @@
   "help_close": "H / Esc / click to close",
   "help_row_move": "Move: arrows / WASD / click-to-travel (hold to repeat; halts on sight)",
   "help_row_combat": "Combat: walk into beasts to strike; click one to approach & strike once",
-  "help_row_skill": "Skills: 1-8 cast page · Tab swaps class page · dimmed when unaffordable",
+  "help_row_skill": "Skills: 1-8 primary · Shift+1-8 secondary (flat bars) · dimmed when unaffordable",
   "help_row_target": "Aiming: ↑↓/Tab cycle · Enter/click cast · Esc/right-click cancel",
   "help_row_item": "Items: G pickup · I inventory (Tab pages · Enter use/equip · U unequip)",
   "help_row_grow": "Growth: K learn (cores & essences gate ults) · X examine (resist/element/threat)",

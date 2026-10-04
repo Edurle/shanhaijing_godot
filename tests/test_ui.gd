@@ -129,6 +129,11 @@ func _init() -> void:
 	var hit_slot: int = skill_bar.skill_slot_at(skill_bar.slot_rect(3).get_center())
 	failed += _check(hit_slot == 3, "技能槽命中检测（点第3槽得%d）" % hit_slot)
 	failed += _check(skill_bar.skill_slot_at(Vector2(5, 5)) == 0, "槽外点击不命中")
+	# 16 格平铺 + 正方形 + 主辅页映射
+	var rect12 := skill_bar.slot_rect(12)
+	failed += _check(skill_bar.skill_slot_at(rect12.get_center()) == 12, "第12槽命中（辅修4）")
+	failed += _check(rect12.size.x == rect12.size.y, "技能格为正方形（%s）" % rect12.size)
+	failed += _check(UiSkillBar.slot_page(12) == [1, 4] and UiSkillBar.slot_page(5) == [0, 5], "槽位→主辅页映射")
 	var icon: String = skill_bar.icon_char(engine, content.skill_for_slot("leifa", 1))
 	failed += _check(icon.length() == 1, "技能图标占位为单字（%s）" % icon)
 

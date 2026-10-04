@@ -19,7 +19,7 @@ func relayout(view_size: Vector2) -> void:
 	# 底部栈：技能栏(88) 之上、消息日志之下，地图区居中
 	setup_ui(Rect2(
 		(view_size.x - minf(BAR_WIDTH, view_size.x - 24.0)) / 2.0,
-		view_size.y - 106.0 - BAR_HEIGHT - 12.0,
+		view_size.y - 76.0 - BAR_HEIGHT - 12.0,
 		minf(BAR_WIDTH, view_size.x - 24.0), BAR_HEIGHT))
 	queue_redraw()
 

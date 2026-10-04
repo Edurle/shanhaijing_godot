@@ -111,17 +111,17 @@ func _unhandled_input(event: InputEvent) -> void:
 				_handle_right_click()
 		return
 	if event is InputEventKey and event.pressed:
-		_dispatch(event.keycode, event.is_echo())
+		_dispatch(event.keycode, event.is_echo(), event.shift_pressed)
 
 
-func _dispatch(keycode: int, is_echo: bool) -> void:
+func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 	match mode:
 		Mode.CLASS_SELECT:
 			menu_class.handle_key(keycode)
 			if menu_class.done:
 				_start_game([menu_class.picked_primary, menu_class.picked_secondary])
 		Mode.PLAY:
-			_handle_play(keycode, is_echo)
+			_handle_play(keycode, is_echo, shift)
 		Mode.INVENTORY:
 			menu_character.handle_key(keycode)
 			if not menu_character.visible:
@@ -182,7 +182,7 @@ func _start_game(class_pair: Array) -> void:
 
 # ---- 游历模式（键盘） ----
 
-func _handle_play(keycode: int, is_echo: bool) -> void:
+func _handle_play(keycode: int, is_echo: bool, shift := false) -> void:
 	if engine.game_over:
 		return
 	var delta := Vector2i.ZERO
@@ -227,10 +227,7 @@ func _handle_play(keycode: int, is_echo: bool) -> void:
 				_sync_examine_marker()
 			board.queue_redraw()
 		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8:
-			_begin_cast(keycode - KEY_0)
-		KEY_TAB:
-			engine.active_page = 1 - engine.active_page
-			_refresh()
+			_begin_cast(keycode - KEY_0 + (8 if shift else 0))
 		KEY_H:
 			help_overlay.open()
 			_set_mode(Mode.HELP)
@@ -431,8 +428,10 @@ func _next_step_bfs(from: Vector2i, to: Vector2i) -> Vector2i:
 # ---- 施放 ----
 
 func _begin_cast(slot: int) -> void:
-	var class_id := String(state.player.class_ids[engine.active_page])
-	var skill: Dictionary = content.skill_for_slot(class_id, slot)
+	# 槽位 1-8 主修、9-16 辅修（与底部技能栏一致）
+	var pair: Array = UiSkillBar.slot_page(slot)
+	var class_id := String(state.player.class_ids[pair[0]])
+	var skill: Dictionary = content.skill_for_slot(class_id, pair[1])
 	if skill.is_empty():
 		return
 	if not state.player.skill_levels.has(skill["id"]):
