@@ -135,6 +135,12 @@ func _unhandled_input(event: InputEvent) -> void:
 func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 	match mode:
 		Mode.CLASS_SELECT:
+			if keycode == KEY_F9 and OS.is_debug_build():
+				# 调试捷径：直达数据编辑器。路径运行时拼接，避免导出依赖扫描把编辑器场景打进产物
+				var editor_scene = load("res://scenes/data_" + "editor.tscn")
+				if editor_scene != null:
+					get_tree().change_scene_to_packed(editor_scene)
+				return
 			menu_class.handle_key(keycode)
 			if menu_class.done:
 				_start_game([menu_class.picked_primary, menu_class.picked_secondary])
