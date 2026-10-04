@@ -63,7 +63,7 @@ func _draw() -> void:
 		return
 	var player = engine.state.player
 	var font := get_theme_default_font()
-	draw_string(font, panel_rect.position + Vector2(0, 12), "B 编排",
+	draw_string(font, panel_rect.position + Vector2(0, 12), "K·拖拽编排",
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 12, INK_SOFT)
 	for slot in range(1, 17):
 		var rect := slot_rect(slot)

@@ -285,7 +285,7 @@
   "help_close": "H / Esc / click to close",
   "help_row_move": "Move: arrows / WASD / click-to-travel (hold to repeat; halts on sight)",
   "help_row_combat": "Combat: walk into beasts to strike; click one to approach & strike once",
-  "help_row_skill": "Skills: 1-8 / Shift+1-8 cast (arrange freely with B) · dimmed when unaffordable",
+  "help_row_skill": "Skills: 1-8 / Shift+1-8 cast · drag from learn menu (K) to arrange · right-click a slot to unbind",
   "help_row_target": "Aiming: ↑↓/Tab cycle · Enter/click cast · Esc/right-click cancel",
   "help_row_item": "Items: G pickup · I inventory (Tab pages · Enter use/equip · U unequip)",
   "help_row_grow": "Growth: K learn (cores & essences gate ults) · X examine (resist/element/threat)",
@@ -295,10 +295,7 @@
   "char_hint": "↑↓ select · Enter/click use·equip · click gear tile or 1-5 to unequip · Esc close",
   "char_equipped": "Equipped",
   "char_bag": "Bag",
-  "assign_title": "Skill Bar",
-  "assign_learned": "Learned Skills",
-  "assign_slots": "Slots",
-  "assign_hint": "click/drag icon to select · drag onto the bar or a slot to bind · hover for details · X unbind · Esc close",
-  "slot_empty_skill": "Slot unbound (B to assign)",
-  "assign_bound": "{skill} bound to {slot}."
+  "slot_empty_skill": "Slot unbound (drag from the learn menu, K)",
+  "assign_bound": "{skill} bound to {slot}.",
+  "slot_unbound": "Slot {slot} unbound."
 }

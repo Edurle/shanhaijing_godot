@@ -11,7 +11,6 @@ const UiLogScript := preload("res://scripts/view/ui/log_panel.gd")
 const UiTargetInfoScript := preload("res://scripts/view/ui/target_info.gd")
 const MenuClassSelect := preload("res://scripts/view/ui/menu_class_select.gd")
 const MenuCharacter := preload("res://scripts/view/ui/menu_character.gd")
-const MenuAssign := preload("res://scripts/view/ui/menu_assign.gd")
 const MenuLearn := preload("res://scripts/view/ui/menu_learn.gd")
 const MenuExamine := preload("res://scripts/view/ui/menu_examine.gd")
 const UiHintBarScript := preload("res://scripts/view/ui/hint_bar.gd")
@@ -21,7 +20,7 @@ const UiSkillBarScript := preload("res://scripts/view/ui/skill_bar.gd")
 const UiTooltipScript := preload("res://scripts/view/ui/ui_tooltip.gd")
 const UiDragGhostScript := preload("res://scripts/view/ui/drag_ghost.gd")
 
-enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP, ASSIGN }
+enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP }
 
 const MOVE_REPEAT_MSEC := 130  # 长按连走节流
 const TRAVEL_STEP_INTERVAL := 0.075  # 点击旅行的步进节奏（秒/格）
@@ -36,7 +35,6 @@ var log_panel
 var target_info
 var menu_class: MenuClassSelect
 var menu_character: MenuCharacter
-var menu_assign: MenuAssign
 var menu_learn: MenuLearn
 var menu_examine: MenuExamine
 var hint_bar
@@ -82,7 +80,6 @@ func _ready() -> void:
 	target_info = UiTargetInfoScript.new()
 	menu_class = MenuClassSelect.new()
 	menu_character = MenuCharacter.new()
-	menu_assign = MenuAssign.new()
 	menu_learn = MenuLearn.new()
 	menu_examine = MenuExamine.new()
 	hint_bar = UiHintBarScript.new()
@@ -91,7 +88,7 @@ func _ready() -> void:
 	skill_bar = UiSkillBarScript.new()
 	tooltip = UiTooltipScript.new()
 	drag_ghost = UiDragGhostScript.new()
-	for panel in [log_panel, target_info, menu_class, menu_character, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar, menu_assign, tooltip, drag_ghost]:
+	for panel in [log_panel, target_info, menu_class, menu_character, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar, tooltip, drag_ghost]:
 		ui.add_child(panel)
 	tooltip.visible = false
 	drag_ghost.visible = false
@@ -100,7 +97,7 @@ func _ready() -> void:
 	hud_vitals.visible = false
 	skill_bar.visible = false
 	target_info.hide_panel()
-	for panel in [log_panel, menu_character, menu_learn, menu_examine, menu_assign]:
+	for panel in [log_panel, menu_character, menu_learn, menu_examine]:
 		panel.visible = false
 
 	menu_class.setup_menu(content)
@@ -129,7 +126,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			MOUSE_BUTTON_LEFT:
 				_handle_click(event.position)
 			MOUSE_BUTTON_RIGHT:
-				_handle_right_click()
+				_handle_right_click(event.position)
 		return
 	if event is InputEventKey and event.pressed:
 		_dispatch(event.keycode, event.is_echo(), event.shift_pressed)
@@ -149,6 +146,18 @@ func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 				_set_mode(Mode.PLAY)
 			_refresh()
 		Mode.LEARN:
+			# 键盘编排：数字键把光标技能绑到对应槽（Shift=9-16）
+			if keycode in [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8] and not menu_learn.rows.is_empty():
+				var bind_sid: String = String(menu_learn.rows[menu_learn.cursor].get("meta", ""))
+				if bind_sid != "":
+					var bind_slot: int = keycode - KEY_0 + (8 if shift else 0)
+					state.player.skill_bar[bind_slot - 1] = bind_sid
+					engine.log_message(content.text("assign_bound").format({
+						"skill": content.localize(content.skills[bind_sid]["name"]),
+						"slot": UiSkillBar.key_label(bind_slot),
+					}), "info")
+					_refresh()
+					return
 			menu_learn.handle_key(keycode)
 			if not menu_learn.visible:
 				_set_mode(Mode.PLAY)
@@ -165,11 +174,6 @@ func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 			_handle_targeting(keycode)
 		Mode.DIRECTION:
 			_handle_direction(keycode)
-		Mode.ASSIGN:
-			if menu_assign.handle_key(keycode, shift):
-				if not menu_assign.visible:
-					_set_mode(Mode.PLAY)
-				_refresh()
 		Mode.HELP:
 			if keycode in [KEY_H, KEY_ESCAPE, KEY_ENTER, KEY_KP_ENTER]:
 				help_overlay.close()
@@ -190,7 +194,6 @@ func _start_game(class_pair: Array) -> void:
 	log_panel.visible = true
 	target_info.setup(engine)
 	menu_character.setup_menu(engine)
-	menu_assign.setup_menu(engine)
 	tooltip.setup(engine)
 	drag_ghost.setup(engine)
 	menu_learn.setup_menu(engine)
@@ -257,10 +260,6 @@ func _handle_play(keycode: int, is_echo: bool, shift := false) -> void:
 			board.queue_redraw()
 		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8:
 			_cast_binding(keycode - KEY_0 + (8 if shift else 0))
-		KEY_B:
-			_stop_travel()
-			menu_assign.open()
-			_set_mode(Mode.ASSIGN)
 		KEY_H:
 			help_overlay.open()
 			_set_mode(Mode.HELP)
@@ -286,19 +285,13 @@ func _update_tooltip(pos: Vector2) -> void:
 	if mode == Mode.LEARN and menu_learn.visible:
 		var learn_sid := menu_learn.row_skill_at(pos)
 		if learn_sid != "":
-			tooltip.show_skill(content.skill_by_id(learn_sid), state.player, pos, "")
+			var bound := ""
+			for i in range(16):
+				if String(state.player.skill_bar[i]) == learn_sid:
+					bound = UiSkillBar.key_label(i + 1)
+					break
+			tooltip.show_skill(content.skill_by_id(learn_sid), state.player, pos, bound)
 			return
-	if mode == Mode.ASSIGN and menu_assign.visible:
-		var icon_sid := menu_assign.icon_at(pos)
-		if icon_sid != "":
-			tooltip.show_skill(content.skill_by_id(icon_sid), state.player, pos, menu_assign._bound_label(icon_sid))
-			return
-		var grid_slot := menu_assign.slot_at(pos)
-		if grid_slot > 0:
-			var grid_sid := String(state.player.skill_bar[grid_slot - 1])
-			if grid_sid != "":
-				tooltip.show_skill(content.skill_by_id(grid_sid), state.player, pos, UiSkillBar.key_label(grid_slot))
-				return
 	tooltip.hide_panel()
 
 
@@ -310,14 +303,14 @@ func _end_drag(pos: Vector2) -> void:
 	dragging_skill = ""
 	drag_ghost.end_drag()
 	var slot: int = skill_bar.skill_slot_at(pos)
-	if slot == 0 and menu_assign.visible:
-		slot = menu_assign.slot_at(pos)
 	if slot > 0:
 		state.player.skill_bar[slot - 1] = sid
-	engine.log_message(content.text("assign_bound").format({
-		"skill": content.localize(content.skills[sid]["name"]),
-		"slot": UiSkillBar.key_label(slot),
-	}), "info") if slot > 0 else null
+		engine.log_message(content.text("assign_bound").format({
+			"skill": content.localize(content.skills[sid]["name"]),
+			"slot": UiSkillBar.key_label(slot),
+		}), "info")
+	elif mode == Mode.LEARN and menu_learn.visible and menu_learn.panel_rect.has_point(pos):
+		menu_learn.confirmed.emit(sid)  # 原地释放 = 参悟该技能（等价点击）
 	_refresh()
 
 
@@ -326,7 +319,7 @@ func _zoom_by(factor: float) -> void:
 	camera.zoom = Vector2(z, z)
 
 
-func _handle_right_click() -> void:
+func _handle_right_click(pos := Vector2(-1, -1)) -> void:
 	match mode:
 		Mode.TARGETING, Mode.DIRECTION:
 			_exit_cast()
@@ -339,6 +332,15 @@ func _handle_right_click() -> void:
 			_set_mode(Mode.PLAY)
 			board.queue_redraw()
 		Mode.PLAY:
+			# 右键技能栏槽位 = 解绑该槽
+			var unbind_slot: int = skill_bar.skill_slot_at(pos) if pos.x >= 0 else 0
+			if unbind_slot > 0 and String(state.player.skill_bar[unbind_slot - 1]) != "":
+				state.player.skill_bar[unbind_slot - 1] = ""
+				engine.log_message(content.text("slot_unbound").format({
+					"slot": UiSkillBar.key_label(unbind_slot),
+				}), "info")
+				_refresh()
+				return
 			_stop_travel()
 
 
@@ -354,6 +356,17 @@ func _handle_click(pos: Vector2) -> void:
 				_set_mode(Mode.PLAY)
 			_refresh()
 		Mode.LEARN:
+			# 按下技能行 → 起拖（拖到技能栏绑定；原地点击仍走参悟确认）
+			var press_sid: String = menu_learn.row_skill_at(pos)
+			if press_sid != "":
+				var row_index: int = menu_learn.row_index_at(pos)
+				if row_index >= 0:
+					menu_learn.cursor = row_index
+					menu_learn.queue_redraw()
+				dragging_skill = press_sid
+				drag_ghost.begin_drag(content.skill_by_id(press_sid))
+				tooltip.hide_panel()
+				return
 			menu_learn.click_at(pos)
 			if not menu_learn.visible:
 				_set_mode(Mode.PLAY)
@@ -378,21 +391,6 @@ func _handle_click(pos: Vector2) -> void:
 					return
 		Mode.DIRECTION:
 			_exit_cast()
-			_refresh()
-		Mode.ASSIGN:
-			var sid := menu_assign.icon_at(pos)
-			if sid != "":
-				menu_assign.select(sid)
-				dragging_skill = sid
-				drag_ghost.begin_drag(content.skill_by_id(sid))
-				tooltip.hide_panel()
-			elif menu_assign.panel_rect.has_point(pos):
-				menu_assign.click_at(pos)
-			else:
-				var bottom_slot: int = skill_bar.skill_slot_at(pos)
-				if bottom_slot == 0:
-					menu_assign.close()
-					_set_mode(Mode.PLAY)
 			_refresh()
 		Mode.HELP:
 			help_overlay.click_at(pos)
@@ -712,8 +710,6 @@ func _on_viewport_resized() -> void:
 		menu_class.relayout(view)
 	if menu_character.visible:
 		menu_character.relayout(view)
-	if menu_assign.visible:
-		menu_assign.relayout(view)
 	if menu_learn.visible:
 		menu_learn.relayout(view)
 	if menu_examine.visible:
@@ -730,8 +726,6 @@ func _set_mode(new_mode: Mode) -> void:
 		menu_learn.close()
 	if new_mode != Mode.EXAMINE:
 		menu_examine.close()
-	if new_mode != Mode.ASSIGN:
-		menu_assign.close()
 
 
 func _refresh() -> void:

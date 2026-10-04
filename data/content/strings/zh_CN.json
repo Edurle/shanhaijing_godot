@@ -286,7 +286,7 @@
   "help_close": "H / Esc / 点击 关闭",
   "help_row_move": "移动：方向键 / WASD / 左键点击寻路（长按连走；途中遇敌自停）",
   "help_row_combat": "战斗：走向异兽即攻击；点击异兽自动接近并攻击一次",
-  "help_row_skill": "技能：1-8 / Shift+1-8 施放（B 自由编排槽位） · 资源不足时图标压灰",
+  "help_row_skill": "技能：1-8 / Shift+1-8 施放 · 参悟面板拖到技能栏编排（或面板内按数字绑定） · 右键槽位解绑",
   "help_row_target": "瞄准：↑↓/Tab 换目标 · Enter/点击 施放 · Esc/右键 取消",
   "help_row_item": "物品：G 拾取脚下 · I 行囊（Tab 翻页 · Enter 使用/装备 · U 卸下）",
   "help_row_grow": "成长：K 参悟（大招需魔核，5/10 重需精魄） · X 查看敌情（抗性/五行/威胁）",
@@ -296,10 +296,7 @@
   "char_hint": "↑↓ 选物 · Enter/点击 使用·装备 · 点击装备格或 1-5 卸下 · Esc 关闭",
   "char_equipped": "已装备",
   "char_bag": "行囊",
-  "assign_title": "技能编排",
-  "assign_learned": "已参悟技能",
-  "assign_slots": "槽位",
-  "assign_hint": "点击/拖拽图标选技能 · 拖到底部技能栏或右侧槽位绑定 · 悬浮查看说明 · X 清除 · Esc 关闭",
-  "slot_empty_skill": "此槽未绑定技能（B 编排）",
-  "assign_bound": "「{skill}」已绑定至 {slot}。"
+  "slot_empty_skill": "此槽未绑定技能（K 参悟面板拖入）",
+  "assign_bound": "「{skill}」已绑定至 {slot}。",
+  "slot_unbound": "{slot} 槽已解绑。"
 }
