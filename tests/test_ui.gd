@@ -139,18 +139,30 @@ func _init() -> void:
 	failed += _check(String(state.player.skill_bar[2]) == "s_fushi_1", "自由重排槽3=火符")
 	failed += _check(UiSkillBar.key_label(3) == "3" and UiSkillBar.key_label(12) == "S4", "键位标签 3/S4")
 
-	# ---- 技能编排面板：清单/绑定/清除 ----
+	# ---- 技能编排面板：图标命中/绑定/清除/悬浮行 ----
 	var assign = load("res://scripts/view/ui/menu_assign.gd").new()
 	root.add_child.call_deferred(assign)
 	await process_frame
 	assign.setup_menu(engine)
 	assign.open()
 	failed += _check(assign.learned_skills.size() >= 1, "编排清单含已学技能（%d）" % assign.learned_skills.size())
-	assign.cursor = assign.learned_skills.size() - 1
-	assign._bind_by_slot(15)
-	failed += _check(String(state.player.skill_bar[14]) == String(assign.learned_skills[assign.learned_skills.size() - 1]), "绑定到槽15")
-	assign._clear_selected()
+	var first_id := String(assign.learned_skills[0])
+	var icon_rect: Rect2 = assign.icon_rects[first_id]
+	failed += _check(assign.icon_at(icon_rect.get_center()) == first_id, "图标命中检测")
+	failed += _check(assign.slot_at(assign.slot_rects[15].get_center()) == 15, "槽位格命中检测")
+	assign.select(first_id)
+	assign.bind_to_slot(15)
+	failed += _check(String(state.player.skill_bar[14]) == first_id, "绑定到槽15")
+	assign.clear_selected()
 	failed += _check(String(state.player.skill_bar[14]) == "", "X 清除该技能绑定")
+	# 悬浮说明行：标题/摘要/描述折行
+	var tip = load("res://scripts/view/ui/ui_tooltip.gd").new()
+	root.add_child.call_deferred(tip)
+	await process_frame
+	tip.setup(engine)
+	var lines: Array = tip.build_lines(content.skill_by_id("s_leifa_1"), state.player, "S4")
+	failed += _check(String(lines[0]["text"]).find("掌心雷") >= 0, "说明标题含技能名")
+	failed += _check(lines.size() >= 4, "说明含摘要/五行/描述多行（%d 行）" % lines.size())
 	var icon: String = skill_bar.icon_char(engine, content.skill_for_slot("leifa", 1))
 	failed += _check(icon.length() == 1, "技能图标占位为单字（%s）" % icon)
 

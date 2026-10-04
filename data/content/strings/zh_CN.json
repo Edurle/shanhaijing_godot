@@ -299,6 +299,7 @@
   "assign_title": "技能编排",
   "assign_learned": "已参悟技能",
   "assign_slots": "槽位",
-  "assign_hint": "↑↓/点击 选技能 · 1-8 / Shift+1-8 或点击槽位 绑定 · X 清除该技能绑定 · Esc 关闭",
-  "slot_empty_skill": "此槽未绑定技能（B 编排）"
+  "assign_hint": "点击/拖拽图标选技能 · 拖到底部技能栏或右侧槽位绑定 · 悬浮查看说明 · X 清除 · Esc 关闭",
+  "slot_empty_skill": "此槽未绑定技能（B 编排）",
+  "assign_bound": "「{skill}」已绑定至 {slot}。"
 }

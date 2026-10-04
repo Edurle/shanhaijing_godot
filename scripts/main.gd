@@ -18,6 +18,8 @@ const UiHintBarScript := preload("res://scripts/view/ui/hint_bar.gd")
 const UiHelpOverlayScript := preload("res://scripts/view/ui/help_overlay.gd")
 const UiHudVitalsScript := preload("res://scripts/view/ui/hud_vitals.gd")
 const UiSkillBarScript := preload("res://scripts/view/ui/skill_bar.gd")
+const UiTooltipScript := preload("res://scripts/view/ui/ui_tooltip.gd")
+const UiDragGhostScript := preload("res://scripts/view/ui/drag_ghost.gd")
 
 enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP, ASSIGN }
 
@@ -41,6 +43,8 @@ var hint_bar
 var help_overlay
 var hud_vitals
 var skill_bar
+var tooltip
+var drag_ghost
 var mode := Mode.CLASS_SELECT
 
 # 瞄准/择向的进行中技能
@@ -51,6 +55,7 @@ var dir_delta := Vector2i.ZERO
 
 # 现代操作：点击旅行 / 长按连走
 var travel_target := Vector2i(-1, -1)
+var dragging_skill := ""  # 拖拽中的技能 id（编排面板 → 技能栏）
 var travel_attack := false
 var _travel_clock := 0.0
 var _last_move_msec := -100000
@@ -84,8 +89,12 @@ func _ready() -> void:
 	help_overlay = UiHelpOverlayScript.new()
 	hud_vitals = UiHudVitalsScript.new()
 	skill_bar = UiSkillBarScript.new()
-	for panel in [log_panel, target_info, menu_class, menu_character, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar, menu_assign]:
+	tooltip = UiTooltipScript.new()
+	drag_ghost = UiDragGhostScript.new()
+	for panel in [log_panel, target_info, menu_class, menu_character, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar, menu_assign, tooltip, drag_ghost]:
 		ui.add_child(panel)
+	tooltip.visible = false
+	drag_ghost.visible = false
 	hint_bar.visible = false
 	help_overlay.visible = false
 	hud_vitals.visible = false
@@ -102,7 +111,16 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
+	if event is InputEventMouseMotion:
+		drag_ghost.queue_redraw() if dragging_skill != "" else null
+		_update_tooltip(event.position)
+		return
+	if event is InputEventMouseButton:
+		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_end_drag(event.position)
+			return
+		if not event.pressed:
+			return
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
 				_zoom_by(1.12)
@@ -173,6 +191,8 @@ func _start_game(class_pair: Array) -> void:
 	target_info.setup(engine)
 	menu_character.setup_menu(engine)
 	menu_assign.setup_menu(engine)
+	tooltip.setup(engine)
+	drag_ghost.setup(engine)
 	menu_learn.setup_menu(engine)
 	menu_examine.setup_menu(engine)
 	hint_bar.setup(engine)
@@ -252,6 +272,50 @@ func _act(_acted: bool) -> void:
 
 # ---- 鼠标（现代操作） ----
 
+## 悬浮提示：技能栏（任意模式）与编排面板图标/槽位 → 技能说明。
+func _update_tooltip(pos: Vector2) -> void:
+	if state == null or dragging_skill != "":
+		tooltip.hide_panel()
+		return
+	var bottom_slot: int = skill_bar.skill_slot_at(pos)
+	if bottom_slot > 0:
+		var sid := String(state.player.skill_bar[bottom_slot - 1])
+		if sid != "":
+			tooltip.show_skill(content.skill_by_id(sid), state.player, pos, UiSkillBar.key_label(bottom_slot))
+			return
+	if mode == Mode.ASSIGN and menu_assign.visible:
+		var icon_sid := menu_assign.icon_at(pos)
+		if icon_sid != "":
+			tooltip.show_skill(content.skill_by_id(icon_sid), state.player, pos, menu_assign._bound_label(icon_sid))
+			return
+		var grid_slot := menu_assign.slot_at(pos)
+		if grid_slot > 0:
+			var grid_sid := String(state.player.skill_bar[grid_slot - 1])
+			if grid_sid != "":
+				tooltip.show_skill(content.skill_by_id(grid_sid), state.player, pos, UiSkillBar.key_label(grid_slot))
+				return
+	tooltip.hide_panel()
+
+
+## 拖拽收尾：释放于技能栏槽位/编排槽位格 → 绑定；其余视为取消（保留所选）。
+func _end_drag(pos: Vector2) -> void:
+	if dragging_skill == "":
+		return
+	var sid := dragging_skill
+	dragging_skill = ""
+	drag_ghost.end_drag()
+	var slot: int = skill_bar.skill_slot_at(pos)
+	if slot == 0 and menu_assign.visible:
+		slot = menu_assign.slot_at(pos)
+	if slot > 0:
+		state.player.skill_bar[slot - 1] = sid
+	engine.log_message(content.text("assign_bound").format({
+		"skill": content.localize(content.skills[sid]["name"]),
+		"slot": UiSkillBar.key_label(slot),
+	}), "info") if slot > 0 else null
+	_refresh()
+
+
 func _zoom_by(factor: float) -> void:
 	var z := clampf(camera.zoom.x * factor, 0.55, 1.6)
 	camera.zoom = Vector2(z, z)
@@ -311,7 +375,19 @@ func _handle_click(pos: Vector2) -> void:
 			_exit_cast()
 			_refresh()
 		Mode.ASSIGN:
-			menu_assign.click_at(pos)
+			var sid := menu_assign.icon_at(pos)
+			if sid != "":
+				menu_assign.select(sid)
+				dragging_skill = sid
+				drag_ghost.begin_drag(content.skill_by_id(sid))
+				tooltip.hide_panel()
+			elif menu_assign.panel_rect.has_point(pos):
+				menu_assign.click_at(pos)
+			else:
+				var bottom_slot: int = skill_bar.skill_slot_at(pos)
+				if bottom_slot == 0:
+					menu_assign.close()
+					_set_mode(Mode.PLAY)
 			_refresh()
 		Mode.HELP:
 			help_overlay.click_at(pos)
@@ -626,6 +702,7 @@ func _on_viewport_resized() -> void:
 	skill_bar.relayout(view)
 	if help_overlay.visible:
 		help_overlay.relayout(view)
+	tooltip.set_view_size(view)
 	if menu_class.visible:
 		menu_class.relayout(view)
 	if menu_character.visible:

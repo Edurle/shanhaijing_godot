@@ -298,6 +298,7 @@
   "assign_title": "Skill Bar",
   "assign_learned": "Learned Skills",
   "assign_slots": "Slots",
-  "assign_hint": "↑↓/click select · 1-8 / Shift+1-8 or click a slot to bind · X unbind · Esc close",
-  "slot_empty_skill": "Slot unbound (B to assign)"
+  "assign_hint": "click/drag icon to select · drag onto the bar or a slot to bind · hover for details · X unbind · Esc close",
+  "slot_empty_skill": "Slot unbound (B to assign)",
+  "assign_bound": "{skill} bound to {slot}."
 }
