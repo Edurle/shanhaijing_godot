@@ -1,0 +1,48 @@
+class_name UiPanel
+extends Control
+## 水墨 UI 面板基类：宣纸底 + 墨框 + 标题的自绘统一入口。
+## 所有菜单/侧栏共用，保证界面风格与棋盘一致（AI 素材期一并换肤）。
+
+const PAPER := Color("EFE8D6")
+const PAPER_SHADOW := Color("D8CFBA")
+const INK := Color("2B2620")
+const INK_SOFT := Color("6E675C")
+const VERMILION := Color("C3272B")
+const GOLD := Color("C9A662")
+
+var panel_rect := Rect2(0, 0, 400, 300)
+var title := ""
+
+
+func setup_ui(rect: Rect2, panel_title := "") -> void:
+	panel_rect = rect
+	title = panel_title
+	position = rect.position
+	custom_minimum_size = rect.size
+	queue_redraw()
+
+
+## 纸面 + 墨框 + 标题章。
+func draw_paper() -> void:
+	draw_rect(panel_rect, PAPER_SHADOW, false, 3.0)  # 底衬
+	draw_rect(Rect2(panel_rect.position - Vector2(3, 3), panel_rect.size + Vector2(6, 6)), PAPER)
+	draw_rect(panel_rect, INK, false, 2.0)
+	if title != "":
+		var font := get_theme_default_font()
+		var size := get_theme_default_font_size()
+		# 标题嵌进上边框（朱印风格）
+		draw_rect(Rect2(panel_rect.position + Vector2(14, -12), Vector2(title.length() * size * 0.62 + 16, 24)), PAPER)
+		draw_string(font, panel_rect.position + Vector2(22, 6), title,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, size, INK)
+
+
+func draw_text_line(pos: Vector2, text: String, color := INK, size := 0) -> void:
+	var font := get_theme_default_font()
+	var font_size := size if size > 0 else get_theme_default_font_size()
+	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+
+
+func draw_bar(pos: Vector2, width: float, ratio: float, fill: Color, height := 10.0) -> void:
+	draw_rect(Rect2(pos, Vector2(width, height)), PAPER_SHADOW)
+	draw_rect(Rect2(pos, Vector2(width * clampf(ratio, 0.0, 1.0), height)), fill)
+	draw_rect(Rect2(pos, Vector2(width, height)), INK, false, 1.0)

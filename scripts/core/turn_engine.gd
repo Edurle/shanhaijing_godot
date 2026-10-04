@@ -13,6 +13,7 @@ var messages: Array = []  # [{text, kind}]
 var events: Array = []  # 演出事件，视图层消费
 var game_over := false
 var turn_count := 0
+var smoke_turns := 0  # 烟障余威：期间敌怪感知不到玩家（贴身除外）
 
 
 func _init(p_state: WorldState, p_content: ContentDb) -> void:
@@ -123,6 +124,112 @@ func execute_skill(slot: int, target = null, page := -1) -> String:
 		return error
 	end_turn()
 	return ""
+
+
+# ---- 行囊与装备动作（成功即消耗回合） ----
+
+## 拾取脚下物品。
+func player_pickup() -> bool:
+	var item: Dictionary = map().item_at(player().x, player().y)
+	if item.is_empty():
+		log_message(content.text("no_item_here"), "warn")
+		return false
+	map().items.erase(item)
+	item["x"] = -1
+	item["y"] = -1
+	player().inventory.add(item)
+	log_message(content.text("pickup").format({"item": item["label"]}), "loot")
+	emit_event("pickup", player().x, player().y, {})
+	end_turn()
+	return true
+
+
+## 使用消耗品。
+func player_use_item(item: Dictionary) -> String:
+	var error := Consumables.activate(self, item)
+	if not error.is_empty():
+		return error
+	player().inventory.remove(item)
+	end_turn()
+	return ""
+
+
+## 装备行囊中的一件（被顶替的旧件回行囊）。
+func player_equip(item: Dictionary) -> String:
+	if not item.has("slot"):
+		return content.text("no_item_here")
+	var replaced: Dictionary = player().equipment.equip(item)
+	player().inventory.remove(item)
+	if not replaced.is_empty():
+		player().inventory.add(replaced)
+	player().fighter.clamp_vitals()
+	log_message(content.text("equip_on").format({"item": item["label"]}), "loot")
+	end_turn()
+	return ""
+
+
+## 卸下指定槽位。
+func player_unequip(slot: String) -> String:
+	var item: Dictionary = player().equipment.unequip_slot(slot)
+	if item.is_empty():
+		return content.text("no_item_here")
+	player().inventory.add(item)
+	player().fighter.clamp_vitals()
+	log_message(content.text("equip_off").format({"item": item["label"]}), "loot")
+	end_turn()
+	return ""
+
+
+## 参悟/修习技能（不消耗回合）：前置 + 技能点 + 材料门槛。
+func learn_skill(sid: String) -> String:
+	var player_actor = player()
+	if not content.skills.has(sid):
+		return content.text("not_learned")
+	var skill: Dictionary = content.skill_by_id(sid)
+	var level := int(player_actor.skill_levels.get(sid, 0))
+	if level >= Skills.SKILL_MAX_LEVEL:
+		return content.text("learn_max")
+	var cost := 1
+	if level == 0:
+		var missing: Array = []
+		for req in skill.get("requires", []):
+			if not player_actor.skill_levels.has(req):
+				missing.append(content.localize(content.skills[req]["name"]))
+		if not missing.is_empty():
+			return content.text("learn_locked").format({"missing": "、".join(missing)})
+		cost = int(skill.get("cost", 1))
+	if player_actor.skill_points < cost:
+		return content.text("learn_no_points")
+	var needs := _skill_material_cost(skill, level + 1)
+	var lacking: Array = []
+	for pair in needs:
+		var have: int = player_actor.inventory.count_material(pair[0])
+		if have < pair[1]:
+			lacking.append("%s×%d" % [content.localize(content.items[pair[0]]["name"]), pair[1] - have])
+	if not lacking.is_empty():
+		return content.text("learn_need_materials").format({"materials": "、".join(lacking)})
+	player_actor.skill_points -= cost
+	for pair in needs:
+		player_actor.inventory.take_material(pair[0], pair[1])
+	player_actor.skill_levels[sid] = level + 1
+	log_message(content.text("learn_ok").format({
+		"skill": content.localize(skill["name"]), "level": level + 1,
+	}), "levelup")
+	emit_event("levelup", player_actor.x, player_actor.y, {})
+	return ""
+
+
+## 修习材料门槛：大招初学耗魔核×1；5 重耗精魄×1；10 重耗精魄×1+魔核×1。
+func _skill_material_cost(skill: Dictionary, target_level: int) -> Array:
+	var needs: Array = []
+	if target_level == 1 and int(skill.get("cost", 1)) >= 2:
+		needs.append(["mat_demon_core", 1])
+	if target_level == 5:
+		needs.append(["mat_elite_essence", 1])
+	if target_level == Skills.SKILL_MAX_LEVEL:
+		needs.append(["mat_elite_essence", 1])
+		needs.append(["mat_demon_core", 1])
+	return needs
 
 
 # ---- 战斗结算 ----
@@ -272,6 +379,11 @@ func end_player_turn() -> void:
 		log_message(content.text("buff_fade"), "info")
 	if fighter.rooted_turns > 0:
 		fighter.rooted_turns -= 1
+	if smoke_turns > 0:
+		smoke_turns -= 1
+		emit_event("smoke", player().x, player().y, {})
+		if smoke_turns == 0:
+			log_message(content.text("smoke_fade"), "info")
 	for actor in map().actors.duplicate():
 		if actor.summon_ttl >= 0 and actor != player():
 			actor.summon_ttl -= 1

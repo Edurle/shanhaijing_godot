@@ -35,6 +35,8 @@ const ELEMENT_COLORS := {
 
 var map: GameMap
 var player: Actor
+var target_cell := Vector2i(-1, -1)  # 瞄准/查看高亮格
+var landing_cell := Vector2i(-1, -1)  # 择向落点预览
 var _jitter := {}  # Vector2i -> 0..2 纸面颗粒抖动，避免大色块呆板
 
 
@@ -68,6 +70,25 @@ func _draw() -> void:
 	for actor in map.actors:
 		if actor.is_alive():
 			_draw_actor(actor)
+	_draw_overlays()
+
+
+## 交互态高亮：目标四角框（朱）/ 择向落点（金角）。
+func _draw_overlays() -> void:
+	if target_cell.x >= 0:
+		var px := target_cell.x * CELL
+		var py := target_cell.y * CELL
+		var color := VERMILION
+		for corner in [
+			[Vector2(px + 2, py + 2), Vector2(px + 10, py + 2), Vector2(px + 2, py + 2), Vector2(px + 2, py + 10)],
+			[Vector2(px + CELL - 10, py + 2), Vector2(px + CELL - 2, py + 2), Vector2(px + CELL - 2, py + 2), Vector2(px + CELL - 2, py + 10)],
+			[Vector2(px + 2, py + CELL - 2), Vector2(px + 10, py + CELL - 2), Vector2(px + 2, py + CELL - 2), Vector2(px + 2, py + CELL - 10)],
+			[Vector2(px + CELL - 10, py + CELL - 2), Vector2(px + CELL - 2, py + CELL - 2), Vector2(px + CELL - 2, py + CELL - 2), Vector2(px + CELL - 2, py + CELL - 10)],
+		]:
+			draw_line(corner[0], corner[1], color, 2.0)
+			draw_line(corner[2], corner[3], color, 2.0)
+	if landing_cell.x >= 0:
+		draw_rect(Rect2(landing_cell.x * CELL + 2, landing_cell.y * CELL + 2, CELL - 4, CELL - 4), Color("C9A662"), false, 2.0)
 
 
 func _terrain_color(kind: int, x: int, y: int, seen: bool) -> Color:

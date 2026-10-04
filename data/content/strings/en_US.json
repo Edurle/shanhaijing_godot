@@ -276,5 +276,6 @@
   "skill_sp_cost": "{sp}SP",
   "bon_max_sp": "SP+{v}",
   "weapon_summary": "PHY{p}",
-  "weapon_summary_element": "PHY{p}·{el}"
+  "weapon_summary_element": "PHY{p}·{el}",
+  "tianshu_pending": "The tianshu volume stirs, but its ascension is not yet bound."
 }

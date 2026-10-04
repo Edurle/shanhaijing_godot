@@ -16,7 +16,7 @@ var fighter: Fighter
 var ai  # BaseAI 或 null
 var equipment: Equipment
 var level  # Level（玩家专用）
-var inventory: Array = []  # 物品 dict 列表（阶段 4 接 UI）
+var inventory = null  # Inventory（行囊模型，build_player 装配）
 var summon_ttl := -1  # -1 = 非召唤
 var elite := false
 # 玩家专用：双职业与技能（skill_levels：1-10，0=未学）

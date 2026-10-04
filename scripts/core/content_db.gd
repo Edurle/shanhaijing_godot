@@ -285,6 +285,7 @@ func build_item(iid: String, x := -1, y := -1) -> Dictionary:
 		"id": iid,
 		"label": localize(idef["name"]),
 		"char": String(idef["char"]),
+		"tags": idef.get("tags", []),
 		"x": x,
 		"y": y,
 		"stack": 1,
@@ -316,6 +317,7 @@ func build_player(class_ids: Array, x: int, y: int) -> Actor:
 	player.fighter.owner = player
 	player.equipment = Equipment.new()
 	var level_data: Dictionary = player_def["level"]
+	player.inventory = Inventory.new()
 	player.level = Level.new()
 	player.level.base_xp = int(level_data["base_xp"])
 	player.level.step_xp = int(level_data["step_xp"])

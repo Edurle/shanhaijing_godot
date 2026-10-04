@@ -277,5 +277,6 @@
   "skill_sp_cost": "{sp}灵",
   "bon_max_sp": "灵{v}",
   "weapon_summary": "物{p}",
-  "weapon_summary_element": "物{p}·{el}"
+  "weapon_summary_element": "物{p}·{el}",
+  "tianshu_pending": "天书残卷的参悟之力尚未苏醒（通关系统待接入）。"
 }

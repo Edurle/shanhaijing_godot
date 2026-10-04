@@ -84,6 +84,9 @@ func hostile_target(engine) -> Actor:
 		var distance := owner.distance_to(actor)
 		if distance > perception:
 			continue
+		# 烟障蔽目：贴身（≤1.5 格）之外的玩家不可感知
+		if actor == engine.player() and engine.smoke_turns > 0 and distance > 1.5:
+			continue
 		if best == null or distance < best_d:
 			best = actor
 			best_d = distance

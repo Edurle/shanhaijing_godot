@@ -61,8 +61,10 @@ func affix(affix_id: String) -> int:
 
 ## 武器伤害面 [physical, element]：无武器/无伤害面返回 [0, ""]。
 func weapon_damage() -> Array:
-	var weapon: Dictionary = slots.get("weapon")
-	if weapon == null or weapon.get("damage") == null:
+	if slots.get("weapon") == null:
+		return [0, ""]
+	var weapon: Dictionary = slots["weapon"]
+	if weapon.get("damage") == null:
 		return [0, ""]
 	var damage: Dictionary = weapon["damage"]
 	return [int(damage.get("physical", 0)), String(damage.get("element", ""))]
