@@ -1,28 +1,53 @@
 class_name GameMap
 extends RefCounted
-## 地图模型：地形网格 + 探索/视野（模型层，不接触节点树）。
-## 数组按 [x][y] 列主序存 PackedByteArray——x 一列整包，遍历行时同列连续。
+## 地图模型：地形网格 + 探索/视野 + 秘境/世界字段（模型层，不接触节点树）。
+## terrain id 与 Python 版完全一致（存档/数据契约），数组按 x*height+y 平铺。
 
-const T_PLAIN := 0
-const T_FOREST := 1
-const T_MOUNTAIN := 2
-const T_WATER := 3
+# ---- 地形 id（0/1 为秘境地牢沿用，世界地形从 2 起） ----
+const T_FLOOR := 0
+const T_WALL := 1
+const T_PLAIN := 2
+const T_FOREST := 3
+const T_HILL := 4
+const T_MOUNTAIN := 5
+const T_WATER := 6
+const T_RIVER := 7
+const T_BRIDGE := 8
+const T_ABYSS := 9
+const T_SNOW := 10
+const T_SHORE := 11
+
+## 地形语义查找表：walkable / transparent（forest 遮视野、mountain 阻通行）。
+const WALKABLE_LUT: PackedByteArray = [1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1]
+const TRANSPARENT_LUT: PackedByteArray = [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1]
 
 var width: int
 var height: int
-var terrain: PackedByteArray  # x*height + y
+var terrain: PackedByteArray
 var explored: PackedByteArray
 var visible: PackedByteArray
 var fov_radius := 14
 
+# ---- 上下文（世界 / 秘境层） ----
+var map_type := "world"
+var realm_id := ""
+var realm_depth := 1
+var upstairs_xy := Vector2i(-1, -1)
+var downstairs_xy := Vector2i(-1, -1)
+var spawn_xy := Vector2i(-1, -1)
+var region_ids: PackedByteArray  # 世界：每格所属区域索引（regions.json 顺序）
+var landmarks: Array = []  # [{x, y, region_id, name}]
+var gates: Array = []  # 秘境入口 [{realm_id, x, y, sealed}]
 
-func _init(map_width: int, map_height: int, p_fov_radius := 14) -> void:
+
+func _init(map_width: int = 80, map_height: int = 45, p_fov_radius := 14) -> void:
 	width = map_width
 	height = map_height
 	fov_radius = p_fov_radius
 	terrain.resize(width * height)
 	explored.resize(width * height)
 	visible.resize(width * height)
+	region_ids.resize(width * height)
 
 
 func in_bounds(x: int, y: int) -> bool:
@@ -33,19 +58,22 @@ func tile_at(x: int, y: int) -> int:
 	return terrain[x * height + y]
 
 
-func set_tile(x: int, int_y: int, kind: int) -> void:
-	# 参数名 int_y 避免与局部习惯冲突；写入前不检查越界（生成器自证）
-	terrain[x * height + int_y] = kind
+func set_tile(x: int, y: int, kind: int) -> void:
+	terrain[x * height + y] = kind
+
+
+func region_at(x: int, y: int) -> int:
+	return region_ids[x * height + y]
 
 
 func is_walkable(x: int, y: int) -> bool:
 	if not in_bounds(x, y):
 		return false
-	return tile_at(x, y) != T_MOUNTAIN and tile_at(x, y) != T_WATER
+	return WALKABLE_LUT[tile_at(x, y)] == 1
 
 
 func blocks_sight(x: int, y: int) -> bool:
-	return tile_at(x, y) == T_MOUNTAIN or tile_at(x, y) == T_FOREST
+	return TRANSPARENT_LUT[tile_at(x, y)] == 0
 
 
 func is_explored(x: int, y: int) -> bool:
@@ -54,6 +82,13 @@ func is_explored(x: int, y: int) -> bool:
 
 func is_visible(x: int, y: int) -> bool:
 	return in_bounds(x, y) and visible[x * height + y] == 1
+
+
+func gate_at(x: int, y: int) -> Dictionary:
+	for gate in gates:
+		if gate["x"] == x and gate["y"] == y:
+			return gate
+	return {}
 
 
 ## 对称视线 FOV：目标可见 = 起点→目标或目标→起点至少一条 Bresenham 线全程透明。

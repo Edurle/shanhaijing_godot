@@ -69,7 +69,7 @@ func _init() -> void:
 	for x in range(21):
 		for y in range(21):
 			map.set_tile(x, y, 0)
-	map.set_tile(10, 7, 2)  # 一座山
+	map.set_tile(10, 7, GameMap.T_MOUNTAIN)  # 一座山
 	map.compute_fov(10, 10)
 	failed += _check(map.is_visible(10, 10), "FOV 应含原点")
 	failed += _check(not map.is_visible(10, 5), "山后直线应被遮挡")
