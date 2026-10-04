@@ -14,6 +14,7 @@ var events: Array = []  # 演出事件，视图层消费
 var game_over := false
 var turn_count := 0
 var smoke_turns := 0  # 烟障余威：期间敌怪感知不到玩家（贴身除外）
+var active_page := 0  # 技能页：0 主职业 / 1 副职业（Tab 切换）
 
 
 func _init(p_state: WorldState, p_content: ContentDb) -> void:
@@ -105,11 +106,12 @@ func player_step(delta: Vector2i) -> bool:
 	return true
 
 
-## 施放当前职业第 slot 槽技能（需目标时自动瞄准最近可见敌）。
+## 施放技能页第 slot 槽技能（需目标时自动瞄准最近可见敌）。
 func execute_skill(slot: int, target = null, page := -1) -> String:
 	if game_over:
 		return ""
-	var class_id: String = player().class_ids[0]  # 阶段 4 接双职业页切换
+	var page_index := active_page if page < 0 else page
+	var class_id: String = player().class_ids[page_index]  # 阶段 4 接双职业页切换
 	var skill: Dictionary = content.skill_for_slot(class_id, slot)
 	if skill.is_empty():
 		return ""
@@ -287,18 +289,21 @@ func log_hit_message(actor: Actor, target: Actor, skill: Dictionary, damage: int
 	}), "combat")
 
 
-## 落伤与死亡结算（击杀经验/弑回血/移除）。
+## 落伤与死亡结算（经验/弑回血/掉落/移除）。
+## 语义对齐 Python：经验与掉落跟随任何原因的异兽死亡（含 DOT）；弑回血仅玩家直接击杀。
 func _apply_damage(killer: Actor, victim: Actor, damage: int) -> void:
+	var ratio_before := float(victim.fighter.hp()) / maxf(1.0, victim.fighter.max_hp())
 	var died := victim.fighter.hurt(damage)
 	if not died:
-		if victim == player() and float(player().fighter.hp()) / player().fighter.max_hp() < 0.3:
-			log_message(content.text("player_hurt_warn"), "warn")
+		if victim == player() and ratio_before > 0.3 and float(player().fighter.hp()) / player().fighter.max_hp() < 0.3:
+			log_message(content.text("player_hurt_warn"), "warn")  # 跨过三成线才提示
 		return
 	if victim == player():
 		log_message(content.text("player_dies"), "death")
 		game_over = true
 		return
 	if victim.summon_ttl >= 0:
+		# 契约兽力竭：化光消散，不留尸骸不掉落
 		log_message(content.text("summon_fade").format({"name": victim.label}), "summon")
 		emit_event("summon", victim.x, victim.y, {})
 		map().actors.erase(victim)
@@ -306,16 +311,53 @@ func _apply_damage(killer: Actor, victim: Actor, damage: int) -> void:
 		return
 	log_message(content.text("monster_dies").format({"name": victim.label}), "kill")
 	emit_event("kill", victim.x, victim.y, {})
-	if killer == player() and player().level != null:
+	var x := victim.x
+	var y := victim.y
+	# 经验：任何原因击杀异兽都归玩家（DOT/召唤兽代杀同理）
+	if player().is_alive() and player().level != null:
 		player().level.add_xp(victim.fighter.xp_reward, true)
-	# 弑回血词条（玩家击杀）
-	if killer == player() and player().equipment != null:
+	# 弑回血词条：仅玩家直接击杀（普攻/技能）
+	if killer == player() and player().is_alive() and player().equipment != null:
 		var heal_amount := player().equipment.affix("kill_heal")
 		if heal_amount > 0:
-			player().fighter.heal(heal_amount)
-			emit_event("heal", player().x, player().y, {"amount": heal_amount})
+			var healed: int = player().fighter.heal(heal_amount)
+			if healed > 0:
+				emit_event("heal", player().x, player().y, {"amount": healed})
+	# 掉落：22% 装备（按层难度 tier 门槛）+ 按 tags 的炼材（BOSS 额外必掉魔核）
+	_roll_equipment_drop(victim, x, y)
+	_roll_material_drop(victim, x, y)
 	map().actors.erase(victim)
 	victim.fighter = null
+
+
+const MONSTER_DROP_CHANCE := 0.22
+
+func _roll_equipment_drop(victim: Actor, x: int, y: int) -> void:
+	if state.rng.randf() >= MONSTER_DROP_CHANCE:
+		return
+	var item_id := content.random_equipment_id(map().floor_number, state.rng)
+	if item_id == "":
+		return
+	var item: Dictionary = content.build_item(item_id, x, y)
+	map().items.append(item)
+	log_message(content.text("monster_drop").format({
+		"monster": victim.label, "item": item["label"],
+	}), "loot")
+
+
+func _roll_material_drop(victim: Actor, x: int, y: int) -> void:
+	var drops: Array = []
+	if victim.tags.has("boss"):
+		drops.append("mat_demon_core")
+	var material_id := content.roll_material_drop(victim.tags, state.rng)
+	if material_id != "":
+		drops.append(material_id)
+	for mid in drops:
+		var item: Dictionary = content.build_item(mid, x, y)
+		map().items.append(item)
+		log_message(content.text("material_drop").format({
+			"monster": victim.label, "item": item["label"],
+		}), "loot")
 
 
 ## 击退：沿 (dx,dy) 推 actor 至多 push 格，遇墙/越界/实体截停；返回实际格数。

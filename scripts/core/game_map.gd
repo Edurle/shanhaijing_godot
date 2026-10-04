@@ -30,6 +30,7 @@ var fov_radius := 14
 
 # ---- 上下文（世界 / 秘境层） ----
 var map_type := "world"
+var floor_number := 0  # 投放难度轴（世界=0；秘境层=层难度）
 var realm_id := ""
 var realm_depth := 1
 var upstairs_xy := Vector2i(-1, -1)

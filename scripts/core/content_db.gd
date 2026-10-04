@@ -36,6 +36,7 @@ var per_room := {}  # 房间投放配置（chance/min/max）
 var regions: Array = []
 var realms: Dictionary = {}
 var recipes: Array = []
+var craft_drops := {}  # 怪物 tag -> {id, chance} 炼材掉落表
 var player_def: Dictionary = {}
 var theme: Dictionary = {}
 var strings: Dictionary = {}
@@ -64,6 +65,7 @@ func load_all(dir_path: String, p_lang := "zh_CN") -> PackedStringArray:
 	for realm in realms_root.get("realms", []):
 		realms[realm["id"]] = realm
 	recipes = crafting_root.get("recipes", [])
+	craft_drops = crafting_root.get("drops", {})
 	spawn_monsters = spawn_root.get("monsters", [])
 	spawn_items = spawn_root.get("items", [])
 	per_room = spawn_root.get("per_room", {})
@@ -268,6 +270,9 @@ func build_monster(mid: String, x: int, y: int, p_elite := false) -> Actor:
 	actor.elite = p_elite
 	actor.attack_tags = PackedStringArray(mdef.get("attack_tags", []))
 	actor.element = String(mdef.get("element", ""))
+	actor.tags = (mdef.get("tags", []) as Array).duplicate()
+	if p_elite:
+		actor.tags.append("elite")
 	actor.fighter = Fighter.new(
 		hp, power, int(fdata["defense"]), xp_reward,
 		0, 0, mdef.get("resistances", {})
@@ -409,3 +414,30 @@ func skills_for_class(class_id: String) -> Array:
 			result.append(entry)
 	result.sort_custom(func(a, b): return int(a["slot"]) < int(b["slot"]))
 	return result
+
+
+## 怪物死亡装备掉落：tier ≤ difficulty//4+2 的装备池随机一件；空池返回 ""。
+func random_equipment_id(difficulty: int, rng: RandomNumberGenerator) -> String:
+	var cap := difficulty / 4 + 2
+	var pool: Array = []
+	for iid in items:
+		var idef: Dictionary = items[iid]
+		if not idef.has("equipment"):
+			continue
+		if int(idef.get("tier", 1)) <= cap:
+			pool.append(String(iid))
+	if pool.is_empty():
+		return ""
+	pool.sort()
+	return pool[rng.randi_range(0, pool.size() - 1)]
+
+
+## 按怪物 tags 的首个命中映射掉炼制材料（drops 表顺序即优先级）。
+func roll_material_drop(monster_tags: Array, rng: RandomNumberGenerator) -> String:
+	for tag in craft_drops:
+		if monster_tags.has(tag):
+			var entry: Dictionary = craft_drops[tag]
+			if rng.randf() < float(entry["chance"]):
+				return String(entry["id"])
+			return ""
+	return ""

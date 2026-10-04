@@ -19,6 +19,7 @@ var level  # Level（玩家专用）
 var inventory = null  # Inventory（行囊模型，build_player 装配）
 var summon_ttl := -1  # -1 = 非召唤
 var elite := false
+var tags: Array = []  # 风味/投放标签（dragon/boss/elite/serpent/bird/beast/shanhaijing）
 # 玩家专用：双职业与技能（skill_levels：1-10，0=未学）
 var class_ids: Array = []
 var skill_points := 0

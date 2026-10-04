@@ -193,3 +193,36 @@ static func apply_attached_controls(engine, caster: Actor, actor: Actor, skill: 
 		var dy := signi(actor.y - caster.y)
 		if engine.push_actor(actor, dx, dy, int(eff["knockback"])) > 0:
 			engine.log(engine.content.text("knockback_note").format({"name": actor.label}), "combat")
+
+
+## 技能效果短摘要（侧栏用）；伤害按当前修为与装备词条折算。
+static func summary(engine, actor: Actor, skill: Dictionary) -> String:
+	var eff: Dictionary = skill["effect"]
+	var etype := String(eff.get("type", ""))
+	if etype == "damage_nearest":
+		return engine.content.text("summ_damage").format({"v": compute_damage(actor, skill)})
+	if etype == "damage_aoe_self":
+		return engine.content.text("summ_aoe").format({"v": compute_damage(actor, skill), "r": eff.get("radius", 1)})
+	if etype == "heal_self":
+		var amount: float = float(eff.get("amount", 0)) + skill_level(actor) * float(eff.get("scale", 0))
+		return engine.content.text("summ_heal").format({"v": int(round(amount))})
+	if etype == "mp_restore":
+		return engine.content.text("summ_heal_mp").format({"v": int(eff.get("amount", 0))})
+	if etype == "buff_defense":
+		return engine.content.text("summ_buff_def").format({"v": int(eff.get("amount", 0))})
+	if etype == "buff_power":
+		return engine.content.text("summ_buff_pow").format({"v": int(eff.get("amount", 0))})
+	if etype == "teleport_step":
+		return engine.content.text("summ_teleport").format({"v": int(eff.get("range", 3))})
+	if etype == "element_dot":
+		var pair := compute_dot(actor, skill)
+		var kind := skill_element(skill)
+		kind = kind if kind != "" else "wood"
+		return engine.content.text("summ_dot").format({"state": engine.content.text("dot_name_" + kind), "v": pair[0], "t": pair[1]})
+	if etype == "summon":
+		return engine.content.text("summ_summon")
+	if etype == "stun_aoe":
+		return engine.content.text("summ_stun").format({"v": int(eff.get("turns", 1))})
+	if etype == "knockback_aoe":
+		return engine.content.text("summ_knockback_aoe").format({"d": int(eff.get("push", 1))})
+	return ""

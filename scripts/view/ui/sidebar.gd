@@ -69,11 +69,13 @@ func _draw() -> void:
 	draw_text_line(Vector2(x, y), state.location_name() + ("  " + status if status != "" else ""), INK, 16)
 	y += 28
 
-	# 技能栏（主职业 8 槽）
-	draw_text_line(Vector2(x, y), "— %s —" % engine.content.class_name(String(player.class_ids[0])), INK_SOFT, 14)
+	# 技能栏（当前页 8 槽；Tab 切主/副职业）
+	var class_id := String(player.class_ids[engine.active_page])
+	var page_text: String = engine.content.text("hud_main_page" if engine.active_page == 0 else "hud_second_page")
+	draw_text_line(Vector2(x, y), "— %s · Tab 切页 —" % page_text.format({"name": engine.content.class_name(class_id)}), INK_SOFT, 14)
 	y += 20
 	for slot in range(1, 9):
-		var skill: Dictionary = engine.content.skill_for_slot(String(player.class_ids[0]), slot)
+		var skill: Dictionary = engine.content.skill_for_slot(class_id, slot)
 		if skill.is_empty():
 			continue
 		var learned: bool = player.skill_levels.has(skill["id"])
@@ -92,10 +94,11 @@ func _draw() -> void:
 			var sp_need := Skills.sp_cost(player, skill)
 			if sp_need > 0:
 				cost_text += "%d灵" % sp_need
-			tail = cost_text
+			var effect_summary := Skills.summary(engine, player, skill)
+			tail = effect_summary + " " + cost_text if effect_summary != "" else cost_text
 		draw_text_line(Vector2(x, y), label, color, 16)
 		if tail != "":
-			draw_text_line(Vector2(x + WIDTH - 16 - 14 - tail.length() * 8, y), tail, INK_SOFT, 13)
+			draw_text_line(Vector2(x + WIDTH - 20 - tail.length() * 8, y), tail, INK_SOFT, 12)
 		y += 21
 
 	# 装备五槽

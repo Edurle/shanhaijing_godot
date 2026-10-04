@@ -18,6 +18,7 @@ static func generate_floor(
 ) -> Dictionary:
 	var map := GameMap.new(DUNGEON_WIDTH, DUNGEON_HEIGHT, 12)
 	map.map_type = "realm"
+	map.floor_number = floor_number
 	map.realm_id = realm_id
 	map.realm_depth = realm_depth
 	map.terrain.fill(GameMap.T_WALL)

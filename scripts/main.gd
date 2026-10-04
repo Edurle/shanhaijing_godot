@@ -205,6 +205,9 @@ func _handle_play(keycode: int, is_echo: bool) -> void:
 			board.queue_redraw()
 		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8:
 			_begin_cast(keycode - KEY_0)
+		KEY_TAB:
+			engine.active_page = 1 - engine.active_page
+			_refresh()
 
 
 func _act(_acted: bool) -> void:
@@ -398,7 +401,8 @@ func _next_step_bfs(from: Vector2i, to: Vector2i) -> Vector2i:
 # ---- 施放 ----
 
 func _begin_cast(slot: int) -> void:
-	var skill: Dictionary = content.skill_for_slot(String(state.player.class_ids[0]), slot)
+	var class_id := String(state.player.class_ids[engine.active_page])
+	var skill: Dictionary = content.skill_for_slot(class_id, slot)
 	if skill.is_empty():
 		return
 	if not state.player.skill_levels.has(skill["id"]):
