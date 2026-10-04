@@ -1,0 +1,22 @@
+; Engine configuration file.
+; 山海行 · 水墨 —— Godot 重构版（源自 tui_game Python 版，规则与数据契约见 vault 文档）
+
+config_version=5
+
+[application]
+
+config/name="山海行 · 水墨"
+config/description="山海经题材五行 Roguelike —— 水墨视觉重构版"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.6")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=768
+window/stretch/mode="disabled"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

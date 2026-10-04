@@ -1,0 +1,1666 @@
+{
+  "_schema": {
+    "说明": "物品定义。consumable.type 对应 consumable.py 的效果注册表；equipment.slot 对应 equipment.py 的五槽（weapon/armor/boots/amulet/helm）。武器槽只带 damage（physical 必填，element 可缺省=无属性，有属性时普攻整段参与生克折算），不带 bonuses/affixes；非武器槽反向。tier 影响怪物死亡掉落的楼层门槛。name/lore 可本地化（同 monsters.json 规则）。"
+  },
+  "lingzhi": {
+    "name": {
+      "zh_CN": "灵芝",
+      "en_US": "Lingzhi"
+    },
+    "char": "!",
+    "art": "lingzhi",
+    "color": [
+      232,
+      72,
+      74
+    ],
+    "tags": [
+      "herb",
+      "wood"
+    ],
+    "lore": {
+      "zh_CN": "山川精气所结，服之养气疗伤。",
+      "en_US": "A growth of mountain essence; eating it mends wounds."
+    },
+    "consumable": {
+      "type": "heal",
+      "amount": 12
+    }
+  },
+  "wulei_fu": {
+    "name": {
+      "zh_CN": "五雷符",
+      "en_US": "Thunder Talisman"
+    },
+    "char": "?",
+    "art": "thunder_talisman",
+    "color": [
+      190,
+      152,
+      255
+    ],
+    "tags": [
+      "talisman",
+      "metal"
+    ],
+    "lore": {
+      "zh_CN": "雷部符箓，祭出时引天雷落在近前妖邪身上。",
+      "en_US": "A charm of the Thunder Ministry; summons a bolt onto the nearest fiend."
+    },
+    "consumable": {
+      "type": "lightning",
+      "damage": 14,
+      "max_range": 8
+    }
+  },
+  "yanwu_fu": {
+    "name": {
+      "zh_CN": "烟雾符",
+      "en_US": "Smoke Talisman"
+    },
+    "char": "?",
+    "color": [
+      176,
+      176,
+      186
+    ],
+    "tags": [
+      "talisman"
+    ],
+    "lore": {
+      "zh_CN": "焚之腾起五里浓烟。烟障蔽目，群兽难觅施符者踪影。",
+      "en_US": "Burns into a choking pall. Behind the smoke, beasts lose your trail."
+    },
+    "consumable": {
+      "type": "smoke",
+      "turns": 8
+    }
+  },
+  "zhentui_fu": {
+    "name": {
+      "zh_CN": "震退符",
+      "en_US": "Repulse Talisman"
+    },
+    "char": "?",
+    "color": [
+      255,
+      168,
+      112
+    ],
+    "tags": [
+      "talisman"
+    ],
+    "lore": {
+      "zh_CN": "祭出符力如山崩，近前妖邪应声抛飞，撞壁者七荤八素。",
+      "en_US": "The charm bursts like a landslide; the nearest fiend is hurled away, stunned on impact."
+    },
+    "consumable": {
+      "type": "knockback",
+      "damage": 6,
+      "max_range": 6,
+      "push": 2,
+      "stun": 1
+    }
+  },
+  "huiqisan": {
+    "name": {
+      "zh_CN": "回气散",
+      "en_US": "Breath Powder"
+    },
+    "char": "!",
+    "color": [
+      110,
+      220,
+      220
+    ],
+    "tags": [
+      "herb"
+    ],
+    "lore": {
+      "zh_CN": "研草木清气为散，一服真气汩汩而生。",
+      "en_US": "Ground herbs of clear qi; one dose and breath wells up again."
+    },
+    "tier": 1,
+    "consumable": {
+      "type": "heal_mp",
+      "amount": 8
+    }
+  },
+  "w_taomu": {
+    "name": {
+      "zh_CN": "桃木剑",
+      "en_US": "Peachwood Sword"
+    },
+    "char": "/",
+    "color": [
+      214,
+      138,
+      106
+    ],
+    "tags": [
+      "weapon"
+    ],
+    "lore": {
+      "zh_CN": "雷击桃木所削，剑气虽浅，百鬼犹避。",
+      "en_US": "Cut from lightning-struck peachwood; shallow in edge, yet ghosts give way."
+    },
+    "tier": 1,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 3,
+        "element": "wood"
+      }
+    }
+  },
+  "w_qingtong": {
+    "name": {
+      "zh_CN": "青铜戈",
+      "en_US": "Bronze Ge"
+    },
+    "char": "/",
+    "color": [
+      158,
+      178,
+      122
+    ],
+    "tags": [
+      "weapon"
+    ],
+    "lore": {
+      "zh_CN": "殷商战阵之遗，历千年而锋刃犹存。",
+      "en_US": "A relic of Shang battle lines; three thousand years, still keen."
+    },
+    "tier": 1,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 5
+      }
+    }
+  },
+  "w_kunwu": {
+    "name": {
+      "zh_CN": "昆吾刀",
+      "en_US": "Kunwu Blade"
+    },
+    "char": "/",
+    "color": [
+      196,
+      214,
+      228
+    ],
+    "tags": [
+      "weapon"
+    ],
+    "lore": {
+      "zh_CN": "昆吾山下精铁所铸，挥动时刀罡如练。",
+      "en_US": "Forged of Kunwu iron; its sweeping aura flows like silk."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 5,
+        "element": "metal"
+      }
+    }
+  },
+  "w_ganjiang": {
+    "name": {
+      "zh_CN": "干将",
+      "en_US": "Ganjiang"
+    },
+    "char": "/",
+    "color": [
+      232,
+      196,
+      116
+    ],
+    "tags": [
+      "weapon",
+      "legendary"
+    ],
+    "lore": {
+      "zh_CN": "莫邪以身殉炉，方成此雌雄双剑之雄。",
+      "en_US": "Moye gave herself to the furnace; this is the male of the pair."
+    },
+    "tier": 3,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 8
+      }
+    }
+  },
+  "a_shoupi": {
+    "name": {
+      "zh_CN": "兽皮裘",
+      "en_US": "Beast-Pelt Jerkin"
+    },
+    "char": "]",
+    "color": [
+      180,
+      148,
+      110
+    ],
+    "tags": [
+      "armor"
+    ],
+    "lore": {
+      "zh_CN": "猎户手绩的粗裘，聊胜于无。",
+      "en_US": "A hunter's rough pelt; better than nothing."
+    },
+    "tier": 1,
+    "equipment": {
+      "slot": "armor",
+      "bonuses": {
+        "defense": 1
+      },
+      "affixes": []
+    }
+  },
+  "a_xuangui": {
+    "name": {
+      "zh_CN": "玄龟甲",
+      "en_US": "Dark-Turtle Shell"
+    },
+    "char": "]",
+    "color": [
+      110,
+      140,
+      150
+    ],
+    "tags": [
+      "armor"
+    ],
+    "lore": {
+      "zh_CN": "玄龟之甲打磨成护，沉厚如山。",
+      "en_US": "Polished shell of the dark turtle; heavy as a hill."
+    },
+    "tier": 1,
+    "equipment": {
+      "slot": "armor",
+      "bonuses": {
+        "defense": 2,
+        "max_hp": 6
+      },
+      "affixes": []
+    }
+  },
+  "a_xisi": {
+    "name": {
+      "zh_CN": "犀兕铠",
+      "en_US": "Rhinoceros Harness"
+    },
+    "char": "]",
+    "color": [
+      160,
+      160,
+      170
+    ],
+    "tags": [
+      "armor"
+    ],
+    "lore": {
+      "zh_CN": "犀兕之革串缀成铠，刀剑加身不过白痕。",
+      "en_US": "Hide of the xi-rhino, laced into mail; blades leave only pale marks."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "armor",
+      "bonuses": {
+        "defense": 3,
+        "max_hp": 8
+      },
+      "affixes": []
+    }
+  },
+  "b_maxie": {
+    "name": {
+      "zh_CN": "麻鞋",
+      "en_US": "Hemp Sandals"
+    },
+    "char": "=",
+    "color": [
+      200,
+      180,
+      130
+    ],
+    "tags": [
+      "boots"
+    ],
+    "lore": {
+      "zh_CN": "千层麻线纳底，山路再远也不磨脚。",
+      "en_US": "Hundred-layer hemp soles; no mountain road wears them through."
+    },
+    "tier": 1,
+    "equipment": {
+      "slot": "boots",
+      "bonuses": {
+        "defense": 1
+      },
+      "affixes": []
+    }
+  },
+  "b_zhuifeng": {
+    "name": {
+      "zh_CN": "追风履",
+      "en_US": "Windchaser Shoes"
+    },
+    "char": "=",
+    "color": [
+      140,
+      220,
+      200
+    ],
+    "tags": [
+      "boots"
+    ],
+    "lore": {
+      "zh_CN": "着之步履生风，气脉亦随之活络。",
+      "en_US": "Wear them and the wind follows your step — and your breath."
+    },
+    "tier": 1,
+    "equipment": {
+      "slot": "boots",
+      "bonuses": {
+        "max_mp": 6
+      },
+      "affixes": []
+    }
+  },
+  "b_dengyun": {
+    "name": {
+      "zh_CN": "踏云履",
+      "en_US": "Cloud-Treading Shoes"
+    },
+    "char": "=",
+    "color": [
+      220,
+      226,
+      240
+    ],
+    "tags": [
+      "boots"
+    ],
+    "lore": {
+      "zh_CN": "云锦织面，行走间如有云气托足。",
+      "en_US": "Woven of cloud-brocade; mist bears each step."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "boots",
+      "bonuses": {
+        "defense": 1,
+        "max_hp": 4
+      },
+      "affixes": []
+    }
+  },
+  "p_yupei": {
+    "name": {
+      "zh_CN": "玉佩",
+      "en_US": "Jade Pendant"
+    },
+    "char": "\"",
+    "color": [
+      150,
+      230,
+      190
+    ],
+    "tags": [
+      "amulet"
+    ],
+    "lore": {
+      "zh_CN": "君子无故玉不去身，温养气脉。",
+      "en_US": "A gentleman's jade, never parted; it tempers the breath."
+    },
+    "tier": 1,
+    "equipment": {
+      "slot": "amulet",
+      "bonuses": {
+        "max_mp": 8
+      },
+      "affixes": []
+    }
+  },
+  "p_bishui": {
+    "name": {
+      "zh_CN": "避水珠",
+      "en_US": "Water-Averting Pearl"
+    },
+    "char": "\"",
+    "color": [
+      120,
+      180,
+      240
+    ],
+    "tags": [
+      "amulet"
+    ],
+    "lore": {
+      "zh_CN": "含之入水不濡，清凉之气沁人心脾。",
+      "en_US": "Hold it and rivers part; its coolness steels the mind."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "amulet",
+      "bonuses": {
+        "defense": 1,
+        "max_mp": 4
+      },
+      "affixes": []
+    }
+  },
+  "p_zhaoyao": {
+    "name": {
+      "zh_CN": "照妖镜",
+      "en_US": "Fiend-Revealing Mirror"
+    },
+    "char": "\"",
+    "color": [
+      230,
+      230,
+      245
+    ],
+    "tags": [
+      "amulet"
+    ],
+    "lore": {
+      "zh_CN": "镜光所照，妖形无所遁；雷法遇之愈威。",
+      "en_US": "Its light unmasks all fiends — and emboldens thunder."
+    },
+    "tier": 3,
+    "equipment": {
+      "slot": "amulet",
+      "bonuses": {
+        "power": 2
+      },
+      "affixes": [
+        {
+          "id": "metal_damage",
+          "value": 3
+        },
+        {
+          "id": "kill_heal",
+          "value": 2
+        }
+      ]
+    }
+  },
+  "p_baidu": {
+    "name": {
+      "zh_CN": "百毒佩",
+      "en_US": "Hundred-Venom Charm"
+    },
+    "char": "\"",
+    "color": [
+      140,
+      220,
+      120
+    ],
+    "tags": [
+      "amulet"
+    ],
+    "lore": {
+      "zh_CN": "以毒攻毒的古佩，蛊毒经此反而愈发狠辣。",
+      "en_US": "An old charm that fights venom with venom — and wins."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "amulet",
+      "bonuses": {
+        "defense": 1
+      },
+      "affixes": [
+        {
+          "id": "wood_damage",
+          "value": 3
+        }
+      ]
+    }
+  },
+  "p_miaoshou": {
+    "name": {
+      "zh_CN": "妙手环",
+      "en_US": "Healer's Loop"
+    },
+    "char": "\"",
+    "color": [
+      240,
+      210,
+      170
+    ],
+    "tags": [
+      "amulet"
+    ],
+    "lore": {
+      "zh_CN": "巫医传下的手环，疗伤时气顺而力足。",
+      "en_US": "A healer's handed-down loop; mending flows smooth and strong."
+    },
+    "tier": 1,
+    "equipment": {
+      "slot": "amulet",
+      "bonuses": {
+        "max_mp": 4
+      },
+      "affixes": [
+        {
+          "id": "heal_power",
+          "value": 3
+        }
+      ]
+    }
+  },
+  "m_zhuli": {
+    "name": {
+      "zh_CN": "竹笠",
+      "en_US": "Bamboo Hat"
+    },
+    "char": "^",
+    "color": [
+      170,
+      200,
+      120
+    ],
+    "tags": [
+      "helm"
+    ],
+    "lore": {
+      "zh_CN": "青篾编就的斗笠，遮雨亦遮妖氛。",
+      "en_US": "Woven of green bamboo; turns rain and miasma alike."
+    },
+    "tier": 1,
+    "equipment": {
+      "slot": "helm",
+      "bonuses": {
+        "defense": 1
+      },
+      "affixes": []
+    }
+  },
+  "m_qingtongmian": {
+    "name": {
+      "zh_CN": "青铜面甲",
+      "en_US": "Bronze Visor"
+    },
+    "char": "^",
+    "color": [
+      150,
+      170,
+      140
+    ],
+    "tags": [
+      "helm"
+    ],
+    "lore": {
+      "zh_CN": "饕餮纹面甲，戴上后只余双眼冷光。",
+      "en_US": "A taotie-masked visor; beneath it, only cold eyes."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "helm",
+      "bonuses": {
+        "defense": 2
+      },
+      "affixes": []
+    }
+  },
+  "m_xiezhi": {
+    "name": {
+      "zh_CN": "獬豸冠",
+      "en_US": "Xiezhi Crown"
+    },
+    "char": "^",
+    "color": [
+      235,
+      180,
+      110
+    ],
+    "tags": [
+      "helm"
+    ],
+    "lore": {
+      "zh_CN": "法冠之属，獬豸触邪，挥洒间罡风更烈。",
+      "en_US": "A crown of judgement; the xiezie gores the wicked, and winds answer."
+    },
+    "tier": 3,
+    "equipment": {
+      "slot": "helm",
+      "bonuses": {
+        "power": 1,
+        "defense": 1
+      },
+      "affixes": [
+        {
+          "id": "aoe_damage",
+          "value": 3
+        }
+      ]
+    }
+  },
+  "a_bihuo": {
+    "name": {
+      "zh_CN": "蔽火袍",
+      "en_US": "Flame-Veil Robe"
+    },
+    "char": "]",
+    "color": [
+      216,
+      132,
+      92
+    ],
+    "tags": [
+      "armor"
+    ],
+    "lore": {
+      "zh_CN": "以南疆桐木丝织就，火舌燎过只余青烟。",
+      "en_US": "Woven of southern tong-wood silk; flames lick it and leave only smoke."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "armor",
+      "bonuses": {
+        "defense": 2
+      },
+      "affixes": [
+        {
+          "id": "resist_fire",
+          "value": 40
+        }
+      ]
+    }
+  },
+  "m_leiwen": {
+    "name": {
+      "zh_CN": "雷纹冠",
+      "en_US": "Thunder-Rune Circlet"
+    },
+    "char": "^",
+    "color": [
+      176,
+      160,
+      236
+    ],
+    "tags": [
+      "helm"
+    ],
+    "lore": {
+      "zh_CN": "皮冠上錾雷纹，戴久了，天雷落身也只当蚊呐。",
+      "en_US": "A hide circlet etched with thunder runes; sky-bolts soon feel like gnat-bites."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "helm",
+      "bonuses": {
+        "defense": 1
+      },
+      "affixes": [
+        {
+          "id": "resist_metal",
+          "value": 35
+        }
+      ]
+    }
+  },
+  "p_qingxin": {
+    "name": {
+      "zh_CN": "清心佩",
+      "en_US": "Clear-Mind Charm"
+    },
+    "char": "\"",
+    "color": [
+      150,
+      226,
+      214
+    ],
+    "tags": [
+      "amulet"
+    ],
+    "lore": {
+      "zh_CN": "玉佩触腕生凉，戴上后心神澄定，魅惑难侵。",
+      "en_US": "The jade charm cools the wrist and stills the mind; bewitchment slides off."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "amulet",
+      "bonuses": {
+        "max_mp": 4
+      },
+      "affixes": [
+        {
+          "id": "resist_stun",
+          "value": 40
+        }
+      ]
+    }
+  },
+  "b_dubi": {
+    "name": {
+      "zh_CN": "避毒履",
+      "en_US": "Venom-Ward Shoes"
+    },
+    "char": "=",
+    "color": [
+      158,
+      216,
+      128
+    ],
+    "tags": [
+      "boots"
+    ],
+    "lore": {
+      "zh_CN": "麻履浸过九道药汁，踏遍瘴泽而足不沾毒。",
+      "en_US": "Hemp shoes steeped nine times in herbal brew; mires and miasma leave no trace."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "boots",
+      "bonuses": {
+        "defense": 1
+      },
+      "affixes": [
+        {
+          "id": "resist_wood",
+          "value": 35
+        }
+      ]
+    }
+  },
+  "mat_beast_bone": {
+    "name": {
+      "zh_CN": "兽骨",
+      "en_US": "Beast Bone"
+    },
+    "char": ",",
+    "color": [
+      222,
+      214,
+      190
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "异兽的枯骨，敲之有金石声，可入药亦可锻刃。",
+      "en_US": "The dried bone of a wild beast; it rings like stone when struck, fit for elixirs and blades alike."
+    }
+  },
+  "mat_bird_feather": {
+    "name": {
+      "zh_CN": "禽羽",
+      "en_US": "Plume"
+    },
+    "char": "\"",
+    "color": [
+      176,
+      216,
+      232
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "异禽的翎羽，迎光流转五彩，是摹符的上好笔锋。",
+      "en_US": "A plume of a strange bird, shimmering five colors in the light - a fine brush for inscribing talismans."
+    }
+  },
+  "mat_serpent_scale": {
+    "name": {
+      "zh_CN": "蛇鳞",
+      "en_US": "Serpent Scale"
+    },
+    "char": "o",
+    "color": [
+      126,
+      200,
+      148
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "大蛇蜕下的鳞片，凉而坚韧，入药可辟毒。",
+      "en_US": "A scale shed by a great serpent, cool and tough; in elixirs it wards off venom."
+    }
+  },
+  "mat_dragon_scale": {
+    "name": {
+      "zh_CN": "龙鳞",
+      "en_US": "Dragon Scale"
+    },
+    "char": "O",
+    "color": [
+      255,
+      196,
+      120
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "真龙之鳞，蕴雷携火，锻入兵刃则百邪辟易。",
+      "en_US": "A true dragon's scale, steeped in thunder and fire; forged into a blade, it repels all evil."
+    }
+  },
+  "mat_demon_core": {
+    "name": {
+      "zh_CN": "魔核",
+      "en_US": "Demon Core"
+    },
+    "char": "*",
+    "color": [
+      214,
+      120,
+      200
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "凶兽体内凝结的精魄之核，是炼制至宝的枢机。",
+      "en_US": "The crystallized core of a fiend, the keystone of forging supreme treasures."
+    }
+  },
+  "mat_spirit_herb": {
+    "name": {
+      "zh_CN": "灵草",
+      "en_US": "Spirit Herb"
+    },
+    "char": ";",
+    "color": [
+      140,
+      226,
+      150
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "山间灵草，服之气清神明，是诸丹之基。",
+      "en_US": "A mountain spirit herb; taken alone it clears the mind, and it is the base of all elixirs."
+    }
+  },
+  "mat_dark_ore": {
+    "name": {
+      "zh_CN": "玄铁",
+      "en_US": "Dark Ore"
+    },
+    "char": "^",
+    "color": [
+      150,
+      152,
+      168
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "出于山阴的玄色铁矿，重逾常铁三倍，锻甲铸兵皆良。",
+      "en_US": "A dark ore from the mountain's shadow, thrice as heavy as common iron - excellent for arms and armor."
+    }
+  },
+  "mat_cinnabar": {
+    "name": {
+      "zh_CN": "朱砂",
+      "en_US": "Cinnabar"
+    },
+    "char": ".",
+    "color": [
+      232,
+      110,
+      96
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "赤色矿粉，安神镇魂，炼丹画符皆不可缺。",
+      "en_US": "Vermilion powder that calms the spirit; no elixir or talisman can do without it."
+    }
+  },
+  "mat_talisman_paper": {
+    "name": {
+      "zh_CN": "符纸",
+      "en_US": "Talisman Paper"
+    },
+    "char": "_",
+    "color": [
+      232,
+      220,
+      180
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "以楮皮和露水制成的黄纸，专承符墨。",
+      "en_US": "Yellow paper made of mulberry bark and dew, made to bear talisman ink."
+    }
+  },
+  "mat_jade_fragment": {
+    "name": {
+      "zh_CN": "玉屑",
+      "en_US": "Jade Shard"
+    },
+    "char": "`",
+    "color": [
+      180,
+      232,
+      214
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "美玉碾磨的碎屑，养气凝神，佩饰点睛之选。",
+      "en_US": "Shards of ground jade that nourish the spirit - the finishing touch for amulets."
+    }
+  },
+  "pill_rejuvenation": {
+    "name": {
+      "zh_CN": "回春丹",
+      "en_US": "Rejuvenation Pill"
+    },
+    "char": "!",
+    "color": [
+      150,
+      240,
+      170
+    ],
+    "tags": [
+      "consumable"
+    ],
+    "lore": {
+      "zh_CN": "以九蒸九晒灵草合朱砂而成，服之气血奔涌，沉疴立起。",
+      "en_US": "Steamed nine times and sun-dried nine more, this pill sends vitality surging through the blood."
+    },
+    "consumable": {
+      "type": "heal",
+      "amount": 30
+    }
+  },
+  "pill_condense_qi": {
+    "name": {
+      "zh_CN": "凝气丹",
+      "en_US": "Qi-Condensing Pill"
+    },
+    "char": "?",
+    "color": [
+      130,
+      230,
+      240
+    ],
+    "tags": [
+      "consumable"
+    ],
+    "lore": {
+      "zh_CN": "蛇鳞辟浊、灵草为引，一粒入腹，真气如泉。",
+      "en_US": "With serpent scale to purify and spirit herb as the guide, one pill restores qi like a spring."
+    },
+    "consumable": {
+      "type": "heal_mp",
+      "amount": 22
+    }
+  },
+  "pill_detox": {
+    "name": {
+      "zh_CN": "解毒丹",
+      "en_US": "Detox Pill"
+    },
+    "char": "!",
+    "color": [
+      180,
+      232,
+      120
+    ],
+    "tags": [
+      "consumable"
+    ],
+    "lore": {
+      "zh_CN": "青碧之丹，苦而回甘，蛊毒入腹顷刻自解。",
+      "en_US": "A jade-green pill, bitter yet sweet after; venoms unbind themselves moments after swallowing."
+    },
+    "consumable": {
+      "type": "cleanse"
+    }
+  },
+  "pill_might": {
+    "name": {
+      "zh_CN": "蛮力丹",
+      "en_US": "Might Pill"
+    },
+    "char": "!",
+    "color": [
+      240,
+      160,
+      100
+    ],
+    "tags": [
+      "consumable"
+    ],
+    "lore": {
+      "zh_CN": "兽骨煅灰合朱砂，药力如兽奔雷霆，膂力暴增而后力竭。",
+      "en_US": "Beast bone ash and cinnabar; the strength of a beast storms through your arms - for a while."
+    },
+    "consumable": {
+      "type": "buff_item",
+      "stat": "power",
+      "amount": 4,
+      "turns": 12
+    }
+  },
+  "pill_iron_skin": {
+    "name": {
+      "zh_CN": "铁骨丹",
+      "en_US": "Iron-Bone Pill"
+    },
+    "char": "!",
+    "color": [
+      190,
+      190,
+      210
+    ],
+    "tags": [
+      "consumable"
+    ],
+    "lore": {
+      "zh_CN": "玄铁细粉入药，筋骨如铸，兵刃加身而不过。",
+      "en_US": "Dark-ore dust tempered into medicine; sinew and bone turn to cast iron."
+    },
+    "consumable": {
+      "type": "buff_item",
+      "stat": "defense",
+      "amount": 4,
+      "turns": 12
+    }
+  },
+  "talisman_sky_thunder": {
+    "name": {
+      "zh_CN": "天雷符",
+      "en_US": "Sky Thunder Talisman"
+    },
+    "char": "?",
+    "color": [
+      200,
+      180,
+      255
+    ],
+    "tags": [
+      "consumable",
+      "talisman"
+    ],
+    "lore": {
+      "zh_CN": "以禽羽为笔、朱砂为墨摹就，引动之时九天雷落。",
+      "en_US": "Inscribed with plume-brush and cinnabar ink; when invoked, thunder falls from the ninth heaven."
+    },
+    "consumable": {
+      "type": "lightning",
+      "damage": 18,
+      "max_range": 8
+    }
+  },
+  "talisman_immobilize": {
+    "name": {
+      "zh_CN": "定身符",
+      "en_US": "Immobilize Talisman"
+    },
+    "char": "?",
+    "color": [
+      220,
+      150,
+      170
+    ],
+    "tags": [
+      "consumable",
+      "talisman"
+    ],
+    "lore": {
+      "zh_CN": "蛇鳞纹路盘曲如锁，符成之处，百邪僵立。",
+      "en_US": "Serpent-scale script coils like a lock; where the talisman lands, all evils stand frozen."
+    },
+    "consumable": {
+      "type": "stun_area",
+      "turns": 3
+    }
+  },
+  "talisman_adamant": {
+    "name": {
+      "zh_CN": "金刚符",
+      "en_US": "Adamant Talisman"
+    },
+    "char": "?",
+    "color": [
+      255,
+      226,
+      130
+    ],
+    "tags": [
+      "consumable",
+      "talisman"
+    ],
+    "lore": {
+      "zh_CN": "金光符文，贴身即化罡气护体。",
+      "en_US": "Golden script that turns to a sheath of gang qi the moment it touches the skin."
+    },
+    "consumable": {
+      "type": "buff_item",
+      "stat": "defense",
+      "amount": 5,
+      "turns": 10
+    }
+  },
+  "w_duanshui": {
+    "name": {
+      "zh_CN": "断水·古铗",
+      "en_US": "Watersplitter"
+    },
+    "char": "/",
+    "color": [
+      200,
+      226,
+      240
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "玄铁锻就的古铗，挥之有断流之声。",
+      "en_US": "An ancient blade of dark ore; swing it and you hear the sound of a river parting."
+    },
+    "tier": 5,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 8,
+        "element": "water"
+      }
+    }
+  },
+  "w_longscale": {
+    "name": {
+      "zh_CN": "龙鳞刀",
+      "en_US": "Dragonscale Saber"
+    },
+    "char": "/",
+    "color": [
+      255,
+      206,
+      130
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "真龙之鳞锻于刃脊，雷纹隐现，斩处生焰。",
+      "en_US": "A true dragon's scale forged into the spine; thunder patterns flicker where it cuts."
+    },
+    "tier": 6,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 10,
+        "element": "metal"
+      }
+    }
+  },
+  "a_xuantie": {
+    "name": {
+      "zh_CN": "玄铁重铠",
+      "en_US": "Dark-Iron Plate"
+    },
+    "char": "[",
+    "color": [
+      158,
+      160,
+      176
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "玄铁千锤成铠，着之如负山岳，而山岳护你。",
+      "en_US": "Dark ore hammered a thousand times; wearing it is bearing a mountain - and the mountain bears you back."
+    },
+    "tier": 5,
+    "equipment": {
+      "slot": "armor",
+      "bonuses": {
+        "defense": 5,
+        "max_hp": 12
+      },
+      "affixes": []
+    }
+  },
+  "b_tayun": {
+    "name": {
+      "zh_CN": "踏云履",
+      "en_US": "Cloud-Striding Boots"
+    },
+    "char": "\"",
+    "color": [
+      176,
+      216,
+      232
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "禽羽衬底，步罡踏斗，行走如乘云气。",
+      "en_US": "Lined with plumes; each step rides the cloud-qi."
+    },
+    "tier": 5,
+    "equipment": {
+      "slot": "boots",
+      "bonuses": {
+        "defense": 2,
+        "max_mp": 8
+      },
+      "affixes": [
+        {
+          "id": "mp_cost_reduce",
+          "value": 1
+        }
+      ]
+    }
+  },
+  "p_tongling": {
+    "name": {
+      "zh_CN": "通灵玉佩",
+      "en_US": "Spirit-Link Jade"
+    },
+    "char": ",",
+    "color": [
+      180,
+      232,
+      214
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "玉屑熔铸，佩之灵台清明，气机绵长。",
+      "en_US": "Cast from jade shards; worn, the spirit clears and qi runs long."
+    },
+    "tier": 5,
+    "equipment": {
+      "slot": "amulet",
+      "bonuses": {
+        "max_hp": 8,
+        "max_mp": 8
+      },
+      "affixes": [
+        {
+          "id": "heal_power",
+          "value": 20
+        }
+      ]
+    }
+  },
+  "m_zhenyue": {
+    "name": {
+      "zh_CN": "镇岳冠",
+      "en_US": "Mountain-Crown"
+    },
+    "char": "^",
+    "color": [
+      232,
+      208,
+      140
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "魔核嵌顶，玄铁为箍，戴之若镇岳，神魂不摇。",
+      "en_US": "A demon core set at the brow, dark iron for the band; the head becomes a settled mountain."
+    },
+    "tier": 6,
+    "equipment": {
+      "slot": "helm",
+      "bonuses": {
+        "defense": 4,
+        "max_hp": 10
+      },
+      "affixes": [
+        {
+          "id": "resist_stun",
+          "value": 40
+        }
+      ]
+    }
+  },
+  "mat_elite_essence": {
+    "name": {
+      "zh_CN": "精魄",
+      "en_US": "Elite Essence"
+    },
+    "char": "&",
+    "color": [
+      255,
+      170,
+      80
+    ],
+    "tags": [
+      "material"
+    ],
+    "lore": {
+      "zh_CN": "精英异兽凝而不散的战魄，微光灼手，是突破桎梏的枢机。",
+      "en_US": "The unyielding battle-spirit of an elite beast, warm to the touch - the keystone of breakthroughs."
+    }
+  },
+  "pill_ninegold": {
+    "name": {
+      "zh_CN": "九转金丹",
+      "en_US": "Ninefold Golden Elixir"
+    },
+    "char": "!",
+    "color": [
+      255,
+      214,
+      120
+    ],
+    "tags": [
+      "consumable"
+    ],
+    "lore": {
+      "zh_CN": "以精魄为引、魔核为枢，九转而成。服之百脉俱通，起死人而肉白骨。",
+      "en_US": "Refined nine times with elite essence and a demon core; one pill mends what should be beyond mending."
+    },
+    "consumable": {
+      "type": "heal",
+      "amount": 60
+    }
+  },
+  "talisman_execlipse": {
+    "name": {
+      "zh_CN": "诛邪符",
+      "en_US": "Fiend-Banishing Talisman"
+    },
+    "char": "?",
+    "color": [
+      255,
+      130,
+      110
+    ],
+    "tags": [
+      "consumable",
+      "talisman"
+    ],
+    "lore": {
+      "zh_CN": "朱砂为骨、精魄为锋，符成之日雷火同行，诸邪辟易。",
+      "en_US": "Cinnabar for bones, elite essence for the edge; where this talisman lands, thunder and fire follow."
+    },
+    "consumable": {
+      "type": "lightning",
+      "damage": 30,
+      "max_range": 9
+    }
+  },
+  "w_xuanyuan": {
+    "name": {
+      "zh_CN": "上古·轩辕剑",
+      "en_US": "Xuanyuan, the Ancient Blade"
+    },
+    "char": "/",
+    "color": [
+      255,
+      240,
+      190
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "以龙鳞淬锋、双魄铸魂，剑成之日风云变色，为天工开物之极。",
+      "en_US": "Quenched in dragon scale, soul-forged with twin essences - the summit of all craft."
+    },
+    "tier": 7,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 13,
+        "element": "metal"
+      }
+    }
+  },
+  "tianshu_shan": {
+    "name": {
+      "zh_CN": "天书·山经卷",
+      "en_US": "Heavenly Scroll: Mountains"
+    },
+    "char": "$",
+    "color": [
+      255,
+      220,
+      120
+    ],
+    "tags": [
+      "tianshu"
+    ],
+    "lore": {
+      "zh_CN": "五藏山经，录九州之草木金石。字迹如山岳盘踞，不可移易。",
+      "en_US": "The Canon of Mountains: herbs, stones and beasts of the five ranges. Its script sits fixed as mountains themselves."
+    },
+    "consumable": {
+      "type": "tianshu",
+      "volume": "shan"
+    }
+  },
+  "tianshu_haiwai": {
+    "name": {
+      "zh_CN": "天书·海外经卷",
+      "en_US": "Heavenly Scroll: Outer Seas"
+    },
+    "char": "$",
+    "color": [
+      214,
+      233,
+      255
+    ],
+    "tags": [
+      "tianshu"
+    ],
+    "lore": {
+      "zh_CN": "海外南西北东，异方之国、奇肱之民，尽在其页。潮声隐约可闻。",
+      "en_US": "The Canon of the Outer Seas: strange kingdoms and wondrous folk of the far shores. One can almost hear the tide among its pages."
+    },
+    "consumable": {
+      "type": "tianshu",
+      "volume": "haiwai"
+    }
+  },
+  "tianshu_hainei": {
+    "name": {
+      "zh_CN": "天书·海内经卷",
+      "en_US": "Heavenly Scroll: Inland Seas"
+    },
+    "char": "$",
+    "color": [
+      188,
+      255,
+      214
+    ],
+    "tags": [
+      "tianshu"
+    ],
+    "lore": {
+      "zh_CN": "四海之内，方国里俗、山川道里，井然如棋局布子。",
+      "en_US": "The Canon of the Inland Seas: within the four seas, every realm and road laid out neat as stones upon a board."
+    },
+    "consumable": {
+      "type": "tianshu",
+      "volume": "hainei"
+    }
+  },
+  "tianshu_dahuang": {
+    "name": {
+      "zh_CN": "天书·大荒经卷",
+      "en_US": "Heavenly Scroll: Great Wilderness"
+    },
+    "char": "$",
+    "color": [
+      255,
+      186,
+      208
+    ],
+    "tags": [
+      "tianshu"
+    ],
+    "lore": {
+      "zh_CN": "大荒之中，日月所入之山，诸神之战与洪荒纪事，俱载于此。",
+      "en_US": "The Canon of the Great Wilderness: mountains where sun and moon set, wars of gods and chronicles of the primal age."
+    },
+    "consumable": {
+      "type": "tianshu",
+      "volume": "dahuang"
+    }
+  },
+  "a_bishui": {
+    "name": {
+      "zh_CN": "避水袍",
+      "en_US": "Water-Ward Robe"
+    },
+    "char": "[",
+    "color": [
+      120,
+      180,
+      240
+    ],
+    "tags": [
+      "armor"
+    ],
+    "lore": {
+      "zh_CN": "鲛绡织就的袍子，入水不濡，寒潮扑面只当清风。",
+      "en_US": "A robe woven of sea-silk; tides part like a breeze before it."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "armor",
+      "bonuses": {
+        "defense": 1
+      },
+      "affixes": [
+        {
+          "id": "resist_water",
+          "value": 40
+        }
+      ]
+    }
+  },
+  "b_panshi": {
+    "name": {
+      "zh_CN": "磐石履",
+      "en_US": "Bedrock Shoes"
+    },
+    "char": "=",
+    "color": [
+      196,
+      158,
+      104
+    ],
+    "tags": [
+      "boots"
+    ],
+    "lore": {
+      "zh_CN": "履底嵌一方山岩，落石崩山砸在脚背也纹丝不动。",
+      "en_US": "A block of mountain stone set in each sole; rockfall feels like drizzle."
+    },
+    "tier": 2,
+    "equipment": {
+      "slot": "boots",
+      "bonuses": {
+        "defense": 1
+      },
+      "affixes": [
+        {
+          "id": "resist_earth",
+          "value": 35
+        }
+      ]
+    }
+  },
+  "w_hantan": {
+    "name": {
+      "zh_CN": "寒潭剑",
+      "en_US": "Cold-Pool Sword"
+    },
+    "char": "/",
+    "color": [
+      140,
+      200,
+      240
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "剑成之夜沉入寒潭三年，出鞘时潭面结霜。",
+      "en_US": "Quenched three years in a cold pool; frost blooms where it is drawn."
+    },
+    "tier": 4,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 7,
+        "element": "water"
+      }
+    }
+  },
+  "w_chixiao": {
+    "name": {
+      "zh_CN": "赤霄剑",
+      "en_US": "Crimson-Sky Sword"
+    },
+    "char": "/",
+    "color": [
+      244,
+      140,
+      90
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "帝道之剑，斩蛇起义；剑气所过，草木尽赤。",
+      "en_US": "A sovereign's blade; where its aura passes, the grass turns scarlet."
+    },
+    "tier": 5,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 8,
+        "element": "fire"
+      }
+    }
+  },
+  "w_bengshan": {
+    "name": {
+      "zh_CN": "崩山斧",
+      "en_US": "Peak-Cleaver Axe"
+    },
+    "char": "/",
+    "color": [
+      196,
+      158,
+      104
+    ],
+    "tags": [
+      "forged"
+    ],
+    "lore": {
+      "zh_CN": "斧刃是半座山的形状，抡圆了劈下，地皮都要颤三颤。",
+      "en_US": "Its edge is half a mountain's silhouette; the ground flinches at every swing."
+    },
+    "tier": 4,
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 9,
+        "element": "earth"
+      }
+    }
+  }
+}

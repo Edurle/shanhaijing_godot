@@ -1,0 +1,2244 @@
+{
+  "_schema": {
+    "说明": "山海经异兽定义。components 里的键对应代码中的组件注册表（content_loader.py），新增行为=新组件类+注册+此处引用。tags 为预留扩展字段：五行/阴阳/出处卷目（卷目 tag 与 regions.json 对应，供投放匹配）。name/lore 支持两种写法：字符串（所有语言同值）或 {\"zh_CN\": …, \"en_US\": …}，缺失语言回退 zh_CN。",
+    "字段": {
+      "name": "显示名（可本地化）",
+      "char": "地图字符",
+      "color": "[R, G, B]",
+      "tags": "扩展标签（shanhaijing=山海经, 卷目, 五行等）",
+      "lore": "典故出处（可本地化）",
+      "components.fighter": "战斗组件：hp/power/defense/xp_reward",
+      "components.ai": "AI 行为，type 对应 ai.py 注册表",
+      "resistances": "抗性表 {thunder|fire|poison|stun: 百分比 0-80}：元素减伤 / 眩晕时长缩短",
+      "attack_tags": "普攻附带元素（thunder/fire/poison），命中按目标抗性折算"
+    },
+    "element": "本命五行 {metal|wood|water|fire|earth}：受生克判定（攻元素克本命+30%/被克-25%）",
+    "resistances": "抗性表 {metal|wood|water|fire|earth|stun: 百分比 0-80}：元素减伤 / 眩晕与缠绕时长缩短",
+    "attack_tags": "普攻附带元素（metal/wood/water/fire/earth），命中按目标抗性折算"
+  },
+  "xingxing": {
+    "name": {
+      "zh_CN": "狌狌",
+      "en_US": "Xingxing"
+    },
+    "char": "x",
+    "color": [
+      236,
+      112,
+      72
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "beast",
+      "wood"
+    ],
+    "lore": {
+      "zh_CN": "《南山经》：招摇之山，有兽焉，其状如禺而白耳，伏行人走，其名曰狌狌，食之善走。",
+      "en_US": "Southern Mountains: On Zhaoyao Mountain lives a beast shaped like an ape with white ears that walks upright. Eating it makes one a swift runner."
+    },
+    "components": {
+      "fighter": {
+        "hp": 8,
+        "power": 3,
+        "defense": 0,
+        "xp_reward": 30
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "wood",
+    "attack_tags": []
+  },
+  "gudiao": {
+    "name": {
+      "zh_CN": "蛊雕",
+      "en_US": "Gudiao"
+    },
+    "char": "d",
+    "color": [
+      250,
+      182,
+      62
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "bird",
+      "metal"
+    ],
+    "lore": {
+      "zh_CN": "《南山经》：鹿吴之山，泽更之水出焉。有兽焉，名曰蛊雕，其状如雕而有角，其音如婴儿之音，是食人。",
+      "en_US": "Southern Mountains: The Gudiao looks like an eagle with horns and cries like a human infant. It preys on people."
+    },
+    "components": {
+      "fighter": {
+        "hp": 14,
+        "power": 5,
+        "defense": 1,
+        "xp_reward": 90
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "attack_tags": [
+      "wood"
+    ],
+    "element": "metal"
+  },
+  "jiuweihu": {
+    "name": {
+      "zh_CN": "九尾狐",
+      "en_US": "Nine-Tailed Fox"
+    },
+    "char": "h",
+    "color": [
+      255,
+      122,
+      172
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "dahuangjing",
+      "beast",
+      "fire"
+    ],
+    "lore": {
+      "zh_CN": "《南山经》：青丘之山，有兽焉，其状如狐而九尾，其音如婴儿，能食人；食者不蛊。",
+      "en_US": "Southern Mountains: On Qingqiu Mountain lives a fox with nine tails that cries like an infant. Its flesh wards off evil poison."
+    },
+    "components": {
+      "fighter": {
+        "hp": 22,
+        "power": 7,
+        "defense": 2,
+        "xp_reward": 220
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "resistances": {
+      "stun": 50
+    },
+    "element": "fire",
+    "attack_tags": []
+  },
+  "luwu": {
+    "name": {
+      "zh_CN": "陆吾",
+      "en_US": "Luwu"
+    },
+    "char": "L",
+    "color": [
+      232,
+      202,
+      148
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "beast",
+      "earth"
+    ],
+    "lore": {
+      "zh_CN": "《西山经》：昆仑之丘，是实惟帝之下都，神陆吾司之。其神状虎身而九尾，人面而虎爪。",
+      "en_US": "Western Mountains: On the Kunlun mound, the earthly capital of the Divine, dwells the god Luwu — tiger-bodied with nine tails, a human face and tiger claws."
+    },
+    "components": {
+      "fighter": {
+        "hp": 18,
+        "power": 6,
+        "defense": 2,
+        "xp_reward": 160
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "resistances": {
+      "earth": 30,
+      "stun": 40
+    },
+    "element": "earth",
+    "attack_tags": [
+      "earth"
+    ]
+  },
+  "bifang": {
+    "name": {
+      "zh_CN": "毕方",
+      "en_US": "Bifang"
+    },
+    "char": "B",
+    "color": [
+      240,
+      116,
+      56
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "bird",
+      "fire"
+    ],
+    "lore": {
+      "zh_CN": "《西山经》：章莪之山，有鸟焉，其状如鹤而一足，赤文青质而白喙，名曰毕方，见则其邑有讹火。",
+      "en_US": "Western Mountains: The Bifang is a one-legged crane with crimson markings. Wherever it appears, strange fires break out in the town."
+    },
+    "components": {
+      "fighter": {
+        "hp": 14,
+        "power": 7,
+        "defense": 1,
+        "xp_reward": 150
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "attack_tags": [
+      "fire"
+    ],
+    "resistances": {
+      "fire": 60
+    },
+    "element": "fire"
+  },
+  "zhudu": {
+    "name": {
+      "zh_CN": "诸犊",
+      "en_US": "Zhudu"
+    },
+    "char": "Z",
+    "color": [
+      172,
+      138,
+      94
+    ],
+    "tags": [
+      "shanhaijing",
+      "beishanjing",
+      "beast",
+      "earth"
+    ],
+    "lore": {
+      "zh_CN": "《北山经》：单张之山，有兽焉，其状如豹而长尾，人首而牛耳，一目，名曰诸犊，善吒，行则衔其尾，居则蟠其尾。",
+      "en_US": "Northern Mountains: The Zhudu has a leopard's body and long tail, a human head with ox ears and a single eye. It howls fiercely, carrying its tail in its mouth as it walks."
+    },
+    "components": {
+      "fighter": {
+        "hp": 20,
+        "power": 7,
+        "defense": 2,
+        "xp_reward": 200
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "resistances": {
+      "metal": 30
+    },
+    "element": "earth",
+    "attack_tags": []
+  },
+  "qiuyu": {
+    "name": {
+      "zh_CN": "犰狳",
+      "en_US": "Qiuyu"
+    },
+    "char": "Q",
+    "color": [
+      196,
+      172,
+      116
+    ],
+    "tags": [
+      "shanhaijing",
+      "dongshanjing",
+      "beast",
+      "earth"
+    ],
+    "lore": {
+      "zh_CN": "《东山经》：余峨之山，有兽焉，其状如菟而鸟喙，鸱目蛇尾，见则螽蝗为败。",
+      "en_US": "Eastern Mountains: The Qiuyu looks like a hare with a bird's beak, an owl's eyes and a snake's tail. Where it appears, locusts ravage the harvest."
+    },
+    "components": {
+      "fighter": {
+        "hp": 22,
+        "power": 8,
+        "defense": 2,
+        "xp_reward": 260
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "resistances": {
+      "wood": 40
+    },
+    "element": "earth",
+    "attack_tags": []
+  },
+  "mafu": {
+    "name": {
+      "zh_CN": "马腹",
+      "en_US": "Mafu"
+    },
+    "char": "M",
+    "color": [
+      204,
+      92,
+      60
+    ],
+    "tags": [
+      "shanhaijing",
+      "zhongshanjing",
+      "beast",
+      "fire"
+    ],
+    "lore": {
+      "zh_CN": "《中山经》：蔓渠之山，有兽焉，其名曰马腹，其状人面虎身，其音如婴儿，是食人。",
+      "en_US": "Central Mountains: The Mafu has a human face and a tiger's body, and cries like an infant. It preys on people."
+    },
+    "components": {
+      "fighter": {
+        "hp": 26,
+        "power": 9,
+        "defense": 3,
+        "xp_reward": 340
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "attack_tags": [
+      "fire"
+    ],
+    "resistances": {
+      "stun": 30
+    },
+    "element": "fire"
+  },
+  "xiangliu": {
+    "name": {
+      "zh_CN": "相柳",
+      "en_US": "Xiangliu"
+    },
+    "char": "X",
+    "color": [
+      116,
+      168,
+      146
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "serpent",
+      "water"
+    ],
+    "lore": {
+      "zh_CN": "《大荒北经》：共工之臣名曰相繇，九首蛇身，自环，食于九土，所扢之泽即为溪。",
+      "en_US": "Great Wilderness North: Xiangliu, minister of Gonggong, has nine snake heads and coils upon itself, devouring nine lands. Wherever it passes, land turns to mire."
+    },
+    "components": {
+      "fighter": {
+        "hp": 34,
+        "power": 10,
+        "defense": 3,
+        "xp_reward": 520
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "attack_tags": [
+      "wood"
+    ],
+    "resistances": {
+      "wood": 60
+    },
+    "element": "water"
+  },
+  "zhulong": {
+    "name": {
+      "zh_CN": "烛龙",
+      "en_US": "Zhulong"
+    },
+    "char": "T",
+    "color": [
+      255,
+      140,
+      60
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "dragon",
+      "fire"
+    ],
+    "lore": {
+      "zh_CN": "《大荒北经》：钟山之神，名曰烛阴，视为昼，瞑为夜，吹为冬，呼为夏，不食不寝不息。",
+      "en_US": "Great Wilderness North: The spirit of Mount Zhong — when its eyes open it is day, when they close it is night; its breath is winter and summer."
+    },
+    "components": {
+      "fighter": {
+        "hp": 45,
+        "power": 12,
+        "defense": 4,
+        "xp_reward": 800
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "attack_tags": [
+      "metal",
+      "fire"
+    ],
+    "resistances": {
+      "fire": 60,
+      "metal": 60
+    },
+    "element": "fire"
+  },
+  "boss_mingshe": {
+    "name": {
+      "zh_CN": "鸣蛇",
+      "en_US": "Singing Serpent"
+    },
+    "char": "s",
+    "color": [
+      150,
+      220,
+      190
+    ],
+    "tags": [
+      "shanhaijing",
+      "zhongshanjing",
+      "serpent",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "鲜山……鸣蛇，其状如蛇而四翼，其音如磬，见则其邑大旱。",
+      "en_US": "On Mt. Xian lives the Singing Serpent - a snake with four wings whose voice chimes like jade; wherever it appears, drought follows."
+    },
+    "components": {
+      "fighter": {
+        "hp": 26,
+        "power": 6,
+        "defense": 1,
+        "xp_reward": 300
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "element": "fire",
+    "attack_tags": []
+  },
+  "boss_tianhu": {
+    "name": {
+      "zh_CN": "九尾天狐",
+      "en_US": "Nine-Tail Prime"
+    },
+    "char": "H",
+    "color": [
+      255,
+      170,
+      200
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "beast",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "青丘之山，有兽焉，其状如狐而九尾，其音如婴儿，能食人；食者不蛊。",
+      "en_US": "On Mt. Qingqiu dwells a fox of nine tails that cries like an infant and devours people; those who eat it are immune to evil."
+    },
+    "components": {
+      "fighter": {
+        "hp": 55,
+        "power": 10,
+        "defense": 3,
+        "xp_reward": 800
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "fire": 40
+    },
+    "attack_tags": [
+      "fire"
+    ],
+    "element": "fire"
+  },
+  "boss_gudiaowang": {
+    "name": {
+      "zh_CN": "蛊雕王",
+      "en_US": "Gu Diao Alpha"
+    },
+    "char": "D",
+    "color": [
+      210,
+      170,
+      90
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "bird",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "鹿吴之山……有兽名曰蛊雕，其状如雕而有角，其音如婴儿之音，是食人。",
+      "en_US": "On Mt. Luwu lives the Gu Diao - an eagle with horns that cries like an infant and preys upon people."
+    },
+    "components": {
+      "fighter": {
+        "hp": 48,
+        "power": 9,
+        "defense": 3,
+        "xp_reward": 700
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "element": "metal",
+    "attack_tags": []
+  },
+  "boss_luwujun": {
+    "name": {
+      "zh_CN": "陆吾·神陆",
+      "en_US": "Lu Wu the Warden"
+    },
+    "char": "K",
+    "color": [
+      230,
+      210,
+      140
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "beast",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "昆仑之丘，是实惟帝之下都，神陆吾司之。其神状虎身而九尾，人面而虎爪。",
+      "en_US": "Mt. Kunlun is the lower capital of Heaven, warded by the god Lu Wu - tiger-bodied, nine-tailed, with a human face and tiger claws."
+    },
+    "components": {
+      "fighter": {
+        "hp": 60,
+        "power": 10,
+        "defense": 4,
+        "xp_reward": 900
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "stun": 40
+    },
+    "element": "earth",
+    "attack_tags": []
+  },
+  "boss_xiangliu_ying": {
+    "name": {
+      "zh_CN": "相柳之影",
+      "en_US": "Shade of Xiangliu"
+    },
+    "char": "Y",
+    "color": [
+      120,
+      200,
+      230
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "serpent",
+      "boss",
+      "water"
+    ],
+    "lore": {
+      "zh_CN": "共工之臣曰相柳氏，九首，以食于九山。其所厌之泽，即为深渊。",
+      "en_US": "Xiangliu, minister of Gonggong, bears nine heads and devours nine mountains; every swamp he touches sinks into abyss."
+    },
+    "components": {
+      "fighter": {
+        "hp": 70,
+        "power": 12,
+        "defense": 4,
+        "xp_reward": 1100
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "stun": 30,
+      "wood": 50
+    },
+    "attack_tags": [
+      "wood"
+    ],
+    "element": "water"
+  },
+  "boss_zhuduwang": {
+    "name": {
+      "zh_CN": "诸犊·凶王",
+      "en_US": "Zhu Du the Fierce"
+    },
+    "char": "W",
+    "color": [
+      200,
+      120,
+      90
+    ],
+    "tags": [
+      "shanhaijing",
+      "beishanjing",
+      "beast",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "北山……有兽焉，其状如豹而长尾，人首牛耳，一目，名曰诸犊，善吒。",
+      "en_US": "In the Northern Mountains lives Zhu Du - leopard-bodied with a long tail, a human head, ox ears and a single eye, ever roaring."
+    },
+    "components": {
+      "fighter": {
+        "hp": 62,
+        "power": 12,
+        "defense": 4,
+        "xp_reward": 1000
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "element": "earth",
+    "attack_tags": []
+  },
+  "boss_mafuling": {
+    "name": {
+      "zh_CN": "马腹·凶灵",
+      "en_US": "Ma Fu Wraith"
+    },
+    "char": "F",
+    "color": [
+      180,
+      90,
+      120
+    ],
+    "tags": [
+      "shanhaijing",
+      "dongshanjing",
+      "beast",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "曼渠之山……有兽焉，名曰马腹，其状人面虎身，其音如婴儿，是食人。",
+      "en_US": "On Mt. Manqu dwells Ma Fu - a human-faced, tiger-bodied beast that cries like an infant and devours people."
+    },
+    "components": {
+      "fighter": {
+        "hp": 72,
+        "power": 13,
+        "defense": 5,
+        "xp_reward": 1300
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "fire": 30
+    },
+    "attack_tags": [
+      "fire"
+    ],
+    "element": "fire"
+  },
+  "boss_zhulongzhen": {
+    "name": {
+      "zh_CN": "烛龙真身",
+      "en_US": "Zhulong Awakened"
+    },
+    "char": "R",
+    "color": [
+      255,
+      120,
+      80
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "dragon",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "钟山之神，名曰烛阴。视为昼，瞑为夜，吹为冬，呼为夏……是烛九阴，是谓烛龙。",
+      "en_US": "The god of Mt. Zhong is called Candle Dragon: its open eyes are day, its closed eyes night; its breath is winter and summer."
+    },
+    "components": {
+      "fighter": {
+        "hp": 100,
+        "power": 16,
+        "defense": 6,
+        "xp_reward": 2000
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "fire": 60,
+      "stun": 50
+    },
+    "attack_tags": [
+      "fire"
+    ],
+    "element": "fire"
+  },
+  "boss_wuluo": {
+    "name": {
+      "zh_CN": "武罗·密都神",
+      "en_US": "Wu Luo of the Vale"
+    },
+    "char": "w",
+    "color": [
+      206,
+      172,
+      224
+    ],
+    "tags": [
+      "shanhaijing",
+      "zhongshanjing",
+      "beast",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "青要之山，实惟帝之密都，北望河曲，是多驾鸟。南望墠渚，禹父之所化。武罗司之，其状人面而豹文，小要而白齿，其鸣如鸣佩。",
+      "en_US": "Mt. Qingyao is the Emperor's secret vale, warded by the god Wu Luo - human-faced with leopard markings, a slender waist and white teeth, its voice like chiming jade."
+    },
+    "components": {
+      "fighter": {
+        "hp": 32,
+        "power": 7,
+        "defense": 2,
+        "xp_reward": 380
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "stun": 30
+    },
+    "element": "earth",
+    "attack_tags": []
+  },
+  "boss_paoyao": {
+    "name": {
+      "zh_CN": "狍鸮·饕餮",
+      "en_US": "Pao Yao the Glutton"
+    },
+    "char": "o",
+    "color": [
+      196,
+      140,
+      92
+    ],
+    "tags": [
+      "shanhaijing",
+      "beishanjing",
+      "beast",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "钩吾之山……有兽焉，其状如羊身人面，其目在腋下，虎齿人爪，其音如婴儿，名曰狍鸮，是食人。",
+      "en_US": "On Mt. Gouwu lives Pao Yao - a beast with a lamb's body and a human face, eyes beneath its armpits, tiger teeth and human claws. It cries like an infant and devours people."
+    },
+    "components": {
+      "fighter": {
+        "hp": 68,
+        "power": 12,
+        "defense": 4,
+        "xp_reward": 1050
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "element": "earth",
+    "attack_tags": [],
+    "resistances": {
+      "earth": 40
+    }
+  },
+  "boss_jingwei": {
+    "name": {
+      "zh_CN": "精卫·衔石",
+      "en_US": "Jingwei the Stone-Bearer"
+    },
+    "char": "V",
+    "color": [
+      122,
+      142,
+      208
+    ],
+    "tags": [
+      "shanhaijing",
+      "beishanjing",
+      "bird",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "发鸠之山……有鸟焉，其状如乌，文首、白喙、赤足，名曰精卫，其鸣自詨。是炎帝之少女，名曰女娃。女娃游于东海，溺而不返，故常衔西山之木石，以堙于东海。",
+      "en_US": "On Mt. Fajiu lives Jingwei - a bird with a patterned head, white beak and crimson feet. She was once Nvwa, the Yan Emperor's daughter, drowned in the Eastern Sea; now she carries twigs and stones forever to fill it."
+    },
+    "components": {
+      "fighter": {
+        "hp": 55,
+        "power": 11,
+        "defense": 3,
+        "xp_reward": 900
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "metal": 30,
+      "water": 40
+    },
+    "element": "water",
+    "attack_tags": [
+      "water"
+    ]
+  },
+  "boss_longzhi": {
+    "name": {
+      "zh_CN": "蠪侄·九首狐",
+      "en_US": "Long Zhi the Nine-Headed"
+    },
+    "char": "j",
+    "color": [
+      232,
+      152,
+      172
+    ],
+    "tags": [
+      "shanhaijing",
+      "dongshanjing",
+      "beast",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "凫丽之山……有兽焉，其状如狐而九尾、九首、虎爪，名曰蠪侄，其音如婴儿，是食人。",
+      "en_US": "On Mt. Fuli lives Long Zhi - a fox with nine tails, nine heads and tiger claws. It cries like an infant and devours people."
+    },
+    "components": {
+      "fighter": {
+        "hp": 78,
+        "power": 14,
+        "defense": 5,
+        "xp_reward": 1350
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "fire": 40
+    },
+    "attack_tags": [
+      "fire"
+    ],
+    "element": "fire"
+  },
+  "boss_yinglong": {
+    "name": {
+      "zh_CN": "应龙·旱神",
+      "en_US": "Yinglong the Rain-Dragon"
+    },
+    "char": "A",
+    "color": [
+      182,
+      202,
+      255
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "dragon",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "大荒东北隅中，有山名曰凶犁土丘。应龙处南极，杀蚩尤与夸父，不得复上，故下数旱。旱而为应龙之状，乃得大雨。",
+      "en_US": "In the northeast of the Great Wilderness stands Mt. Xiongli. There dwells Yinglong, the winged dragon who slew Chiyou and Kuafu; barred from heaven, it brings drought below - yet summon its likeness, and rain will fall."
+    },
+    "components": {
+      "fighter": {
+        "hp": 95,
+        "power": 15,
+        "defense": 5,
+        "xp_reward": 1800
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "fire": 40,
+      "metal": 50
+    },
+    "attack_tags": [
+      "water",
+      "metal"
+    ],
+    "element": "water"
+  },
+  "boss_kuafu": {
+    "name": {
+      "zh_CN": "夸父·逐日",
+      "en_US": "Kuafu the Sun-Chaser"
+    },
+    "char": "C",
+    "color": [
+      255,
+      182,
+      92
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "giant",
+      "boss"
+    ],
+    "lore": {
+      "zh_CN": "大荒之中，有山名曰成都载天。有人珥两黄蛇，把两黄蛇，名曰夸父。……夸父不量力，欲追日景，逮之于禺谷。将饮河而不足也，将走大泽，未至，死于此。",
+      "en_US": "In the Great Wilderness stands Mt. Chengdu-Zaitian. There dwells Kuafu, earrings of yellow serpents, who chased the sun to Yugu valley. The rivers could not quench his thirst; he died on the road to the great marsh."
+    },
+    "components": {
+      "fighter": {
+        "hp": 110,
+        "power": 17,
+        "defense": 6,
+        "xp_reward": 2200
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "earth": 50,
+      "fire": 60,
+      "stun": 60
+    },
+    "attack_tags": [
+      "fire"
+    ],
+    "element": "fire"
+  },
+  "wenlin": {
+    "name": {
+      "zh_CN": "闻獜",
+      "en_US": "Wenlin"
+    },
+    "char": "n",
+    "color": [
+      200,
+      190,
+      150
+    ],
+    "tags": [
+      "shanhaijing",
+      "zhongshanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "鲜山……有兽焉，其状如彘而黄身白头白尾，名曰闻獜，见则天下大风。",
+      "en_US": "On Mt. Xian lives the Wenlin, a pig-like beast with a yellow body and white head and tail; wherever it appears, great winds rise."
+    },
+    "components": {
+      "fighter": {
+        "hp": 12,
+        "power": 4,
+        "defense": 1,
+        "xp_reward": 60
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "earth",
+    "attack_tags": []
+  },
+  "qinggeng": {
+    "name": {
+      "zh_CN": "青耕",
+      "en_US": "Qinggeng"
+    },
+    "char": "q",
+    "color": [
+      140,
+      220,
+      190
+    ],
+    "tags": [
+      "shanhaijing",
+      "zhongshanjing",
+      "bird"
+    ],
+    "lore": {
+      "zh_CN": "堇理之山……有鸟焉，青身白喙，名曰青耕，可以御疫。",
+      "en_US": "On Mt. Jinli lives the Qinggeng, a bird with a green body and white beak; it wards off plague."
+    },
+    "components": {
+      "fighter": {
+        "hp": 10,
+        "power": 3,
+        "defense": 0,
+        "xp_reward": 50
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "element": "wood",
+    "attack_tags": []
+  },
+  "fuzhu": {
+    "name": {
+      "zh_CN": "夫诸",
+      "en_US": "Fuzhu"
+    },
+    "char": "f",
+    "color": [
+      235,
+      235,
+      240
+    ],
+    "tags": [
+      "shanhaijing",
+      "zhongshanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "敖岸之山……有兽焉，如白鹿而四角，名曰夫诸，见则其邑大水。",
+      "en_US": "On Mt. Ao'an lives the Fuzhu, a white deer with four horns; wherever it appears, floods follow."
+    },
+    "components": {
+      "fighter": {
+        "hp": 14,
+        "power": 4,
+        "defense": 1,
+        "xp_reward": 70
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "water",
+    "attack_tags": [
+      "water"
+    ],
+    "resistances": {
+      "water": 40
+    }
+  },
+  "zhen": {
+    "name": {
+      "zh_CN": "鸩",
+      "en_US": "Zhen"
+    },
+    "char": "z",
+    "color": [
+      170,
+      120,
+      170
+    ],
+    "tags": [
+      "shanhaijing",
+      "zhongshanjing",
+      "bird"
+    ],
+    "lore": {
+      "zh_CN": "女儿之山……多鸩。鸩如雉，恒食蜚，其羽有毒。",
+      "en_US": "Mt. Nver abounds with the Zhen, a pheasant-like bird whose feathers carry deadly venom."
+    },
+    "components": {
+      "fighter": {
+        "hp": 12,
+        "power": 5,
+        "defense": 1,
+        "xp_reward": 90
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "resistances": {
+      "wood": 40
+    },
+    "attack_tags": [
+      "wood"
+    ],
+    "element": "wood"
+  },
+  "huashe": {
+    "name": {
+      "zh_CN": "化蛇",
+      "en_US": "Huashe"
+    },
+    "char": "c",
+    "color": [
+      110,
+      180,
+      210
+    ],
+    "tags": [
+      "shanhaijing",
+      "zhongshanjing",
+      "serpent",
+      "water"
+    ],
+    "lore": {
+      "zh_CN": "阳山……有兽焉，人面豺身，鸟翼蛇行，名曰化蛇，见则其邑大水。",
+      "en_US": "On Mt. Yang lives the Huashe, a beast with a human face, jackal body and bird wings that glides like a snake; it heralds floods."
+    },
+    "components": {
+      "fighter": {
+        "hp": 16,
+        "power": 5,
+        "defense": 1,
+        "xp_reward": 110
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "water",
+    "attack_tags": [],
+    "resistances": {
+      "water": 40
+    }
+  },
+  "lushu": {
+    "name": {
+      "zh_CN": "鹿蜀",
+      "en_US": "Lushu"
+    },
+    "char": "l",
+    "color": [
+      210,
+      170,
+      110
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "杻阳之山……有兽焉，马身虎纹，白首赤尾，音如谣，名曰鹿蜀，佩之宜子孙。",
+      "en_US": "On Mt. Niuyang lives the Lushu, horse-bodied with tiger stripes; wearing its pelt blesses one's descendants."
+    },
+    "components": {
+      "fighter": {
+        "hp": 16,
+        "power": 5,
+        "defense": 1,
+        "xp_reward": 130
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "wood",
+    "attack_tags": []
+  },
+  "boyi": {
+    "name": {
+      "zh_CN": "猼訑",
+      "en_US": "Boyi"
+    },
+    "char": "b",
+    "color": [
+      190,
+      160,
+      220
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "基山……有兽焉，九尾四耳，其目在背，名曰猼訑，佩之不畏。",
+      "en_US": "On Mt. Ji lives the Boyi, a beast with nine tails, four ears and eyes upon its back; wearing it dispels fear."
+    },
+    "components": {
+      "fighter": {
+        "hp": 18,
+        "power": 6,
+        "defense": 2,
+        "xp_reward": 160
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "earth",
+    "attack_tags": []
+  },
+  "xuangui": {
+    "name": {
+      "zh_CN": "旋龟",
+      "en_US": "Xuangui"
+    },
+    "char": "t",
+    "color": [
+      120,
+      200,
+      170
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "beast",
+      "water"
+    ],
+    "lore": {
+      "zh_CN": "杻阳之山……旋龟，其状如龟而鸟首虺尾，其音如判木，佩之不聋。",
+      "en_US": "On Mt. Niuyang lives the Xuangui, a turtle with a bird's head and viper's tail; wearing it preserves hearing."
+    },
+    "components": {
+      "fighter": {
+        "hp": 20,
+        "power": 4,
+        "defense": 3,
+        "xp_reward": 150
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "water",
+    "attack_tags": [
+      "water"
+    ],
+    "resistances": {
+      "water": 40
+    }
+  },
+  "guanguan": {
+    "name": {
+      "zh_CN": "灌灌",
+      "en_US": "Guanguan"
+    },
+    "char": "g",
+    "color": [
+      210,
+      200,
+      130
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "bird"
+    ],
+    "lore": {
+      "zh_CN": "青丘之山……有鸟焉，其状如鸠，其音如呵，名曰灌灌，佩之不惑。",
+      "en_US": "On Mt. Qingqiu lives the Guanguan, a dove-like bird; wearing it guards against confusion."
+    },
+    "components": {
+      "fighter": {
+        "hp": 12,
+        "power": 4,
+        "defense": 1,
+        "xp_reward": 100
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "element": "wood",
+    "attack_tags": []
+  },
+  "changyou": {
+    "name": {
+      "zh_CN": "长右",
+      "en_US": "Changyou"
+    },
+    "char": "v",
+    "color": [
+      170,
+      150,
+      130
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "长右之山……有兽焉，如禺而四耳，名长右，见则郡县大水。",
+      "en_US": "On Mt. Changyou lives a monkey-like beast with four ears; its appearance heralds floods across the counties."
+    },
+    "components": {
+      "fighter": {
+        "hp": 18,
+        "power": 6,
+        "defense": 2,
+        "xp_reward": 170
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "water",
+    "attack_tags": [
+      "water"
+    ],
+    "resistances": {
+      "water": 30
+    }
+  },
+  "lili": {
+    "name": {
+      "zh_CN": "狸力",
+      "en_US": "Lili"
+    },
+    "char": "r",
+    "color": [
+      190,
+      170,
+      110
+    ],
+    "tags": [
+      "shanhaijing",
+      "nanshanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "柜山……有兽焉，如豚有距，音如狗吠，名曰狸力，见则多土功。",
+      "en_US": "On Mt. Ju lives the Lili, a pig with spurs that barks like a dog; it heralds great labors of earth."
+    },
+    "components": {
+      "fighter": {
+        "hp": 16,
+        "power": 5,
+        "defense": 2,
+        "xp_reward": 140
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "earth",
+    "attack_tags": [
+      "earth"
+    ],
+    "resistances": {
+      "earth": 30
+    }
+  },
+  "dijiang": {
+    "name": {
+      "zh_CN": "帝江",
+      "en_US": "Dijiang"
+    },
+    "char": "e",
+    "color": [
+      230,
+      200,
+      140
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "bird"
+    ],
+    "lore": {
+      "zh_CN": "天山……有神焉，浑敦无面目，是识歌舞，实惟帝江也。",
+      "en_US": "On Mt. Tian dwells the god Dijiang, a formless sack that knows song and dance."
+    },
+    "components": {
+      "fighter": {
+        "hp": 24,
+        "power": 7,
+        "defense": 2,
+        "xp_reward": 260
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "element": "earth",
+    "attack_tags": [
+      "earth"
+    ],
+    "resistances": {
+      "earth": 30
+    }
+  },
+  "zheng": {
+    "name": {
+      "zh_CN": "狰",
+      "en_US": "Zheng"
+    },
+    "char": "p",
+    "color": [
+      220,
+      120,
+      90
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "章莪之山……有兽焉，状如赤豹，五尾一角，音如击石，名曰狰。",
+      "en_US": "On Mt. Zhang'e lives the Zheng, a crimson leopard with five tails and one horn, its cry like struck stone."
+    },
+    "components": {
+      "fighter": {
+        "hp": 26,
+        "power": 8,
+        "defense": 2,
+        "xp_reward": 300
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "attack_tags": [
+      "fire"
+    ],
+    "element": "metal"
+  },
+  "zhuyan": {
+    "name": {
+      "zh_CN": "朱厌",
+      "en_US": "Zhuyan"
+    },
+    "char": "u",
+    "color": [
+      220,
+      200,
+      180
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "小次之山……有兽焉，如猿而白首赤足，名曰朱厌，见则大兵。",
+      "en_US": "On Mt. Xiaoci lives the Zhuyan, an ape with a white head and crimson feet; wherever it appears, war follows."
+    },
+    "components": {
+      "fighter": {
+        "hp": 22,
+        "power": 8,
+        "defense": 1,
+        "xp_reward": 280
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "metal",
+    "attack_tags": []
+  },
+  "manman": {
+    "name": {
+      "zh_CN": "蛮蛮",
+      "en_US": "Manman"
+    },
+    "char": "a",
+    "color": [
+      200,
+      170,
+      220
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "bird"
+    ],
+    "lore": {
+      "zh_CN": "崇吾之山……有鸟焉，一翼一目，相得乃飞，名曰蛮蛮。",
+      "en_US": "On Mt. Chongwu lives the Manman, a bird of one wing and one eye that flies only in pairs."
+    },
+    "components": {
+      "fighter": {
+        "hp": 16,
+        "power": 6,
+        "defense": 1,
+        "xp_reward": 200
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "element": "water",
+    "attack_tags": []
+  },
+  "wenyao": {
+    "name": {
+      "zh_CN": "文鳐鱼",
+      "en_US": "Wenyao Fish"
+    },
+    "char": "y",
+    "color": [
+      130,
+      190,
+      220
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "fish"
+    ],
+    "lore": {
+      "zh_CN": "泰器之山……观水出焉，是多文鳐鱼，鸟身鱼翼，见则天下大穰。",
+      "en_US": "The River Guan abounds with Wenyao fish, bird-bodied with fish wings; their appearance promises great harvests."
+    },
+    "components": {
+      "fighter": {
+        "hp": 18,
+        "power": 5,
+        "defense": 1,
+        "xp_reward": 190
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "water",
+    "attack_tags": [
+      "water"
+    ],
+    "resistances": {
+      "water": 30
+    }
+  },
+  "tiangou": {
+    "name": {
+      "zh_CN": "天狗",
+      "en_US": "Tiangou"
+    },
+    "char": "k",
+    "color": [
+      230,
+      230,
+      240
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "阴山……有兽焉，如狸而白首，名曰天狗，可以御凶。",
+      "en_US": "On Mt. Yin lives the Tiangou, a lynx-like beast with a white head; it wards off calamity."
+    },
+    "components": {
+      "fighter": {
+        "hp": 22,
+        "power": 7,
+        "defense": 2,
+        "xp_reward": 250
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "metal",
+    "attack_tags": []
+  },
+  "lei": {
+    "name": {
+      "zh_CN": "鸓",
+      "en_US": "Lei"
+    },
+    "char": "w",
+    "color": [
+      240,
+      150,
+      120
+    ],
+    "tags": [
+      "shanhaijing",
+      "xishanjing",
+      "bird"
+    ],
+    "lore": {
+      "zh_CN": "翠山……有鸟焉，其状如鹊，两首四足，名曰鸓，可以御火。",
+      "en_US": "On Mt. Cui lives the Lei, a magpie with two heads and four legs; it wards off fire."
+    },
+    "components": {
+      "fighter": {
+        "hp": 16,
+        "power": 6,
+        "defense": 1,
+        "xp_reward": 210
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "resistances": {
+      "fire": 40
+    },
+    "element": "metal",
+    "attack_tags": []
+  },
+  "yayu": {
+    "name": {
+      "zh_CN": "窫窳",
+      "en_US": "Yayu"
+    },
+    "char": "i",
+    "color": [
+      110,
+      170,
+      200
+    ],
+    "tags": [
+      "shanhaijing",
+      "beishanjing",
+      "serpent",
+      "water"
+    ],
+    "lore": {
+      "zh_CN": "少咸之山……窫窳，龙首，是食人。",
+      "en_US": "On Mt. Shaoxian lives the Yayu, a dragon-headed horror that devours people."
+    },
+    "components": {
+      "fighter": {
+        "hp": 30,
+        "power": 10,
+        "defense": 3,
+        "xp_reward": 420
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "attack_tags": [
+      "wood"
+    ],
+    "element": "water"
+  },
+  "mengji": {
+    "name": {
+      "zh_CN": "孟极",
+      "en_US": "Mengji"
+    },
+    "char": "m",
+    "color": [
+      200,
+      190,
+      160
+    ],
+    "tags": [
+      "shanhaijing",
+      "beishanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "石者之山……有兽焉，豹文而白身，名曰孟极，善伏。",
+      "en_US": "On Mt. Shizhe lives the Mengji, a leopard-marked white beast, master of the ambush."
+    },
+    "components": {
+      "fighter": {
+        "hp": 22,
+        "power": 7,
+        "defense": 2,
+        "xp_reward": 260
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "earth",
+    "attack_tags": []
+  },
+  "youyan": {
+    "name": {
+      "zh_CN": "幽鴳",
+      "en_US": "Youyan"
+    },
+    "char": "o",
+    "color": [
+      180,
+      160,
+      140
+    ],
+    "tags": [
+      "shanhaijing",
+      "beishanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "灌题之山……有兽焉，如禺而赤身，名曰幽鴳，其音如笑。",
+      "en_US": "On Mt. Guanti lives the Youyan, a red-bodied monkey whose cry is like laughter."
+    },
+    "components": {
+      "fighter": {
+        "hp": 20,
+        "power": 6,
+        "defense": 1,
+        "xp_reward": 230
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "wood",
+    "attack_tags": []
+  },
+  "zuzi": {
+    "name": {
+      "zh_CN": "足訾",
+      "en_US": "Zuzi"
+    },
+    "char": "0",
+    "color": [
+      190,
+      170,
+      150
+    ],
+    "tags": [
+      "shanhaijing",
+      "beishanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "蔓联之山……有兽焉，禺身牛尾，名曰足訾，其音如呼。",
+      "en_US": "On Mt. Manlian lives the Zuzi, monkey-bodied with an ox tail, crying like a calling voice."
+    },
+    "components": {
+      "fighter": {
+        "hp": 22,
+        "power": 7,
+        "defense": 2,
+        "xp_reward": 250
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "earth",
+    "attack_tags": [],
+    "resistances": {
+      "earth": 30
+    }
+  },
+  "suanyu": {
+    "name": {
+      "zh_CN": "酸与",
+      "en_US": "Suanyu"
+    },
+    "char": "1",
+    "color": [
+      170,
+      200,
+      160
+    ],
+    "tags": [
+      "shanhaijing",
+      "beishanjing",
+      "serpent"
+    ],
+    "lore": {
+      "zh_CN": "秀山……酸与，其状如蛇而四翼六目三足，见则其邑有恐。",
+      "en_US": "The Suanyu is a serpent with four wings, six eyes and three legs; wherever it appears, terror grips the town."
+    },
+    "components": {
+      "fighter": {
+        "hp": 24,
+        "power": 8,
+        "defense": 2,
+        "xp_reward": 300
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "resistances": {
+      "stun": 30
+    },
+    "element": "water",
+    "attack_tags": []
+  },
+  "xiegou": {
+    "name": {
+      "zh_CN": "絜钩",
+      "en_US": "Xiegou"
+    },
+    "char": "2",
+    "color": [
+      180,
+      190,
+      170
+    ],
+    "tags": [
+      "shanhaijing",
+      "dongshanjing",
+      "bird"
+    ],
+    "lore": {
+      "zh_CN": "剡山……有鸟焉，如凫而鼠尾，善登木，名曰絜钩，见则多疫。",
+      "en_US": "On Mt. Shan lives the Xiegou, a duck-like bird with a rat's tail; wherever it appears, plagues spread."
+    },
+    "components": {
+      "fighter": {
+        "hp": 24,
+        "power": 8,
+        "defense": 2,
+        "xp_reward": 320
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "element": "wood",
+    "attack_tags": []
+  },
+  "congcong": {
+    "name": {
+      "zh_CN": "从从",
+      "en_US": "Congcong"
+    },
+    "char": "3",
+    "color": [
+      200,
+      170,
+      130
+    ],
+    "tags": [
+      "shanhaijing",
+      "dongshanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "栒状之山……有兽焉，如犬六足，名曰从从，其音如狺狺。",
+      "en_US": "On Mt. Xunzhuang lives the Congcong, a dog with six legs that snarls without end."
+    },
+    "components": {
+      "fighter": {
+        "hp": 28,
+        "power": 9,
+        "defense": 3,
+        "xp_reward": 380
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "earth",
+    "attack_tags": []
+  },
+  "youyou": {
+    "name": {
+      "zh_CN": "峳峳",
+      "en_US": "Youyou"
+    },
+    "char": "4",
+    "color": [
+      210,
+      180,
+      140
+    ],
+    "tags": [
+      "shanhaijing",
+      "dongshanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "䃌山……有兽焉，如马而羊目，四角牛尾，名曰峳峳，见则其国多狡客。",
+      "en_US": "On Mt. Yin lives the Youyou, horse-like with goat eyes and four horns; wherever it appears, schemers gather."
+    },
+    "components": {
+      "fighter": {
+        "hp": 30,
+        "power": 10,
+        "defense": 3,
+        "xp_reward": 420
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "metal",
+    "attack_tags": []
+  },
+  "tongtong": {
+    "name": {
+      "zh_CN": "狪狪",
+      "en_US": "Tongtong"
+    },
+    "char": "5",
+    "color": [
+      230,
+      210,
+      170
+    ],
+    "tags": [
+      "shanhaijing",
+      "dongshanjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "泰山……有兽焉，其状如豚而有珠，名曰狪狪，其鸣自訆。",
+      "en_US": "On Mt. Tai lives the Tongtong, a pig that carries pearls within its body."
+    },
+    "components": {
+      "fighter": {
+        "hp": 26,
+        "power": 8,
+        "defense": 3,
+        "xp_reward": 360
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "earth",
+    "attack_tags": [],
+    "resistances": {
+      "earth": 30
+    }
+  },
+  "jiufeng": {
+    "name": {
+      "zh_CN": "九凤",
+      "en_US": "Nine-Phoenix"
+    },
+    "char": "6",
+    "color": [
+      255,
+      150,
+      110
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "bird"
+    ],
+    "lore": {
+      "zh_CN": "大荒之中，有神九首，人面，鸟身，名曰九凤。",
+      "en_US": "In the Great Wilderness dwells the Nine-Phoenix, a god with nine human faces upon a bird's body."
+    },
+    "components": {
+      "fighter": {
+        "hp": 40,
+        "power": 12,
+        "defense": 4,
+        "xp_reward": 700
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 7
+      }
+    },
+    "resistances": {
+      "fire": 40
+    },
+    "attack_tags": [
+      "fire"
+    ],
+    "element": "fire"
+  },
+  "zouwu": {
+    "name": {
+      "zh_CN": "驺吾",
+      "en_US": "Zouwu"
+    },
+    "char": "7",
+    "color": [
+      255,
+      220,
+      130
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "beast"
+    ],
+    "lore": {
+      "zh_CN": "林氏国……有珍兽，大若虎，五采毕具，尾长于身，名曰驺吾，乘之日行千里。",
+      "en_US": "The realm of Lin holds a treasured beast, tiger-sized in five colors with a tail longer than its body: the Zouwu, which carries its rider a thousand li a day."
+    },
+    "components": {
+      "fighter": {
+        "hp": 45,
+        "power": 13,
+        "defense": 4,
+        "xp_reward": 800
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "element": "metal",
+    "attack_tags": []
+  },
+  "bashe": {
+    "name": {
+      "zh_CN": "巴蛇",
+      "en_US": "Ba Serpent"
+    },
+    "char": "8",
+    "color": [
+      140,
+      190,
+      150
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "serpent"
+    ],
+    "lore": {
+      "zh_CN": "巴蛇食象，三岁而出其骨。",
+      "en_US": "The Ba Serpent swallows elephants whole and three years pass before it casts out their bones."
+    },
+    "components": {
+      "fighter": {
+        "hp": 50,
+        "power": 13,
+        "defense": 4,
+        "xp_reward": 850
+      },
+      "ai": {
+        "type": "hostile"
+      }
+    },
+    "resistances": {
+      "wood": 50
+    },
+    "attack_tags": [
+      "wood"
+    ],
+    "element": "wood"
+  },
+  "boss_dijiang_zhen": {
+    "name": {
+      "zh_CN": "帝江·浑敦真身",
+      "en_US": "Dijiang the Primordial Chaos"
+    },
+    "char": "J",
+    "color": [
+      216,
+      178,
+      74
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "bird",
+      "boss",
+      "drop:tianshu_shan"
+    ],
+    "lore": {
+      "zh_CN": "天山有神，其状如黄囊，赤如丹火，六足四翼，浑敦无面目，是识歌舞，实惟帝江也。",
+      "en_US": "On Mt. Tian dwells a god shaped like a yellow sack, red as flame, six-legged and four-winged, faceless yet knowing song and dance - Dijiang, the primordial chaos."
+    },
+    "components": {
+      "fighter": {
+        "hp": 160,
+        "power": 19,
+        "defense": 9,
+        "xp_reward": 3000
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "earth": 50,
+      "fire": 40,
+      "metal": 40,
+      "stun": 70,
+      "wood": 50
+    },
+    "attack_tags": [
+      "metal"
+    ],
+    "element": "earth"
+  },
+  "boss_xiangliu_zhen": {
+    "name": {
+      "zh_CN": "相柳·九首真身",
+      "en_US": "Xiangliu the Nine-Headed"
+    },
+    "char": "X",
+    "color": [
+      126,
+      208,
+      134
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "serpent",
+      "boss",
+      "drop:tianshu_hainei"
+    ],
+    "lore": {
+      "zh_CN": "共工之臣曰相柳氏，九首，以食于九山。相柳之所抵，厥为泽溪。禹杀相柳，其血腥，不可以树五谷种。",
+      "en_US": "Gonggong's minister Xiangliu, nine-headed, feeding upon nine mountains; wherever it rested sank into fen and swamp. Its blood turned the earth barren for all grain."
+    },
+    "components": {
+      "fighter": {
+        "hp": 150,
+        "power": 20,
+        "defense": 6,
+        "xp_reward": 3200
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "fire": 30,
+      "water": 50,
+      "wood": 80
+    },
+    "attack_tags": [
+      "wood"
+    ],
+    "element": "water"
+  },
+  "boss_xingtian": {
+    "name": {
+      "zh_CN": "刑天·断首争神",
+      "en_US": "Xingtian the Headless"
+    },
+    "char": "T",
+    "color": [
+      232,
+      88,
+      88
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "giant",
+      "boss",
+      "drop:tianshu_haiwai"
+    ],
+    "lore": {
+      "zh_CN": "刑天与帝至此争神，帝断其首，葬之常羊之山。乃以乳为目，以脐为口，操干戚以舞。",
+      "en_US": "Xingtian contended with the Supreme Deity for godhood here; his head was severed and buried on Mt. Changyang. Eyes became his breasts, his navel a mouth - still he dances with shield and axe."
+    },
+    "components": {
+      "fighter": {
+        "hp": 140,
+        "power": 23,
+        "defense": 7,
+        "xp_reward": 3400
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "metal": 30,
+      "stun": 80
+    },
+    "attack_tags": [],
+    "element": "metal"
+  },
+  "boss_chiyou": {
+    "name": {
+      "zh_CN": "蚩尤·兵主",
+      "en_US": "Chiyou the War-Lord"
+    },
+    "char": "V",
+    "color": [
+      196,
+      108,
+      224
+    ],
+    "tags": [
+      "shanhaijing",
+      "dahuangjing",
+      "giant",
+      "boss",
+      "drop:tianshu_dahuang"
+    ],
+    "lore": {
+      "zh_CN": "蚩尤作兵伐黄帝，黄帝乃令应龙攻之冀州之野。应龙畜水，蚩尤请风伯雨师，纵大风雨。",
+      "en_US": "Chiyou forged arms to march on the Yellow Emperor, who sent Yinglong against him in the fields of Jizhou. Chiyou called the Wind Lord and Rain Master, and loosed storm and deluge upon the field."
+    },
+    "components": {
+      "fighter": {
+        "hp": 170,
+        "power": 24,
+        "defense": 8,
+        "xp_reward": 4000
+      },
+      "ai": {
+        "type": "hostile",
+        "perception": 8
+      }
+    },
+    "resistances": {
+      "fire": 50,
+      "metal": 50,
+      "stun": 60,
+      "wood": 30
+    },
+    "attack_tags": [
+      "fire",
+      "metal"
+    ],
+    "element": "metal"
+  }
+}
