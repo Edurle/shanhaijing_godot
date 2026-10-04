@@ -14,8 +14,10 @@ const MenuClassSelect := preload("res://scripts/view/ui/menu_class_select.gd")
 const MenuInventory := preload("res://scripts/view/ui/menu_inventory.gd")
 const MenuLearn := preload("res://scripts/view/ui/menu_learn.gd")
 const MenuExamine := preload("res://scripts/view/ui/menu_examine.gd")
+const UiHintBarScript := preload("res://scripts/view/ui/hint_bar.gd")
+const UiHelpOverlayScript := preload("res://scripts/view/ui/help_overlay.gd")
 
-enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION }
+enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP }
 
 const MOVE_REPEAT_MSEC := 130  # 长按连走节流
 const TRAVEL_STEP_INTERVAL := 0.075  # 点击旅行的步进节奏（秒/格）
@@ -33,6 +35,8 @@ var menu_class: MenuClassSelect
 var menu_inventory: MenuInventory
 var menu_learn: MenuLearn
 var menu_examine: MenuExamine
+var hint_bar
+var help_overlay
 var mode := Mode.CLASS_SELECT
 
 # 瞄准/择向的进行中技能
@@ -72,8 +76,12 @@ func _ready() -> void:
 	menu_inventory = MenuInventory.new()
 	menu_learn = MenuLearn.new()
 	menu_examine = MenuExamine.new()
-	for panel in [sidebar, log_panel, target_info, menu_class, menu_inventory, menu_learn, menu_examine]:
+	hint_bar = UiHintBarScript.new()
+	help_overlay = UiHelpOverlayScript.new()
+	for panel in [sidebar, log_panel, target_info, menu_class, menu_inventory, menu_learn, menu_examine, hint_bar, help_overlay]:
 		ui.add_child(panel)
+	hint_bar.visible = false
+	help_overlay.visible = false
 	target_info.hide_panel()
 	for panel in [sidebar, log_panel, menu_inventory, menu_learn, menu_examine]:
 		panel.visible = false
@@ -131,6 +139,11 @@ func _dispatch(keycode: int, is_echo: bool) -> void:
 			_handle_targeting(keycode)
 		Mode.DIRECTION:
 			_handle_direction(keycode)
+		Mode.HELP:
+			if keycode in [KEY_H, KEY_ESCAPE, KEY_ENTER, KEY_KP_ENTER]:
+				help_overlay.close()
+				_set_mode(Mode.PLAY)
+				_refresh()
 
 
 func _start_game(class_pair: Array) -> void:
@@ -150,6 +163,9 @@ func _start_game(class_pair: Array) -> void:
 	menu_inventory.setup_menu(engine)
 	menu_learn.setup_menu(engine)
 	menu_examine.setup_menu(engine)
+	hint_bar.setup(engine)
+	hint_bar.visible = true
+	help_overlay.setup_panel(engine)
 	menu_class.visible = false
 	board.setup(state.current, state.player)
 	_set_mode(Mode.PLAY)
@@ -208,6 +224,9 @@ func _handle_play(keycode: int, is_echo: bool) -> void:
 		KEY_TAB:
 			engine.active_page = 1 - engine.active_page
 			_refresh()
+		KEY_H:
+			help_overlay.open()
+			_set_mode(Mode.HELP)
 
 
 func _act(_acted: bool) -> void:
@@ -274,6 +293,11 @@ func _handle_click(pos: Vector2) -> void:
 		Mode.DIRECTION:
 			_exit_cast()
 			_refresh()
+		Mode.HELP:
+			help_overlay.click_at(pos)
+			if not help_overlay.visible:
+				_set_mode(Mode.PLAY)
+				_refresh()
 		Mode.PLAY:
 			_click_play(pos)
 
@@ -574,6 +598,9 @@ func _on_viewport_resized() -> void:
 	var view := get_viewport().get_visible_rect().size
 	sidebar.relayout(view)
 	log_panel.relayout(view)
+	hint_bar.relayout(view)
+	if help_overlay.visible:
+		help_overlay.relayout(view)
 	if menu_class.visible:
 		menu_class.relayout(view)
 	if menu_inventory.visible:
@@ -613,4 +640,6 @@ func _refresh() -> void:
 	)
 	sidebar.refresh()
 	log_panel.refresh()
+	hint_bar.visible = mode == Mode.PLAY or mode == Mode.HELP
+	hint_bar.refresh()
 	board.queue_redraw()

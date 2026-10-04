@@ -277,5 +277,18 @@
   "bon_max_sp": "SP+{v}",
   "weapon_summary": "PHY{p}",
   "weapon_summary_element": "PHY{p}·{el}",
-  "tianshu_pending": "The tianshu volume stirs, but its ascension is not yet bound."
+  "tianshu_pending": "The tianshu volume stirs, but its ascension is not yet bound.",
+  "hint_default": "Arrows/click to move · 1-8 skills · H keymap",
+  "hint_melee": "Walk into a beast to strike (arrows/click)",
+  "hint_game_over": "The wanderer has fallen · restart to roam again",
+  "help_title": "Keymap",
+  "help_close": "H / Esc / click to close",
+  "help_row_move": "Move: arrows / WASD / click-to-travel (hold to repeat; halts on sight)",
+  "help_row_combat": "Combat: walk into beasts to strike; click one to approach & strike once",
+  "help_row_skill": "Skills: 1-8 cast page · Tab swaps class page · dimmed when unaffordable",
+  "help_row_target": "Aiming: ↑↓/Tab cycle · Enter/click cast · Esc/right-click cancel",
+  "help_row_item": "Items: G pickup · I inventory (Tab pages · Enter use/equip · U unequip)",
+  "help_row_grow": "Growth: K learn (cores & essences gate ults) · X examine (resist/element/threat)",
+  "help_row_interact": "Interact: E enter sealed gates / descend · Q return · stand on the stair",
+  "help_row_view": "View: wheel zoom · right-click stop travel / close menus / cancel aim"
 }

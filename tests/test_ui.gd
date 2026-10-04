@@ -87,6 +87,40 @@ func _init() -> void:
 	sidebar.refresh()
 	failed += _check(true, "")  # 到此无运行时错误即通过
 
+	# ---- 上下文提示条：情境切换 ----
+	var hint_bar = load("res://scripts/view/ui/hint_bar.gd").new()
+	root.add_child.call_deferred(hint_bar)
+	await process_frame
+	hint_bar.setup(engine)
+	# 贴身可见敌（前段摆放的烛龙在 11,10）→ 近战提示
+	var hint_melee: String = hint_bar.current_hint()
+	failed += _check(hint_melee.find("攻击") >= 0, "贴身敌提示攻击（%s）" % hint_melee)
+	map.actors.erase(monster)
+	monster.x = 19
+	monster.y = 19
+	var hint_default: String = hint_bar.current_hint()
+	failed += _check(hint_default.find("H") >= 0, "默认提示含 H 帮助（%s）" % hint_default)
+	# 脚下物品 → 拾取提示
+	var herb: Dictionary = content.build_item("lingzhi", 10, 10)
+	map.items.append(herb)
+	var hint_item: String = hint_bar.current_hint()
+	failed += _check(hint_item.find("G") >= 0 and hint_item.find("灵芝") >= 0, "站上物品提示拾取（%s）" % hint_item)
+	map.items.erase(herb)
+	# 低气血 + 疗伤丹 → 服丹提示
+	state.player.inventory.add(content.build_item("lingzhi"))
+	state.player.fighter.hurt(state.player.fighter.hp() - 1)
+	var hint_heal: String = hint_bar.current_hint()
+	failed += _check(hint_heal.find("I") >= 0, "低血提示服丹（%s）" % hint_heal)
+	# 帮助浮层：开关与行数
+	var help = load("res://scripts/view/ui/help_overlay.gd").new()
+	root.add_child.call_deferred(help)
+	await process_frame
+	help.setup_panel(engine)
+	help.open()
+	failed += _check(help.visible, "帮助浮层可打开")
+	help.click_at(Vector2(50, 50))
+	failed += _check(not help.visible, "帮助浮层点击关闭")
+
 	# ---- 技能摘要：主副职业首技能均非空 ----
 	var s1: String = Skills.summary(engine, state.player, content.skill_for_slot("leifa", 1))
 	var s2: String = Skills.summary(engine, state.player, content.skill_for_slot("fushi", 1))

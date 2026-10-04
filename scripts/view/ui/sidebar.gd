@@ -116,10 +116,6 @@ func _draw() -> void:
 		draw_text_line(Vector2(x, y), text, INK if not item.is_empty() else Color(170, 165, 155), 15)
 		y += 20
 
-	# 底部操作提示
-	draw_text_line(Vector2(x, _panel_height - 24),
-		"移动 WASD · 技能 1-8 · 行囊 I · 参悟 K · 查看 X · 拾取 G · 踏入 E/Q", INK_SOFT, 13)
-
 
 ## 侧栏半透明（不遮蔽棋盘边缘太多）。
 func draw_paper_dim() -> void:
