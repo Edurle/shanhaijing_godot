@@ -262,8 +262,6 @@ func _build_deco(kind: int, x: int, y: int, rng: RandomNumberGenerator) -> Dicti
 				# 同行取一致相位 → 水纹横向流过邻格
 				"ry": _grain_noise.get_noise_2d(17.3, y * 1.6) * 0.5 + 0.5,
 			}
-		GameMap.T_HILL:
-			return {"phase": _grain_noise.get_noise_2d(x * 0.6, y * 0.9) * 0.5 + 0.5}
 		GameMap.T_SHORE, GameMap.T_SNOW:
 			var dots: Array = []
 			for _i in range(3):
@@ -401,11 +399,6 @@ func _draw_decoration(x: int, y: int, kind: int) -> void:
 			for dot in deco.get("dots", []):
 				var dot_color := InkPalette.INK_DEEP if dot[3] else InkPalette.INK_MID
 				draw_circle(Vector2(px + dot[0], py + dot[1]), dot[2], dot_color)
-		GameMap.T_HILL:
-			# 披麻皴：两短竖笔
-			var phase: float = float(deco.get("phase", 0.5))
-			draw_line(Vector2(px + 8.0, py + 8.0 + phase * 4.0), Vector2(px + 13.0, py + 22.0), InkPalette.INK_MID, 1.2)
-			draw_line(Vector2(px + 19.0, py + 6.0 + phase * 4.0), Vector2(px + 24.0, py + 20.0), InkPalette.INK_MID, 1.2)
 		GameMap.T_SHORE:
 			for dot in deco.get("dots", []):
 				draw_circle(Vector2(px + dot[0], py + dot[1]), 1.1, InkPalette.OCHRE.darkened(0.1))
