@@ -20,6 +20,10 @@ config/features=PackedStringArray("4.6")
 window/size/viewport_width=1280
 window/size/viewport_height=768
 
+[gui]
+
+theme/custom="res://assets/theme/ink_theme.tres"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
