@@ -166,15 +166,10 @@ func _draw_actor(actor: Actor) -> void:
 	var texture := _beast_texture(actor)
 	var below := radius + 7.0  # 血条距中心的纵向偏移
 	if texture != null:
-		# AI 素材期：40px 贴图（略溢出格子换辨识度，贴图自带留白边距）+ 右下五行小印；
-		# 不画整环避免框住美术，金环仅精英保留（稀有反馈）
+		# AI 素材期：40px 贴图（略溢出格子换辨识度，贴图自带留白边距）。
+		# 属性（五行/精英）不做贴图上标记，统一由查看卡（X）承载。
 		var size := CELL + 8.0
 		draw_texture_rect(texture, Rect2(center - Vector2(size, size) / 2.0, Vector2(size, size)), false)
-		var dot := center + Vector2(CELL / 2.0 - 6.0, CELL / 2.0 - 6.0)
-		draw_circle(dot, 2.5, InkPalette.ELEMENT_COLORS.get(actor.element, InkPalette.INK_MID))
-		draw_arc(dot, 3.5, 0, TAU, 12, InkPalette.PAPER, 1.0)
-		if actor.elite:
-			draw_arc(center, size / 2.0 + 1.0, 0, TAU, 32, InkPalette.GOLD, 1.5)
 		below = size / 2.0 + 5.0
 	else:
 		if actor.elite:
