@@ -472,7 +472,9 @@ func _draw_actor(actor: Actor) -> void:
 		return
 	var center := _cell_center(Vector2i(actor.x, actor.y))
 	if actor == player:
-		var hero := hero_texture(String(actor.gender))
+		var hero := hero_icon_texture(String(actor.gender))
+		if hero == null:
+			hero = hero_texture(String(actor.gender))
 		if hero != null:
 			# 主角点景：全身立像 48px + 淡青墨罩染（青墨行者）；缺失回退墨点占位
 			var size := CELL + 16.0
@@ -527,3 +529,12 @@ static func hero_texture(gender: String) -> Texture2D:
 		var path := "res://assets/art/actors/hero_%s.png" % key
 		_hero_cache[key] = load(path) if ResourceLoader.exists(path) else null
 	return _hero_cache[key]
+
+
+## 主角小尺寸 icon（棋盘 48px 用；对比/alpha 加强变体，缺原图时无此图）。
+static func hero_icon_texture(gender: String) -> Texture2D:
+	var key := gender if gender == "female" else "male"
+	if not _hero_cache.has(key + "_icon"):
+		var path := "res://assets/art/actors/hero_%s_icon.png" % key
+		_hero_cache[key + "_icon"] = load(path) if ResourceLoader.exists(path) else null
+	return _hero_cache[key + "_icon"]
