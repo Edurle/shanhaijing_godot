@@ -3,11 +3,12 @@ shader_type canvas_item;
 // 覆盖全图的 quad，Board 自绘层（皴笔/楼梯/门/单位）叠在其上。
 //
 // 数据纹理（每格1px，RGBA8）：R=地形id，G=雾态（0未探索/1记忆/2可见）。
-// 消棱角三件套：
-//   1) 域扭曲——采样位置沿低频噪声扭动（±7px），水岸彻底离开格线；
-//   2) 四角双线性+锐化——相邻地形颜色 8px 有机曲线过渡，无阶梯；
-//   3) 雾态连续化——未探索/记忆的边界也变成晕开的软边。
-// 水面：AI 水纹贴图双层错向慢滚 + 噪声域扭曲 + 整域呼吸；湿边随双线性水性权重走。
+// 曲线化三件套：
+//   1) 两尺度域扭曲——大弯（±11px 低频：湖岸走势）+ 细摆（±4px 高频：岸边波纹），
+//      边界彻底离开格线且有"走势+波纹"两级节奏；
+//   2) 4×4 邻域十字软化——角点值掺入四邻均值，磨掉四格交角的"角感"；
+//   3) smoothstep 过渡——锐化收窄（~8px）后两端润化，无锯齿无硬折。
+// 雾态连续化：未探索/记忆边界晕开成软边。水面：AI 水纹双层错向慢滚 + 整域呼吸。
 
 uniform sampler2D data_tex : filter_nearest;
 uniform sampler2D paper_tex : repeat_enable;
@@ -24,7 +25,6 @@ uniform float grain_strength = 0.05;
 
 const int WATER = 6;
 const int RIVER = 7;
-const float WARP_AMP = 7.0;   // 域扭曲幅度（px，小于半格：视觉不越出逻辑格）
 const float SHARPEN = 4.0;    // 过渡带收窄（过渡宽 ≈ cell_px/SHARPEN ≈ 8px）
 
 
@@ -47,6 +47,11 @@ float vnoise(vec2 p) {
 }
 
 
+vec4 field_at(vec2 cell) {
+	return texture(data_tex, (cell + 0.5) / map_size);
+}
+
+
 vec3 kind_color(vec4 d) {
 	return terrain_colors[int(d.r * 255.0 + 0.5)].rgb;
 }
@@ -63,36 +68,64 @@ float water_flag(vec4 d) {
 }
 
 
+// 十字软化：角点 0.5 + 四邻各 0.125（磨四格交角）
+float soft5(float a[16], int i) {
+	return a[i] * 0.5 + (a[i + 1] + a[i - 1] + a[i + 4] + a[i - 4]) * 0.125;
+}
+
+
+vec3 soft5v(vec3 a[16], int i) {
+	return a[i] * 0.5 + (a[i + 1] + a[i - 1] + a[i + 4] + a[i - 4]) * 0.125;
+}
+
+
 void fragment() {
 	vec2 world_px = UV * map_size * cell_px;
 
-	// 域扭曲：边界沿低频噪声扭动——水岸彻底离开格线
+	// 两尺度域扭曲：大弯定走势，细摆生波纹
 	vec2 warp = (vec2(
-		vnoise(world_px * 0.045),
-		vnoise(world_px * 0.045 + vec2(37.0, 11.0))
-	) - 0.5) * WARP_AMP;
+		vnoise(world_px * 0.008),
+		vnoise(world_px * 0.008 + vec2(37.0, 11.0))
+	) - 0.5) * 11.0;
+	warp += (vec2(
+		vnoise(world_px * 0.05),
+		vnoise(world_px * 0.05 + vec2(113.0, 71.0))
+	) - 0.5) * 4.0;
 	vec2 pos = world_px + warp;
 	vec2 cell = floor(pos / cell_px);
 	vec2 f = fract(pos / cell_px);
 
-	// 四角采样 + 锐化双线性：地形/雾/水性全走连续场
+	// 4×4 邻域一次采样解码（四角格及其四邻），角点十字软化
+	vec3 bc[16];
+	float ba[16];
+	float bf[16];
+	float bw[16];
+	for (int i = 0; i < 16; i++) {
+		vec4 d = field_at(cell + vec2(float(i % 4) - 1.0, float(i / 4) - 1.0));
+		bc[i] = kind_color(d);
+		ba[i] = kind_alpha(d);
+		bf[i] = d.g * 255.0;
+		bw[i] = water_flag(d);
+	}
+
+	// smoothstep 过渡：锐化收窄 + 两端润化
 	vec2 fs = clamp((f - 0.5) * SHARPEN + 0.5, 0.0, 1.0);
-	vec4 d00 = texture(data_tex, (cell + vec2(0.5, 0.5)) / map_size);
-	vec4 d10 = texture(data_tex, (cell + vec2(1.5, 0.5)) / map_size);
-	vec4 d01 = texture(data_tex, (cell + vec2(0.5, 1.5)) / map_size);
-	vec4 d11 = texture(data_tex, (cell + vec2(1.5, 1.5)) / map_size);
-	float fog_f = mix(mix(d00.g, d10.g, fs.x), mix(d01.g, d11.g, fs.x), fs.y) * 255.0;
-	float waterness = mix(mix(water_flag(d00), water_flag(d10), fs.x),
-		mix(water_flag(d01), water_flag(d11), fs.x), fs.y);
+	fs = fs * fs * (3.0 - 2.0 * fs);
+
+	// 四角 = 邻域块中心 2×2（块内下标 5/6/9/10）
+	float fog_f = mix(mix(soft5(bf, 5), soft5(bf, 6), fs.x),
+		mix(soft5(bf, 9), soft5(bf, 10), fs.x), fs.y);
+	float waterness = mix(mix(soft5(bw, 5), soft5(bw, 6), fs.x),
+		mix(soft5(bw, 9), soft5(bw, 10), fs.x), fs.y);
 
 	// 整幅宣纸：留白即未探索（纸纹四方连续）
 	vec3 col = texture(paper_tex, world_px / 256.0).rgb;
 
-	// 洗染：四角颜色双线性，明度颗粒像素尺度（消瓷砖感）
-	vec3 base = mix(mix(kind_color(d00), kind_color(d10), fs.x),
-		mix(kind_color(d01), kind_color(d11), fs.x), fs.y);
-	float alpha = mix(mix(kind_alpha(d00), kind_alpha(d10), fs.x),
-		mix(kind_alpha(d01), kind_alpha(d11), fs.x), fs.y);
+	// 洗染：软化角点颜色双线性，明度颗粒像素尺度（消瓷砖感）
+	vec3 base = mix(mix(soft5v(bc, 5), soft5v(bc, 6), fs.x),
+		mix(soft5v(bc, 9), soft5v(bc, 10), fs.x), fs.y);
+	float alpha = mix(mix(soft5(ba, 5), soft5(ba, 6), fs.x),
+		mix(soft5(ba, 9), soft5(ba, 10), fs.x), fs.y);
 	float grain = (vnoise(world_px * 0.13) - 0.5) + (vnoise(world_px * 0.031) - 0.5) * 0.7;
 	base *= 1.0 + grain * grain_strength;
 
