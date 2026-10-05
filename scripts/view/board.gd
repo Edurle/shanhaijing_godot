@@ -1,23 +1,22 @@
 class_name Board
 extends Node2D
-## 棋盘渲染（视图层）：批次 4 起为程序化水墨地形——整幅宣纸底 + 半透明洗染 +
-## 水陆湿边 + 跨格连贯皴笔（长卷感核心）；AI 地形图集到位后可逐地形换贴图。
-## 重绘由 main 事件驱动，无逐帧开销；装饰参数在 setup 预计算，重绘期间稳定。
+## 棋盘渲染（视图层）：地形场由 paper_ground.gdshader 的全图 quad 渲染（像素级连续——
+## 一片水是一整片水，格子只存在于数据纹理）；本节点自绘笔墨装饰（皴笔/点苔）与
+## 楼梯/门/物品/单位，叠在 shader 层之上。重绘由 main 事件驱动。
 
 const CELL := 32
+const GROUND_SHADER := preload("res://assets/shaders/paper_ground.gdshader")
 
 # 色板唯一来源：ink_palette.gd（theme.json 可覆盖），本文件不持有颜色常量。
 
-# —— 洗染参数：各地形"墨在纸上的浓度"，越小纸纹越透 ——
+# —— 洗染参数：喂给 shader 的各地形"墨在纸上的浓度"，越小纸纹越透 ——
 const WASH_ALPHA := {
 	GameMap.T_FLOOR: 0.55, GameMap.T_PLAIN: 0.30, GameMap.T_FOREST: 0.88,
 	GameMap.T_HILL: 0.55, GameMap.T_MOUNTAIN: 0.94, GameMap.T_WATER: 0.78,
 	GameMap.T_RIVER: 0.66, GameMap.T_BRIDGE: 0.85, GameMap.T_ABYSS: 0.96,
 	GameMap.T_SNOW: 0.45, GameMap.T_SHORE: 0.60, GameMap.T_WALL: 0.85,
 }
-const GRAIN_STRENGTH := 0.05   # 连续明度颗粒幅度（色斑跨格、消瓷砖感的关键）
-const WET_TERRAINS := [GameMap.T_WATER, GameMap.T_RIVER]
-const WET_STEPS := [[5.0, 0.20], [3.0, 0.11], [1.8, 0.06]]  # 湿边渗带：宽度 / 浓度
+const GRAIN_STRENGTH := 0.05   # 连续明度颗粒幅度（shader 内像素尺度采样）
 
 var map: GameMap
 var player: Actor
@@ -25,8 +24,11 @@ var target_cell := Vector2i(-1, -1)  # 瞄准/查看高亮格
 var landing_cell := Vector2i(-1, -1)  # 择向落点预览
 var travel_cell := Vector2i(-1, -1)  # 点击旅行目标（淡金虚框）
 
-var _paper: ImageTexture           # 宣纸底纹（±2.5% 纤维斑驳，镜像平铺）
-var _grain := {}                   # Vector2i -> float 连续明度颗粒
+var _paper: ImageTexture           # 宣纸底纹（shader 采样，四方连续）
+var _ground: Sprite2D              # 全图地形 quad（z=-1 垫在自绘内容之下）
+var _ground_mat: ShaderMaterial
+var _field_tex: ImageTexture       # 每格地形+雾态的数据纹理
+var _blank: ImageTexture           # 水贴图缺失时的透明兜底
 var _deco := {}                    # Vector2i -> Dictionary 装饰参数
 var _grain_noise := FastNoiseLite.new()
 var _clump_noise := FastNoiseLite.new()
@@ -39,19 +41,40 @@ func _ready() -> void:
 	_grain_noise.frequency = 0.32
 	_clump_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	_clump_noise.frequency = 0.11
-	texture_repeat = CanvasItem.TEXTURE_REPEAT_MIRROR
 	_build_paper()
+	_blank = ImageTexture.create_from_image(_filled(1, 1, Color(0, 0, 0, 0)))
+	_ground = Sprite2D.new()
+	_ground.texture = ImageTexture.create_from_image(_filled(2, 2, Color.WHITE))
+	_ground.centered = false
+	_ground.visible = false  # setup 绑定 uniform 后才显示（避免空参数渲染）
+	_ground.z_index = -1  # 垫在 Board 自绘内容（装饰/楼梯/单位）之下
+	_ground_mat = ShaderMaterial.new()
+	_ground_mat.shader = GROUND_SHADER
+	_ground.material = _ground_mat
+	add_child(_ground)
+	set_process(true)  # 水纹时间（一个 quad 的逐帧重绘，GPU 开销可忽略）
 
 
-## 宣纸：Simplex 生成 256px 纸纹（±2.5% 纤维斑驳），镜像平铺满图——未探索区即带肌理的留白。
+func _filled(w: int, h: int, color: Color) -> Image:
+	var image := Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
+	image.fill(color)
+	return image
+
+
+## 宣纸：Simplex + 对边交叉混合做真正的四方连续（256px，±2.5% 纤维斑驳）。
 func _build_paper() -> void:
-	var image := Image.create_empty(256, 256, false, Image.FORMAT_RGB8)
+	var s := 256
+	var image := Image.create_empty(s, s, false, Image.FORMAT_RGB8)
 	var fiber := FastNoiseLite.new()
 	fiber.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	fiber.frequency = 0.06
-	for y in range(256):
-		for x in range(256):
-			image.set_pixel(x, y, InkPalette.PAPER.lightened(fiber.get_noise_2d(x, y) * 0.025))
+	fiber.frequency = 0.05
+	for y in range(s):
+		for x in range(s):
+			var fx := float(x) / float(s)
+			var fy := float(y) / float(s)
+			var g := (fiber.get_noise_2d(x, y) * (1.0 - fx) + fiber.get_noise_2d(x - s, y) * fx) * (1.0 - fy) \
+				+ (fiber.get_noise_2d(x, y - s) * (1.0 - fx) + fiber.get_noise_2d(x - s, y - s) * fx) * fy
+			image.set_pixel(x, y, InkPalette.PAPER.lightened(g * 0.025))
 	_paper = ImageTexture.create_from_image(image)
 
 
@@ -59,23 +82,22 @@ func setup(p_map: GameMap, p_player: Actor = null) -> void:
 	map = p_map
 	player = p_player
 	_precompute()
+	_bind_material()
+	_sync_field()
 	queue_redraw()
 
 
-## 逐格预计算：明度颗粒（连续场）+ 装饰参数。种子按地图稳定（重进同层不闪变）。
+## 逐格预计算：装饰参数。种子按地图稳定（重进同层不闪变）。
 func _precompute() -> void:
 	var field_seed := (String(map.realm_id).hash() + map.width * 131 + map.height * 17 + map.floor_number * 397) % 100000
 	_grain_noise.seed = field_seed
 	_clump_noise.seed = field_seed + 7
 	var rng := RandomNumberGenerator.new()
 	rng.seed = field_seed + 13
-	_grain.clear()
 	_deco.clear()
 	for y in range(map.height):
 		for x in range(map.width):
-			var cell := Vector2i(x, y)
-			_grain[cell] = _grain_noise.get_noise_2d(x, y)
-			_deco[cell] = _build_deco(map.tile_at(x, y), x, y, rng)
+			_deco[Vector2i(x, y)] = _build_deco(map.tile_at(x, y), x, y, rng)
 
 
 ## 装饰参数（仅视野内绘制）：山脊笔高取平滑场（邻格连贯成脉），点苔/水纹密度取聚簇场（成片跨格）。
@@ -116,20 +138,12 @@ func _build_deco(kind: int, x: int, y: int, rng: RandomNumberGenerator) -> Dicti
 func _draw() -> void:
 	if map == null:
 		return
-	# 整幅宣纸（镜像平铺）：全图共享一张纸，留白即未探索
-	draw_texture_rect(_paper, Rect2(0, 0, map.width * CELL, map.height * CELL), true)
+	# 地形场（宣纸/洗染/湿边/水纹）由 _ground 的 shader 渲染；此处只画笔墨装饰与实体
 	for y in range(map.height):
 		for x in range(map.width):
-			if not map.is_explored(x, y):
-				continue
-			var seen := map.is_visible(x, y)
-			var kind := map.tile_at(x, y)
-			# 满格洗染（无 1px 缝：方格是逻辑的不是视觉的），纸纹自墨下透出
-			draw_rect(Rect2(x * CELL, y * CELL, CELL, CELL), _terrain_color(kind, x, y, seen))
-			if seen:
-				if kind in WET_TERRAINS:
-					_draw_wet_edges(x, y, kind)
-				_draw_decoration(x, y, kind)
+			if not map.is_visible(x, y):
+				continue  # 记忆区只留 shader 的洗染+雾，干净的回忆
+			_draw_decoration(x, y, map.tile_at(x, y))
 	_draw_stairs()
 	_draw_gates()
 	_draw_items()
@@ -137,6 +151,68 @@ func _draw() -> void:
 		if actor.is_alive():
 			_draw_actor(actor)
 	_draw_overlays()
+
+
+## 水纹时间：shader 的 time uniform + 单 quad 重绘（每帧一次，开销可忽略）。
+func _process(_delta: float) -> void:
+	if _ground_mat != null:
+		_ground_mat.set_shader_parameter("time", float(Time.get_ticks_msec()) / 1000.0)
+		_ground.queue_redraw()
+
+
+## 绑定 shader 材质：尺寸/纸纹/水纹/调色板（InkPalette → uniform，theme.json 换肤即生效）。
+func _bind_material() -> void:
+	_ground.scale = Vector2(map.width * CELL / 2.0, map.height * CELL / 2.0)  # 2px 白图 → 全图
+	_ground.visible = true
+	_ground_mat.set_shader_parameter("map_size", Vector2(map.width, map.height))
+	_ground_mat.set_shader_parameter("cell_px", float(CELL))
+	_ground_mat.set_shader_parameter("paper_tex", _paper)
+	_ground_mat.set_shader_parameter("water_a", _load_texture("res://assets/art/terrain/water_flow.png"))
+	_ground_mat.set_shader_parameter("water_b", _load_texture("res://assets/art/terrain/water_calm.png"))
+	var colors := PackedColorArray()
+	var alphas := PackedFloat32Array()
+	for kind in range(12):
+		colors.append(InkPalette.TERRAIN_COLORS.get(kind, InkPalette.PAPER))
+		alphas.append(WASH_ALPHA.get(kind, 0.8))
+	_ground_mat.set_shader_parameter("terrain_colors", colors)
+	_ground_mat.set_shader_parameter("wash_alpha", alphas)
+	_ground_mat.set_shader_parameter("fog_color", InkPalette.INK_LIGHT)
+	_ground_mat.set_shader_parameter("fog_lerp", InkPalette.FOG_LERP)
+	_ground_mat.set_shader_parameter("grain_strength", GRAIN_STRENGTH)
+
+
+func _load_texture(path: String) -> ImageTexture:
+	if ResourceLoader.exists(path):
+		return load(path)
+	return _blank
+
+
+## 数据纹理（每格 1px：R=地形 id，G=雾态 0/1/2）在每次重绘前同步——FOV/地形变化即生效。
+func _sync_field() -> void:
+	var w := map.width
+	var h := map.height
+	var data := PackedByteArray()
+	data.resize(w * h * 4)
+	var idx := 0
+	for y in range(h):
+		for x in range(w):
+			data[idx] = map.tile_at(x, y)
+			data[idx + 1] = 2 if map.is_visible(x, y) else (1 if map.is_explored(x, y) else 0)
+			data[idx + 2] = 0
+			data[idx + 3] = 255
+			idx += 4
+	var image := Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, data)
+	if _field_tex == null or _field_tex.get_size() != Vector2(w, h):
+		_field_tex = ImageTexture.create_from_image(image)
+	else:
+		_field_tex.update(image)
+	_ground_mat.set_shader_parameter("data_tex", _field_tex)
+
+
+## FOV/地形变化后同步数据纹理（main._refresh 每回合调用；setup 内自动调一次）。
+func sync_field() -> void:
+	if map != null and _ground_mat != null:
+		_sync_field()
 
 
 ## 交互态高亮：目标四角框（朱）/ 择向落点（金角）。
@@ -166,52 +242,8 @@ func _draw_overlays() -> void:
 			draw_line(tpos + Vector2(seg * tsize.x / 4.0, tsize.y), tpos + Vector2((seg + 0.6) * tsize.x / 4.0, tsize.y), dash, 1.5)
 
 
-## 洗染色：地形色 × 连续明度颗粒，半透明罩在纸纹上（记忆态罩灰墨）。
-func _terrain_color(kind: int, x: int, y: int, seen: bool) -> Color:
-	var base: Color = InkPalette.TERRAIN_COLORS.get(kind, InkPalette.PAPER)
-	base = base.lightened(_grain.get(Vector2i(x, y), 0.0) * GRAIN_STRENGTH)
-	if not seen:
-		base = base.lerp(InkPalette.INK_LIGHT, InkPalette.FOG_LERP)
-	return Color(base, WASH_ALPHA.get(kind, 0.8))
-
-
-## 湿边：水/河与陆地交界，水面侧三段渗带 + 一条边界沉积线（水彩边缘效应）。
-func _draw_wet_edges(x: int, y: int, kind: int) -> void:
-	var base: Color = InkPalette.TERRAIN_COLORS.get(kind, InkPalette.PAPER).darkened(0.35)
-	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-		var nx: int = x + dir.x
-		var ny: int = y + dir.y
-		if map.in_bounds(nx, ny):
-			var neighbor := map.tile_at(nx, ny)
-			if neighbor in WET_TERRAINS or neighbor == GameMap.T_ABYSS:
-				continue  # 水连水/渊：无交界
-		_draw_bleed_edge(x * CELL, y * CELL, dir, base)
-
-
-func _draw_bleed_edge(px: int, py: int, dir: Vector2i, color: Color) -> void:
-	var x0 := px + (CELL if dir.x == 1 else 0)
-	var y0 := py + (CELL if dir.y == 1 else 0)
-	var inset := 0.0
-	for step in WET_STEPS:
-		var w: float = step[0]
-		var a: float = step[1]
-		inset += w
-		if dir.x == 1:
-			draw_rect(Rect2(x0 - inset, py + 1.5, w, CELL - 3.0), Color(color, a))
-		elif dir.x == -1:
-			draw_rect(Rect2(x0, py + 1.5, w, CELL - 3.0), Color(color, a))
-		elif dir.y == 1:
-			draw_rect(Rect2(px + 1.5, y0 - inset, CELL - 3.0, w), Color(color, a))
-		else:
-			draw_rect(Rect2(px + 1.5, y0, CELL - 3.0, w), Color(color, a))
-	# 边界沉积线（渗得最深的一线）
-	if dir.x != 0:
-		draw_line(Vector2(x0, py + 1), Vector2(x0, py + CELL - 1), Color(color, 0.32), 1.5)
-	else:
-		draw_line(Vector2(px + 1, y0), Vector2(px + CELL - 1, y0), Color(color, 0.32), 1.5)
-
-
-## 笔墨装饰（仅视野内；记忆区只留洗染+雾，干净的回忆）。
+## 笔墨装饰（仅视野内；记忆区只留 shader 的洗染+雾，干净的回忆）。
+## 水面纹理由 shader 的水纹贴图层承担，此处不再画 canvas 水纹。
 func _draw_decoration(x: int, y: int, kind: int) -> void:
 	var deco: Dictionary = _deco.get(Vector2i(x, y), {})
 	var px := x * CELL
@@ -231,14 +263,6 @@ func _draw_decoration(x: int, y: int, kind: int) -> void:
 			for dot in deco.get("dots", []):
 				var dot_color := InkPalette.INK_DEEP if dot[3] else InkPalette.INK_MID
 				draw_circle(Vector2(px + dot[0], py + dot[1]), dot[2], dot_color)
-		GameMap.T_WATER, GameMap.T_RIVER:
-			if not deco.get("rip", false):
-				return
-			var water: Color = InkPalette.TERRAIN_COLORS.get(kind, InkPalette.PAPER).darkened(0.18)
-			var cy: float = py + 8.0 + float(deco.get("ry", 0.5)) * 12.0
-			draw_arc(Vector2(px + 16.0, cy), 8.5, PI * 0.12, PI * 0.88, 10, water, 1.2)
-			if deco.get("rip2", false):
-				draw_arc(Vector2(px + 20.0, cy + 4.0), 5.5, PI * 0.15, PI * 0.85, 8, water, 1.0)
 		GameMap.T_HILL:
 			# 披麻皴：两短竖笔
 			var phase: float = float(deco.get("phase", 0.5))

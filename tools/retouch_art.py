@@ -21,11 +21,12 @@ INK_DEEP = (0x2B, 0x26, 0x20)
 INK_MID = (0x6E, 0x67, 0x5C)
 INK_LIGHT = (0xB9, 0xB2, 0xA2)
 
-SIZE = {"beast": 128, "brush": 256, "paper": 512}
+SIZE = {"beast": 128, "brush": 256, "paper": 512, "field": 512}
 WHITE_GATE = 238   # 亮度高于此 → 全透明
 INK_GATE = 108     # 亮度低于此 → 全不透明
 DEEP_SPLIT = 88    # posterize 分档
 MID_SPLIT = 176
+FEATHER = 48       # field 模式：四边羽化带宽度（px，弱化 AI 平铺接缝）
 
 
 def ink_alpha(lum: int) -> int:
@@ -54,6 +55,13 @@ def retouch(src: Path, kind: str, deepen: bool = False) -> Image.Image:
     if kind == "brush":
         # 笔刷只做白底转 alpha，保留连续灰阶（运行时再上色）
         out = Image.merge("RGBA", (*image.convert("RGB").split(), alpha))
+    elif kind == "field":
+        # 整片场贴图（水纹等）：百分位对比度拉伸（AI 常把"淡墨"画得只比纸底深一二十级）
+        # → 紧致门限转 alpha（拉伸后线暗、纸底亮，用更高的白门槛把背景噪声归零）
+        # → 四边羽化（接缝化为空档）；不裁切不补方形——保持可平铺的满幅场
+        image = _stretch(image)
+        alpha = image.point(_field_alpha)
+        out = Image.merge("RGBA", (*image.convert("RGB").split(), _feather_edges(alpha, FEATHER)))
     else:
         # 三阶墨查表（浓/中/淡，档位边界与 alpha 羽化衔接）；deepen=整体加深一档
         solid = Image.new("RGB", image.size)
@@ -67,9 +75,52 @@ def retouch(src: Path, kind: str, deepen: bool = False) -> Image.Image:
                     level -= 1
                 sp[x, y] = (INK_DEEP, INK_MID, INK_LIGHT)[level]
         out = Image.merge("RGBA", (*solid.split(), alpha))
-    out = _fit(out, SIZE[kind])
+    out = _fit(out, SIZE[kind]) if kind != "field" else out.resize((SIZE[kind], SIZE[kind]), Image.LANCZOS)
     if kind == "beast":
         out = _despeckle(out)  # 笔刷的卫星墨滴是设计特征，不清
+    return out
+
+
+def _stretch(image: Image.Image, low_q: float = 0.02, high_q: float = 0.995) -> Image.Image:
+    """按亮度百分位把实际动态范围拉到全量程（low_q→0，high_q→255）。"""
+    hist = image.histogram()
+    total = sum(hist)
+
+    def threshold(q: float) -> int:
+        acc = 0
+        for value in range(256):
+            acc += hist[value]
+            if acc >= total * q:
+                return value
+        return 255
+
+    lo = threshold(low_q)
+    hi = threshold(high_q)
+    if hi <= lo:
+        return image
+    lut = [max(0, min(255, int((v - lo) * 255 / (hi - lo)))) for v in range(256)]
+    return image.point(lut)
+
+
+def _field_alpha(lum: int, white: int = 210, ink: int = 100) -> int:
+    """field 模式专用：拉伸后的亮度 → alpha（门限比通用白底抠图更紧，压掉纸底噪声）。"""
+    if lum >= white:
+        return 0
+    if lum <= ink:
+        return 255
+    return int(255 * (white - lum) / (white - ink))
+
+
+def _feather_edges(alpha: Image.Image, band: int) -> Image.Image:
+    """四边 band 像素宽的 alpha 线性淡出（0→原值），把平铺接缝化为稀疏空档。"""
+    w, h = alpha.size
+    out = alpha.copy()
+    px = out.load()
+    for y in range(h):
+        for x in range(w):
+            d = min(x, y, w - 1 - x, h - 1 - y)
+            if d < band:
+                px[x, y] = int(px[x, y] * d / band)
     return out
 
 
@@ -123,7 +174,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="水墨素材修板")
     parser.add_argument("src", type=Path)
     parser.add_argument("-o", "--out", type=Path, required=True)
-    parser.add_argument("--kind", choices=["beast", "brush", "paper"], default="beast")
+    parser.add_argument("--kind", choices=["beast", "brush", "paper", "field"], default="beast")
     parser.add_argument("--deepen", action="store_true", help="墨阶整体加深一档（淡→中→浓）")
     args = parser.parse_args()
     result = retouch(args.src, args.kind, args.deepen)

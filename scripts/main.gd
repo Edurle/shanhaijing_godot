@@ -254,6 +254,9 @@ func _handle_play(keycode: int, is_echo: bool, shift := false) -> void:
 	if is_echo:
 		return
 	match keycode:
+		KEY_PERIOD, KEY_SPACE, KEY_KP_5:
+			_stop_travel()
+			_act(engine.player_wait())
 		KEY_G:
 			_act(engine.player_pickup())
 		KEY_E:
@@ -442,6 +445,11 @@ func _click_play(pos: Vector2) -> void:
 	if not state.current.in_bounds(cell.x, cell.y):
 		return
 	if not state.current.is_explored(cell.x, cell.y):
+		return
+	# 点击脚下 = 原地跳过一回合（被眩晕/缠绕缠住时的鼠标出路）
+	if cell == state.player_xy():
+		_stop_travel()
+		_act(engine.player_wait())
 		return
 	# 点击可见敌 → 走过去并攻击一次；点击已探索可走格/门/山径/物品 → 旅行
 	var victim = state.current.actor_at(cell.x, cell.y)
@@ -762,6 +770,7 @@ func _set_mode(new_mode: Mode) -> void:
 func _refresh() -> void:
 	if state == null:
 		return
+	board.sync_field()  # 地形/雾态数据纹理（shader 场在重绘前拿到最新状态）
 	if not engine.events.is_empty():
 		vfx.play(engine.events)  # 演出事件一次性消费（引擎约定：视图消费后清空）
 		engine.events.clear()
