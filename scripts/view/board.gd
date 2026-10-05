@@ -164,11 +164,18 @@ func _draw_actor(actor: Actor) -> void:
 		return
 	var radius := 8.0 if not actor.elite else 10.0
 	var texture := _beast_texture(actor)
+	var below := radius + 7.0  # 血条距中心的纵向偏移
 	if texture != null:
-		# AI 素材期：贴图本体 + 程序层只留五行环/金环/血条（颜色仍经 InkPalette 调制）
-		var size := CELL - 4.0
+		# AI 素材期：40px 贴图（略溢出格子换辨识度，贴图自带留白边距）+ 右下五行小印；
+		# 不画整环避免框住美术，金环仅精英保留（稀有反馈）
+		var size := CELL + 8.0
 		draw_texture_rect(texture, Rect2(center - Vector2(size, size) / 2.0, Vector2(size, size)), false)
-		radius = size / 2.0 - 1.0
+		var dot := center + Vector2(CELL / 2.0 - 6.0, CELL / 2.0 - 6.0)
+		draw_circle(dot, 2.5, InkPalette.ELEMENT_COLORS.get(actor.element, InkPalette.INK_MID))
+		draw_arc(dot, 3.5, 0, TAU, 12, InkPalette.PAPER, 1.0)
+		if actor.elite:
+			draw_arc(center, size / 2.0 + 1.0, 0, TAU, 32, InkPalette.GOLD, 1.5)
+		below = size / 2.0 + 5.0
 	else:
 		if actor.elite:
 			draw_circle(center, radius, InkPalette.ELITE_GOLD.darkened(0.25))
@@ -176,14 +183,14 @@ func _draw_actor(actor: Actor) -> void:
 			draw_circle(center, radius, InkPalette.INK_DEEP)
 		# 点睛：异兽唯一的亮色（贴图自带墨眼，素材期仅程序占位兽使用）
 		draw_circle(center + Vector2(-2, -2), 1.6, InkPalette.VERMILION)
-	var ring: Color = InkPalette.ELEMENT_COLORS.get(actor.element, InkPalette.INK_MID)
-	draw_arc(center, radius + 3.0, 0, TAU, 24, ring, 2.0)
+		var ring: Color = InkPalette.ELEMENT_COLORS.get(actor.element, InkPalette.INK_MID)
+		draw_arc(center, radius + 3.0, 0, TAU, 24, ring, 2.0)
 	# 血条细线（受伤才显示）
 	var hp_ratio := float(actor.fighter.hp()) / maxf(1.0, actor.fighter.max_hp())
 	if hp_ratio < 1.0:
 		var bar_w := 22.0
-		draw_rect(Rect2(center - Vector2(bar_w / 2, radius + 7), Vector2(bar_w, 3)), InkPalette.INK_LIGHT)
-		draw_rect(Rect2(center - Vector2(bar_w / 2, radius + 7), Vector2(bar_w * hp_ratio, 3)), InkPalette.VERMILION)
+		draw_rect(Rect2(center - Vector2(bar_w / 2, below), Vector2(bar_w, 3)), InkPalette.INK_LIGHT)
+		draw_rect(Rect2(center - Vector2(bar_w / 2, below), Vector2(bar_w * hp_ratio, 3)), InkPalette.VERMILION)
 
 
 ## 异兽贴图（AI 素材期；缺失返回 null 回退程序化墨点占位）。
