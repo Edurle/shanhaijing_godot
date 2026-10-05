@@ -10,3 +10,9 @@ export/
 # 系统杂项
 Thumbs.db
 .DS_Store
+
+# 会话产物
+.zcode/
+
+# AI 素材原图（修板后成品入 assets/art 对应子目录，1024 原图不入库）
+assets/art/_raw/

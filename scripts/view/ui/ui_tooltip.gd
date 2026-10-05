@@ -23,7 +23,7 @@ func build_lines(skill: Dictionary, player: Actor, bound_label := "") -> Array:
 	var title: String = engine.content.localize(skill["name"])
 	if level > 1:
 		title += " · %d 重" % level
-	out.append({"text": title, "color": INK, "size": 17})
+	out.append({"text": title, "color": InkPalette.INK, "size": 17})
 	# 耗与摘要
 	var cost := ""
 	var mp_need := Skills.mp_cost(player, skill)
@@ -37,7 +37,7 @@ func build_lines(skill: Dictionary, player: Actor, bound_label := "") -> Array:
 	if cost != "":
 		meta = (summary + "  " if summary != "" else "") + cost
 	if meta != "":
-		out.append({"text": meta, "color": GOLD, "size": 13})
+		out.append({"text": meta, "color": InkPalette.GOLD, "size": 13})
 	# 五行与绑定
 	var element := Skills.skill_element(skill)
 	var tags_line := ""
@@ -46,7 +46,7 @@ func build_lines(skill: Dictionary, player: Actor, bound_label := "") -> Array:
 	if bound_label != "":
 		tags_line += ("  " if tags_line != "" else "") + "已绑 " + bound_label
 	if tags_line != "":
-		out.append({"text": tags_line, "color": INK_SOFT, "size": 12})
+		out.append({"text": tags_line, "color": InkPalette.INK_SOFT, "size": 12})
 	# 未学技能：前置链提示
 	var skill_id := String(skill.get("id", ""))
 	if not player.skill_levels.has(skill_id) and skill.has("requires"):
@@ -55,11 +55,11 @@ func build_lines(skill: Dictionary, player: Actor, bound_label := "") -> Array:
 			if not player.skill_levels.has(String(req)) and engine.content.skills.has(String(req)):
 				names.append(engine.content.localize(engine.content.skills[String(req)]["name"]))
 		if not names.is_empty():
-			out.append({"text": "前置：" + "、".join(names), "color": VERMILION, "size": 12})
+			out.append({"text": "前置：" + "、".join(names), "color": InkPalette.VERMILION, "size": 12})
 	# 描述折行（CJK 按字符宽折）
 	var desc: String = engine.content.localize(skill.get("desc", ""))
 	for line in _wrap_cjk(desc, 20):
-		out.append({"text": line, "color": INK, "size": 13})
+		out.append({"text": line, "color": InkPalette.INK, "size": 13})
 	return out
 
 
@@ -76,42 +76,42 @@ func show_skill(skill: Dictionary, player: Actor, pos: Vector2, bound_label := "
 func build_item_lines(item: Dictionary, player: Actor) -> Array:
 	var out: Array = []
 	var is_gear := item.has("slot")
-	out.append({"text": String(item["label"]), "color": UiPanel.rarity_color(item, INK), "size": 17})
+	out.append({"text": String(item["label"]), "color": UiPanel.rarity_color(item, InkPalette.INK), "size": 17})
 	if is_gear:
 		var meta: String = engine.content.text("slot_" + String(item["slot"]))
 		meta += " · " + String(UiPanel.RARITY_LABELS.get(String(item.get("rarity", "common")), ""))
-		out.append({"text": meta, "color": GOLD, "size": 13})
+		out.append({"text": meta, "color": InkPalette.GOLD, "size": 13})
 	if item.has("damage"):
-		out.append({"text": _item_brief(item), "color": GOLD, "size": 13})
+		out.append({"text": _item_brief(item), "color": InkPalette.GOLD, "size": 13})
 	var bonus_parts: Array = []
 	for key in ["power", "defense", "max_hp", "max_mp", "max_sp"]:
 		var value := int(item.get("bonuses", {}).get(key, 0))
 		if value > 0:
 			bonus_parts.append(engine.content.text("bon_" + key).format({"v": value}))
 	if not bonus_parts.is_empty():
-		out.append({"text": " ".join(bonus_parts), "color": GOLD, "size": 13})
+		out.append({"text": " ".join(bonus_parts), "color": InkPalette.GOLD, "size": 13})
 	var affix_parts: Array = []
 	for affix in item.get("affixes", []):
 		affix_parts.append(engine.content.text("aff_" + String(affix["id"])).format({"v": int(affix["value"])}))
 	if not affix_parts.is_empty():
-		out.append({"text": " · ".join(affix_parts), "color": GOLD, "size": 13})
+		out.append({"text": " · ".join(affix_parts), "color": InkPalette.GOLD, "size": 13})
 	if item.has("consumable"):
 		var summary := Consumables.summary(engine, item)
 		if summary != "":
-			out.append({"text": summary, "color": GOLD, "size": 13})
+			out.append({"text": summary, "color": InkPalette.GOLD, "size": 13})
 	# 同槽对比：行囊中悬停装备时提示身上现役
 	if is_gear and not player.equipment.is_equipped(item):
 		var worn = player.equipment.slots.get(String(item["slot"]))
 		if worn != null:
 			out.append({"text": "已装备：%s（%s）" % [String(worn["label"]), _item_brief(worn)],
-				"color": INK_SOFT, "size": 12})
+				"color": InkPalette.INK_SOFT, "size": 12})
 	# 套装块：名称 + 持有计数 + 各档位激活态（✓ 已激活 / · 未激活）
 	var set_id := String(item.get("set_id", ""))
 	if set_id != "" and engine.content.sets.has(set_id):
 		var owned := _set_owned_count(player, set_id)
 		out.append({"text": "%s套装 · %d/%d" % [
 			engine.content.set_name(set_id), owned, engine.content.set_piece_total(set_id),
-		], "color": SET_COLOR, "size": 13})
+		], "color": InkPalette.SET_COLOR, "size": 13})
 		var tiers: Dictionary = engine.content.sets[set_id].get("tiers", {})
 		var threshold_texts: Array = tiers.keys()
 		threshold_texts.sort_custom(func(a, b): return int(a) < int(b))
@@ -119,13 +119,13 @@ func build_item_lines(item: Dictionary, player: Actor) -> Array:
 			var active := int(threshold_text) <= owned
 			out.append({
 				"text": "%s %d件：%s" % ["✓" if active else "·", int(threshold_text), _tier_brief(tiers[threshold_text])],
-				"color": SET_COLOR if active else INK_SOFT, "size": 12,
+				"color": InkPalette.SET_COLOR if active else InkPalette.INK_SOFT, "size": 12,
 			})
 	# 典故折行（运行时 dict 不带 lore，按 id 回查定义）
 	var idef: Dictionary = engine.content.items.get(String(item["id"]), {})
 	if idef.has("lore"):
 		for line in _wrap_cjk(engine.content.localize(idef["lore"]), 20):
-			out.append({"text": line, "color": INK_SOFT, "size": 12})
+			out.append({"text": line, "color": InkPalette.INK_SOFT, "size": 12})
 	return out
 
 
@@ -194,9 +194,9 @@ func _draw() -> void:
 	var x: float = clampf(anchor.x + 18.0, 8.0, _view_size.x - WIDTH - 8.0)
 	var y: float = clampf(anchor.y - 6.0, 8.0, _view_size.y - height - 8.0)
 	var rect := Rect2(x, y, WIDTH, height)
-	draw_rect(Rect2(rect.position - Vector2(2, 2), rect.size + Vector2(4, 4)), Color(INK, 0.35))
-	draw_rect(rect, PAPER)
-	draw_rect(rect, INK, false, 1.4)
+	draw_rect(Rect2(rect.position - Vector2(2, 2), rect.size + Vector2(4, 4)), Color(InkPalette.INK, 0.35))
+	draw_rect(rect, InkPalette.PAPER_UI)
+	draw_rect(rect, InkPalette.INK, false, 1.4)
 	var font := get_theme_default_font()
 	var ly := y + 24.0
 	for line in lines:

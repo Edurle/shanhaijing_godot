@@ -7,6 +7,7 @@ const CoreContentDb := preload("res://scripts/core/content_db.gd")
 const CoreWorldState := preload("res://scripts/core/world_state.gd")
 const CoreTurnEngine := preload("res://scripts/core/turn_engine.gd")
 const ViewBoard := preload("res://scripts/view/board.gd")
+const ViewVfxLayer := preload("res://scripts/view/vfx_layer.gd")
 const UiLogScript := preload("res://scripts/view/ui/log_panel.gd")
 const UiTargetInfoScript := preload("res://scripts/view/ui/target_info.gd")
 const MenuClassSelect := preload("res://scripts/view/ui/menu_class_select.gd")
@@ -29,6 +30,7 @@ var content: CoreContentDb
 var state: CoreWorldState
 var engine: CoreTurnEngine
 var board: ViewBoard
+var vfx: ViewVfxLayer
 var camera: Camera2D
 var ui: CanvasLayer
 var log_panel
@@ -66,9 +68,15 @@ func _ready() -> void:
 		push_error("内容校验失败 %d 项：\n%s" % [errors.size(), "\n".join(errors)])
 		get_tree().quit(1)
 		return
+	InkPalette.apply(content.theme)  # 调色板唯一色源：theme.json → 视图层
+	var ink_font_path := "res://assets/fonts/LXGWWenKai-Regular.ttf"  # 霞鹜文楷（OFL），游戏文本 1319 字零缺字
+	if ResourceLoader.exists(ink_font_path):
+		ThemeDB.fallback_font = load(ink_font_path)
 
 	board = ViewBoard.new()
 	add_child(board)
+	vfx = ViewVfxLayer.new()
+	add_child(vfx)  # 演出层：Board 之上、UI CanvasLayer 之下
 	camera = Camera2D.new()
 	camera.zoom = Vector2.ONE
 	add_child(camera)
@@ -754,6 +762,9 @@ func _set_mode(new_mode: Mode) -> void:
 func _refresh() -> void:
 	if state == null:
 		return
+	if not engine.events.is_empty():
+		vfx.play(engine.events)  # 演出事件一次性消费（引擎约定：视图消费后清空）
+		engine.events.clear()
 	camera.position = Vector2(
 		(state.player.x + 0.5) * ViewBoard.CELL,
 		(state.player.y + 0.5) * ViewBoard.CELL

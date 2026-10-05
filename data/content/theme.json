@@ -1,548 +1,68 @@
 {
   "_schema": {
-    "说明": "国潮画面主题：墨底 / 鎏金 / 朱砂 / 青瓷 / 紫电 五色体系。全部颜色与光照/特效参数集中于此，代码零硬编码颜色。换肤=复制一份改色值。",
-    "颜色格式": "[R, G, B]，0-255"
+    "说明": "水墨画面主题（view 层唯一色源，经 InkPalette.apply 加载；代码内颜色常量仅为缺文件回退）。换肤=改此文件。terrain 键对应 game_map.gd 地形常量。",
+    "颜色格式": "#RRGGBB"
   },
-  "background": [
-    12,
-    12,
-    20
-  ],
-  "tiles": {
-    "floor_char": "·",
-    "wall_char_solo": "#",
-    "floor_light": [
-      92,
-      104,
-      128
-    ],
-    "floor_dark": [
-      42,
-      47,
-      62
-    ],
-    "wall_light": [
-      214,
-      176,
-      96
-    ],
-    "wall_dark": [
-      90,
-      72,
-      46
-    ]
+  "paper": "#E9E1CD",
+  "paper_ui": "#EFE8D6",
+  "paper_shadow": "#D8CFBA",
+  "ink": "#2B2620",
+  "ink_deep": "#2B2620",
+  "ink_mid": "#6E675C",
+  "ink_soft": "#6E675C",
+  "ink_light": "#B9B2A2",
+  "player_ink": "#3A5A6E",
+  "vermilion": "#C3272B",
+  "gold": "#C9A662",
+  "elite_gold": "#D9A404",
+  "ochre": "#8C5A3C",
+  "warn": "#B4652A",
+  "safe": "#4A7C59",
+  "mp_bar": "#2E5977",
+  "sp_bar": "#7B5EA7",
+  "terrain": {
+    "floor": "#D8CFBA",
+    "wall": "#E9E1CD",
+    "plain": "#E9E1CD",
+    "forest": "#8A8674",
+    "hill": "#C4B99F",
+    "mountain": "#2B2620",
+    "water": "#9FB6C4",
+    "river": "#B7C9D4",
+    "bridge": "#A8815C",
+    "abyss": "#191414",
+    "snow": "#F4EFE2",
+    "shore": "#D9C9A3"
   },
-  "terrains": {
-    "floor": {
-      "char": "·",
-      "light": [
-        92,
-        104,
-        128
-      ],
-      "dark": [
-        42,
-        47,
-        62
-      ]
-    },
-    "wall": {
-      "char": "#",
-      "light": [
-        214,
-        176,
-        96
-      ],
-      "dark": [
-        90,
-        72,
-        46
-      ]
-    },
-    "plain": {
-      "char": ".",
-      "light": [
-        96,
-        128,
-        90
-      ],
-      "dark": [
-        40,
-        56,
-        42
-      ]
-    },
-    "forest": {
-      "char": "♣",
-      "light": [
-        64,
-        138,
-        88
-      ],
-      "dark": [
-        28,
-        60,
-        40
-      ]
-    },
-    "hill": {
-      "char": "∩",
-      "light": [
-        158,
-        138,
-        88
-      ],
-      "dark": [
-        66,
-        58,
-        42
-      ]
-    },
-    "mountain": {
-      "char": "▲",
-      "light": [
-        134,
-        130,
-        140
-      ],
-      "dark": [
-        58,
-        56,
-        64
-      ]
-    },
-    "snow": {
-      "char": "▲",
-      "light": [
-        216,
-        220,
-        228
-      ],
-      "dark": [
-        96,
-        100,
-        114
-      ]
-    },
-    "water": {
-      "char": "≈",
-      "light": [
-        70,
-        134,
-        174
-      ],
-      "dark": [
-        32,
-        58,
-        78
-      ]
-    },
-    "river": {
-      "char": "~",
-      "light": [
-        80,
-        152,
-        170
-      ],
-      "dark": [
-        34,
-        64,
-        74
-      ]
-    },
-    "bridge": {
-      "char": "=",
-      "light": [
-        176,
-        136,
-        88
-      ],
-      "dark": [
-        74,
-        60,
-        42
-      ]
-    },
-    "abyss": {
-      "char": "▼",
-      "light": [
-        96,
-        72,
-        132
-      ],
-      "dark": [
-        32,
-        26,
-        48
-      ]
-    },
-    "shore": {
-      "char": "·",
-      "light": [
-        172,
-        158,
-        120
-      ],
-      "dark": [
-        78,
-        72,
-        56
-      ]
-    }
+  "elements": {
+    "metal": "#C9A662",
+    "wood": "#4A7C59",
+    "water": "#2E5977",
+    "fire": "#C3272B",
+    "earth": "#8C5A3C"
   },
-  "lighting": {
-    "inner_radius": 3,
-    "edge_falloff": 0.5
+  "rarity": {
+    "magic": "#3465A4",
+    "rare": "#B8860B",
+    "legendary": "#D2691E",
+    "mythic": "#C3272B"
   },
-  "effects": {
-    "light_pulse_amplitude": 0.05,
-    "light_pulse_speed": 2.2,
-    "hit_flash_strength": 0.35,
-    "hit_flash_decay": 3.5,
-    "shake_strength": 3,
-    "shake_decay": 9.0,
-    "float_speed": 3.5,
-    "float_lifetime": 0.9,
-    "notice_lifetime": 0.8,
-    "spark_lifetime": 0.7,
-    "spark_speed": 6.0
-  },
-  "stairs": {
-    "light": [
-      255,
-      214,
-      120
-    ],
-    "dark": [
-      112,
-      92,
-      50
-    ],
-    "up_light": [
-      122,
-      220,
-      208
-    ],
-    "up_dark": [
-      52,
-      96,
-      92
-    ]
-  },
-  "corpse_color": [
-    128,
-    50,
-    44
-  ],
-  "player_corpse_color": [
-    190,
-    52,
-    52
-  ],
-  "hud": {
-    "hp": [
-      232,
-      92,
-      92
-    ],
-    "xp": [
-      240,
-      202,
-      112
-    ],
-    "floor": [
-      122,
-      202,
-      190
-    ],
-    "dead_tag": [
-      244,
-      96,
-      96
-    ]
-  },
-  "ui": {
-    "frame": [
-      192,
-      162,
-      102
-    ]
-  },
+  "set_color": "#3E8E58",
   "messages": {
-    "combat": [
-      236,
-      236,
-      240
-    ],
-    "combat_blocked": [
-      150,
-      152,
-      164
-    ],
-    "warn": [
-      255,
-      122,
-      92
-    ],
-    "death": [
-      240,
-      92,
-      92
-    ],
-    "kill": [
-      214,
-      182,
-      122
-    ],
-    "xp": [
-      238,
-      206,
-      118
-    ],
-    "levelup": [
-      255,
-      222,
-      122
-    ],
-    "heal": [
-      112,
-      222,
-      182
-    ],
-    "lightning": [
-      186,
-      152,
-      255
-    ],
-    "loot": [
-      232,
-      204,
-      132
-    ],
-    "descend": [
-      132,
-      192,
-      232
-    ],
-    "system": [
-      216,
-      206,
-      168
-    ],
-    "info": [
-      164,
-      166,
-      176
-    ],
-    "buff": [
-      255,
-      222,
-      130
-    ],
-    "summon": [
-      150,
-      220,
-      240
-    ]
+    "combat": "#2B2620",
+    "warn": "#B4652A",
+    "death": "#C3272B",
+    "kill": "#7A2E2E",
+    "loot": "#8C5A3C",
+    "heal": "#4A7C59",
+    "buff": "#C9A662",
+    "levelup": "#C9A662",
+    "info": "#6E675C",
+    "summon": "#3A5A6E",
+    "descend": "#3A5A6E"
   },
-  "realm_themes": {
-    "jade": {
-      "floor_light": [
-        110,
-        180,
-        150
-      ],
-      "floor_dark": [
-        40,
-        72,
-        62
-      ],
-      "wall_light": [
-        214,
-        196,
-        120
-      ],
-      "wall_dark": [
-        84,
-        76,
-        48
-      ]
-    },
-    "charm": {
-      "floor_light": [
-        188,
-        128,
-        138
-      ],
-      "floor_dark": [
-        70,
-        48,
-        54
-      ],
-      "wall_light": [
-        236,
-        210,
-        220
-      ],
-      "wall_dark": [
-        88,
-        66,
-        74
-      ]
-    },
-    "thunder": {
-      "floor_light": [
-        140,
-        128,
-        190
-      ],
-      "floor_dark": [
-        52,
-        48,
-        74
-      ],
-      "wall_light": [
-        150,
-        190,
-        250
-      ],
-      "wall_dark": [
-        56,
-        70,
-        96
-      ]
-    },
-    "stone": {
-      "floor_light": [
-        162,
-        150,
-        122
-      ],
-      "floor_dark": [
-        62,
-        58,
-        46
-      ],
-      "wall_light": [
-        120,
-        200,
-        160
-      ],
-      "wall_dark": [
-        46,
-        78,
-        62
-      ]
-    },
-    "water": {
-      "floor_light": [
-        104,
-        160,
-        194
-      ],
-      "floor_dark": [
-        42,
-        64,
-        80
-      ],
-      "wall_light": [
-        240,
-        170,
-        140
-      ],
-      "wall_dark": [
-        94,
-        66,
-        54
-      ]
-    },
-    "ice": {
-      "floor_light": [
-        168,
-        206,
-        232
-      ],
-      "floor_dark": [
-        66,
-        88,
-        106
-      ],
-      "wall_light": [
-        232,
-        240,
-        250
-      ],
-      "wall_dark": [
-        92,
-        104,
-        120
-      ]
-    },
-    "dark": {
-      "floor_light": [
-        124,
-        114,
-        140
-      ],
-      "floor_dark": [
-        48,
-        44,
-        58
-      ],
-      "wall_light": [
-        176,
-        158,
-        130
-      ],
-      "wall_dark": [
-        68,
-        60,
-        48
-      ]
-    },
-    "abyss": {
-      "floor_light": [
-        104,
-        84,
-        132
-      ],
-      "floor_dark": [
-        40,
-        32,
-        52
-      ],
-      "wall_light": [
-        200,
-        90,
-        90
-      ],
-      "wall_dark": [
-        78,
-        36,
-        40
-      ]
-    },
-    "ember": {
-      "floor_light": [
-        198,
-        152,
-        110
-      ],
-      "floor_dark": [
-        78,
-        58,
-        42
-      ],
-      "wall_light": [
-        255,
-        148,
-        88
-      ],
-      "wall_dark": [
-        104,
-        54,
-        34
-      ]
-    }
+  "params": {
+    "fog_lerp": 0.45,
+    "plain_jitter": -0.025
   }
 }

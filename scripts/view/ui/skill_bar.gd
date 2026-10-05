@@ -64,15 +64,15 @@ func _draw() -> void:
 	var player = engine.state.player
 	var font := get_theme_default_font()
 	draw_string(font, panel_rect.position + Vector2(0, 12), "K·拖拽编排",
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 12, INK_SOFT)
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 12, InkPalette.INK_SOFT)
 	for slot in range(1, 17):
 		var rect := slot_rect(slot)
 		var skill_id := String(player.skill_bar[slot - 1])
-		draw_rect(rect, Color(PAPER, 0.55))
-		draw_rect(rect, INK_SOFT, false, 1.0)
+		draw_rect(rect, Color(InkPalette.PAPER_UI, 0.55))
+		draw_rect(rect, InkPalette.INK_SOFT, false, 1.0)
 		if skill_id == "":
 			draw_string(font, rect.position + Vector2(SLOT / 2.0 - 3.0, 30), "·",
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 18, INK_SOFT)
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 18, InkPalette.INK_SOFT)
 			continue
 		var skill: Dictionary = engine.content.skill_by_id(skill_id)
 		if skill.is_empty() or not player.skill_levels.has(skill_id):
@@ -82,22 +82,22 @@ func _draw() -> void:
 		var affordable: bool = player.fighter.mp() >= Skills.mp_cost(player, skill) and player.fighter.sp() >= Skills.sp_cost(player, skill)
 		var active := learned and affordable
 
-		draw_rect(rect, Color(PAPER, 0.92))
-		draw_rect(rect, INK if active else INK_SOFT, false, 1.6 if active else 1.0)
+		draw_rect(rect, Color(InkPalette.PAPER_UI, 0.92))
+		draw_rect(rect, InkPalette.INK if active else InkPalette.INK_SOFT, false, 1.6 if active else 1.0)
 
-		var icon_color: Color = INK
+		var icon_color: Color = InkPalette.INK
 		var element := Skills.skill_element(skill)
 		if element != "":
-			icon_color = ELEMENT_COLORS.get(element, INK)
+			icon_color = InkPalette.ELEMENT_COLORS.get(element, InkPalette.INK)
 		if not active:
-			icon_color = icon_color.lerp(PAPER, 0.62)
+			icon_color = icon_color.lerp(InkPalette.PAPER_UI, 0.62)
 		draw_string(font, rect.position + Vector2(SLOT / 2.0 - 11.0, 30), icon_char(engine, skill),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 22, icon_color)
 		draw_string(font, rect.position + Vector2(3, 12), key_label(slot),
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 10, INK_SOFT)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 10, InkPalette.INK_SOFT)
 		if level > 1:
 			draw_string(font, rect.position + Vector2(SLOT - 14, 12), str(level),
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, GOLD if active else INK_SOFT)
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, InkPalette.GOLD if active else InkPalette.INK_SOFT)
 		var cost := ""
 		var mp_need := Skills.mp_cost(player, skill)
 		if mp_need > 0:
@@ -107,4 +107,4 @@ func _draw() -> void:
 			cost += "%d灵" % sp_need
 		if cost != "":
 			draw_string(font, rect.position + Vector2(SLOT / 2.0 - cost.length() * 4.5, SLOT - 3), cost,
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 10, INK_SOFT if affordable else VERMILION)
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 10, InkPalette.INK_SOFT if affordable else InkPalette.VERMILION)

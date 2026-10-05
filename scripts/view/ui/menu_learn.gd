@@ -136,12 +136,12 @@ func _draw() -> void:
 	draw_paper()
 	var font := get_theme_default_font()
 	if header_extra != "":
-		draw_text_line(panel_rect.position + Vector2(24, 34), header_extra, INK_SOFT, 14)
+		draw_text_line(panel_rect.position + Vector2(24, 34), header_extra, InkPalette.INK_SOFT, 14)
 	# 父子连线：父右缘中点 → 中垂折线 → 子左缘中点，颜色随子状态
 	for link in links:
 		var child: Dictionary = nodes[link["to"]]
 		var st := _node_state(child)
-		var line_color := INK if st == "learned" else (INK_SOFT if st == "ready" else INK_SOFT.lerp(PAPER, 0.55))
+		var line_color := InkPalette.INK if st == "learned" else (InkPalette.INK_SOFT if st == "ready" else InkPalette.INK_SOFT.lerp(InkPalette.PAPER_UI, 0.55))
 		var p_from: Vector2 = (nodes[link["from"]]["rect"] as Rect2).get_center() + Vector2(NODE / 2.0, 0)
 		var p_to: Vector2 = (child["rect"] as Rect2).get_center() - Vector2(NODE / 2.0, 0)
 		var mid_x := (p_from.x + p_to.x) / 2.0
@@ -155,23 +155,23 @@ func _draw() -> void:
 		var skill: Dictionary = n["skill"]
 		var st := _node_state(n)
 		var label: String = engine.content.localize(skill["name"])
-		draw_rect(rect, Color(PAPER, 0.92 if st == "learned" else 0.55))
-		var frame_color := INK if st == "learned" else (INK_SOFT if st == "ready" else INK_SOFT.lerp(PAPER, 0.55))
+		draw_rect(rect, Color(InkPalette.PAPER_UI, 0.92 if st == "learned" else 0.55))
+		var frame_color := InkPalette.INK if st == "learned" else (InkPalette.INK_SOFT if st == "ready" else InkPalette.INK_SOFT.lerp(InkPalette.PAPER_UI, 0.55))
 		draw_rect(rect, frame_color, false, 1.6 if st == "learned" else 1.0)
-		var icon_color: Color = ELEMENT_COLORS.get(Skills.skill_element(skill), INK)
+		var icon_color: Color = InkPalette.ELEMENT_COLORS.get(Skills.skill_element(skill), InkPalette.INK)
 		if st != "learned":
-			icon_color = icon_color.lerp(PAPER, 0.45 if st == "ready" else 0.68)
+			icon_color = icon_color.lerp(InkPalette.PAPER_UI, 0.45 if st == "ready" else 0.68)
 		draw_string(font, rect.position + Vector2(NODE / 2.0 - 11.0, 33), label.substr(0, 1),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 22, icon_color)
 		if int(n["level"]) > 1:
 			draw_string(font, rect.position + Vector2(NODE - 14, 12), str(int(n["level"])),
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, GOLD)
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, InkPalette.GOLD)
 		if i == cursor:
-			draw_rect(rect.grow(4), VERMILION, false, 2.0)
+			draw_rect(rect.grow(4), InkPalette.VERMILION, false, 2.0)
 		draw_string(font, Vector2(rect.get_center().x - label.length() * 5.5, rect.end.y + NAME_ROW - 3), label,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, INK if st == "learned" else INK_SOFT)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, InkPalette.INK if st == "learned" else InkPalette.INK_SOFT)
 	draw_text_line(Vector2(panel_rect.position.x + 24, panel_rect.end.y - 16),
-		"←→↑↓ 移动 · Tab 换页 · Enter 参悟 · 拖入技能栏/数字键 绑定 · Esc 关闭", INK_SOFT, 13)
+		"←→↑↓ 移动 · Tab 换页 · Enter 参悟 · 拖入技能栏/数字键 绑定 · Esc 关闭", InkPalette.INK_SOFT, 13)
 
 
 ## 网格游标：左右取相邻列最近行，上下在同列环绕。

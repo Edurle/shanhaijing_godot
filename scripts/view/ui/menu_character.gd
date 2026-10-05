@@ -156,7 +156,7 @@ func _draw() -> void:
 	var y := panel_rect.position.y + 46
 
 	# ---- 左列：装备纸娃娃 ----
-	draw_text_line(Vector2(x, y), engine.content.text("char_equipped"), INK_SOFT, 14)
+	draw_text_line(Vector2(x, y), engine.content.text("char_equipped"), InkPalette.INK_SOFT, 14)
 	y += 26
 	equip_rects.clear()
 	var tile_x := x + 30.0
@@ -165,58 +165,58 @@ func _draw() -> void:
 		var rect := Rect2(tile_x, y, SLOT_TILE, SLOT_TILE)
 		equip_rects[slot] = rect
 		var item: Dictionary = player.equipment.slots[slot] if player.equipment.slots.get(slot) != null else {}
-		draw_rect(rect, Color(PAPER, 0.9) if not item.is_empty() else Color(PAPER_SHADOW, 0.5))
-		draw_rect(rect, INK if not item.is_empty() else INK_SOFT, false, 1.6)
+		draw_rect(rect, Color(InkPalette.PAPER_UI, 0.9) if not item.is_empty() else Color(InkPalette.PAPER_SHADOW, 0.5))
+		draw_rect(rect, InkPalette.INK if not item.is_empty() else InkPalette.INK_SOFT, false, 1.6)
 		if String(slot) == hover_slot:
-			draw_rect(rect, VERMILION, false, 2.0)  # 悬停朱印描边
+			draw_rect(rect, InkPalette.VERMILION, false, 2.0)  # 悬停朱印描边
 		if not item.is_empty():
-			var icon_color := INK
+			var icon_color := InkPalette.INK
 			if UiPanel.has_rarity_color(item):
 				icon_color = UiPanel.rarity_color(item)
 			elif item.has("damage") and String(item["damage"].get("element", "")) != "":
 				icon_color = _element_color(String(item["damage"]["element"]))
 			_draw_tile_icon(rect, String(item["label"].substr(0, 1)), icon_color, str(i + 1))
 		else:
-			_draw_tile_icon(rect, "·", INK_SOFT, str(i + 1))
+			_draw_tile_icon(rect, "·", InkPalette.INK_SOFT, str(i + 1))
 		y += SLOT_STEP
 	# 卸下数字提示
-	draw_text_line(Vector2(x, y + 6), "1-5 卸下", INK_SOFT, 12)
+	draw_text_line(Vector2(x, y + 6), "1-5 卸下", InkPalette.INK_SOFT, 12)
 
 	# ---- 右列：行囊 ----
 	var bag_x := panel_rect.position.x + 300
 	var bag_y := panel_rect.position.y + 46
-	draw_text_line(Vector2(bag_x, bag_y), engine.content.text("char_bag"), INK_SOFT, 14)
+	draw_text_line(Vector2(bag_x, bag_y), engine.content.text("char_bag"), InkPalette.INK_SOFT, 14)
 	bag_first_y = bag_y + 30
 	var ry := bag_first_y
 	for i in range(bag_items.size()):
 		var item: Dictionary = bag_items[i]
 		var selected := i == cursor
 		if i == hover_row:
-			draw_rect(Rect2(bag_x - 10, ry - 18, panel_rect.size.x - 330, ROW_STEP), Color(PAPER_SHADOW, 0.6))
+			draw_rect(Rect2(bag_x - 10, ry - 18, panel_rect.size.x - 330, ROW_STEP), Color(InkPalette.PAPER_SHADOW, 0.6))
 		if selected:
-			draw_rect(Rect2(bag_x - 10, ry - 18, panel_rect.size.x - 330, ROW_STEP), Color(PAPER_SHADOW, 0.8))
-			draw_text_line(Vector2(bag_x - 8, ry), "►", VERMILION, 15)
-		var icon_color := INK
+			draw_rect(Rect2(bag_x - 10, ry - 18, panel_rect.size.x - 330, ROW_STEP), Color(InkPalette.PAPER_SHADOW, 0.8))
+			draw_text_line(Vector2(bag_x - 8, ry), "►", InkPalette.VERMILION, 15)
+		var icon_color := InkPalette.INK
 		if player.inventory.is_material(item):
-			icon_color = Color("8C5A3C")
+			icon_color = InkPalette.OCHRE
 		elif UiPanel.has_rarity_color(item):
 			icon_color = UiPanel.rarity_color(item)
 		elif item.has("damage") and String(item["damage"].get("element", "")) != "":
 			icon_color = _element_color(String(item["damage"]["element"]))
 		elif item.has("slot"):
-			icon_color = INK_SOFT
+			icon_color = InkPalette.INK_SOFT
 		draw_string(get_theme_default_font(), Vector2(bag_x + 16, ry), String(item["label"].substr(0, 1)),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, icon_color)
 		var tail := _item_tail(item)
-		draw_text_line(Vector2(bag_x + 40, ry), String(item["label"]), UiPanel.rarity_color(item, INK), 15)
+		draw_text_line(Vector2(bag_x + 40, ry), String(item["label"]), UiPanel.rarity_color(item, InkPalette.INK), 15)
 		if tail != "":
-			draw_text_line(Vector2(panel_rect.end.x - 30 - tail.length() * 8, ry), tail, INK_SOFT, 12)
+			draw_text_line(Vector2(panel_rect.end.x - 30 - tail.length() * 8, ry), tail, InkPalette.INK_SOFT, 12)
 		ry += ROW_STEP
 	if bag_items.is_empty():
-		draw_text_line(Vector2(bag_x + 16, ry), "（空空如也）", INK_SOFT, 14)
+		draw_text_line(Vector2(bag_x + 16, ry), "（空空如也）", InkPalette.INK_SOFT, 14)
 
 	draw_text_line(Vector2(panel_rect.position.x + 30, panel_rect.end.y - 20),
-		engine.content.text("char_hint"), INK_SOFT, 12)
+		engine.content.text("char_hint"), InkPalette.INK_SOFT, 12)
 
 
 func _draw_tile_icon(rect: Rect2, icon: String, color: Color, badge := "") -> void:
@@ -225,7 +225,7 @@ func _draw_tile_icon(rect: Rect2, icon: String, color: Color, badge := "") -> vo
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 24, color)
 	if badge != "":
 		draw_string(font, rect.position + Vector2(4, 14), badge,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, INK_SOFT)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, InkPalette.INK_SOFT)
 
 
 func _item_tail(item: Dictionary) -> String:
@@ -267,8 +267,4 @@ func _set_owned_count(item: Dictionary) -> int:
 
 
 func _element_color(element: String) -> Color:
-	var colors := {
-		"metal": Color("C9A662"), "wood": Color("4A7C59"), "water": Color("2E5977"),
-		"fire": Color("C3272B"), "earth": Color("8C5A3C"),
-	}
-	return colors.get(element, INK)
+	return InkPalette.ELEMENT_COLORS.get(element, InkPalette.INK)

@@ -1,13 +1,7 @@
 class_name UiLogPanel
 extends UiPanel
 ## 左下消息日志：无底透明，最近 5 条直接浮在地图上（旧行淡墨）。
-
-const KIND_COLORS := {
-	"combat": Color("2B2620"), "warn": Color("B4652A"), "death": Color("C3272B"),
-	"kill": Color("7A2E2E"), "loot": Color("8C5A3C"), "heal": Color("4A7C59"),
-	"buff": Color("C9A662"), "levelup": Color("C9A662"), "info": Color("6E675C"),
-	"summon": Color("3A5A6E"), "descend": Color("3A5A6E"),
-}
+## 消息语义色取 InkPalette.KIND_COLORS。
 
 var engine
 var lines := 5
@@ -42,14 +36,14 @@ func _draw() -> void:
 			var x := panel_rect.position.x + 12
 			for segment in msg["segments"]:
 				var seg_text := String(segment["text"])
-				var color := UiPanel.rarity_color(segment, KIND_COLORS.get(String(msg["kind"]), INK))
+				var color := UiPanel.rarity_color(segment, InkPalette.KIND_COLORS.get(String(msg["kind"]), InkPalette.INK))
 				if faded:
-					color = color.lerp(PAPER, 0.45)  # 旧行淡化
+					color = color.lerp(InkPalette.PAPER_UI, 0.45)  # 旧行淡化
 				draw_string(font, Vector2(x, y), seg_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, color)
 				x += font.get_string_size(seg_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 		else:
-			var color: Color = KIND_COLORS.get(String(msg["kind"]), INK)
+			var color: Color = InkPalette.KIND_COLORS.get(String(msg["kind"]), InkPalette.INK)
 			if faded:
-				color = color.lerp(PAPER, 0.45)  # 旧行淡化
+				color = color.lerp(InkPalette.PAPER_UI, 0.45)  # 旧行淡化
 			draw_text_line(Vector2(panel_rect.position.x + 12, y), String(msg["text"]), color, 15)
 		y += 22

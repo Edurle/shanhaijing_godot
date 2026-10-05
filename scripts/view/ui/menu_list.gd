@@ -87,23 +87,23 @@ func _draw() -> void:
 	var x := panel_rect.position.x + 24
 	var y := panel_rect.position.y + 34
 	if header_extra != "":
-		draw_text_line(Vector2(x, y), header_extra, INK_SOFT, 14)
+		draw_text_line(Vector2(x, y), header_extra, InkPalette.INK_SOFT, 14)
 		y += 24
 	for i in range(rows.size()):
 		var row: Dictionary = rows[i]
 		var selected := i == cursor
 		if selected:
-			draw_rect(Rect2(x - 12, y - 16, panel_rect.size.x - 36, 24), Color(PAPER_SHADOW, 0.8))
-			draw_text_line(Vector2(x - 10, y), "►", VERMILION, 16)
-		var color: Color = row.get("color", INK)
+			draw_rect(Rect2(x - 12, y - 16, panel_rect.size.x - 36, 24), Color(InkPalette.PAPER_SHADOW, 0.8))
+			draw_text_line(Vector2(x - 10, y), "►", InkPalette.VERMILION, 16)
+		var color: Color = row.get("color", InkPalette.INK)
 		draw_text_line(Vector2(x + 16, y), String(row.get("text", "")), color, 16)
 		var tail := String(row.get("tail", ""))
 		if tail != "":
-			draw_text_line(Vector2(panel_rect.end.x - 24 - tail.length() * 9, y), tail, INK_SOFT, 13)
+			draw_text_line(Vector2(panel_rect.end.x - 24 - tail.length() * 9, y), tail, InkPalette.INK_SOFT, 13)
 		y += 24
 	if rows.is_empty():
-		draw_text_line(Vector2(x + 16, y), "（空）", INK_SOFT, 15)
-	draw_text_line(Vector2(x, panel_rect.end.y - 18), "↑↓ 选择 · Tab 翻页 · Enter 确认 · Esc 关闭", INK_SOFT, 13)
+		draw_text_line(Vector2(x + 16, y), "（空）", InkPalette.INK_SOFT, 15)
+	draw_text_line(Vector2(x, panel_rect.end.y - 18), "↑↓ 选择 · Tab 翻页 · Enter 确认 · Esc 关闭", InkPalette.INK_SOFT, 13)
 
 
 ## 行命中查询（悬浮提示等用）：返回行号，未命中 -1。几何与 _draw 保持一致。

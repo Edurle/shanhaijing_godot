@@ -27,9 +27,9 @@ func _draw() -> void:
 		return
 	var mouse := get_viewport().get_mouse_position() if get_viewport() != null else Vector2.ZERO
 	var rect := Rect2(mouse - Vector2(25, 25), Vector2(50, 50))
-	draw_rect(rect, Color(PAPER, 0.85))
-	draw_rect(rect, INK, false, 1.6)
-	var icon_color: Color = INK
+	draw_rect(rect, Color(InkPalette.PAPER_UI, 0.85))
+	draw_rect(rect, InkPalette.INK, false, 1.6)
+	var icon_color: Color = InkPalette.INK
 	var element := Skills.skill_element(skill)
 	if element != "":
 		icon_color = _element_color(element)
@@ -39,8 +39,4 @@ func _draw() -> void:
 
 
 func _element_color(element: String) -> Color:
-	var colors := {
-		"metal": Color("C9A662"), "wood": Color("4A7C59"), "water": Color("2E5977"),
-		"fire": Color("C3272B"), "earth": Color("8C5A3C"),
-	}
-	return colors.get(element, INK)
+	return InkPalette.ELEMENT_COLORS.get(element, InkPalette.INK)

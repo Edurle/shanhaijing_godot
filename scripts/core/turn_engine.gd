@@ -343,7 +343,12 @@ func melee_attack(attacker: Actor, target: Actor) -> void:
 		log_message(content.text("attack_hits").format({
 			"attacker": attacker.label, "target": target.label, "damage": damage,
 		}), "combat")
-		emit_event("hit", target.x, target.y, {"amount": damage})
+		emit_event("hit", target.x, target.y, {
+			"amount": damage,
+			"from_x": attacker.x, "from_y": attacker.y,
+			"element": lead_element(element_tags),
+			"countered": target.fighter.counter_multiplier(element_tags) > 1.0,
+		})
 		# 元素命中玩家且玩家有对应抗性：装备构筑的正反馈提示
 		if target == player() and element_tags.size() > 0:
 			var resisted := 0
@@ -365,8 +370,21 @@ func melee_attack(attacker: Actor, target: Actor) -> void:
 func hit_actor(caster: Actor, target: Actor, damage: int, skill: Dictionary) -> void:
 	var final_damage: int = target.fighter.mitigate_incoming(damage, skill.get("tags", []))
 	emit_noise(target.x, target.y, NOISE_RADIUS_SKILL)
-	emit_event("hit", target.x, target.y, {"amount": final_damage})
+	emit_event("hit", target.x, target.y, {
+		"amount": final_damage,
+		"from_x": caster.x, "from_y": caster.y,
+		"element": lead_element(skill.get("tags", [])),
+		"countered": target.fighter.counter_multiplier(skill.get("tags", [])) > 1.0,
+	})
 	_apply_damage(caster, target, final_damage)
+
+
+## tags 中首个五行元素（演出主元素口径，与 fighter.counter_multiplier 一致）。
+static func lead_element(tags: Array) -> String:
+	for t in tags:
+		if ContentDb.ELEMENTS.has(t):
+			return String(t)
+	return ""
 
 
 func log_hit_message(actor: Actor, target: Actor, skill: Dictionary, damage: int, hits: int) -> void:

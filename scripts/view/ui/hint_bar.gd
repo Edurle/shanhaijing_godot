@@ -68,6 +68,6 @@ func _draw() -> void:
 	var hint := current_hint()
 	if hint == "":
 		return
-	draw_rect(Rect2(panel_rect.position - Vector2(2, 2), panel_rect.size + Vector2(4, 4)), Color(PAPER, 0.88))
-	draw_rect(panel_rect, INK, false, 1.2)
-	draw_text_line(panel_rect.position + Vector2(14, 20), hint, INK_SOFT, 14)
+	draw_rect(Rect2(panel_rect.position - Vector2(2, 2), panel_rect.size + Vector2(4, 4)), Color(InkPalette.PAPER_UI, 0.88))
+	draw_rect(panel_rect, InkPalette.INK, false, 1.2)
+	draw_text_line(panel_rect.position + Vector2(14, 20), hint, InkPalette.INK_SOFT, 14)

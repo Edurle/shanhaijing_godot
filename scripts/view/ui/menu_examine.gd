@@ -72,25 +72,25 @@ func _draw() -> void:
 	var x := panel_rect.position.x + 28
 	var y := panel_rect.position.y + 40
 
-	draw_text_line(Vector2(x, y), "%d/%d  %s" % [index + 1, targets.size(), target.label], INK, 20)
+	draw_text_line(Vector2(x, y), "%d/%d  %s" % [index + 1, targets.size(), target.label], InkPalette.INK, 20)
 	if target.elite:
-		draw_text_line(Vector2(x + 300, y), "精英", GOLD, 15)
+		draw_text_line(Vector2(x + 300, y), "精英", InkPalette.GOLD, 15)
 	y += 30
 	# 气血条
-	draw_bar(Vector2(x, y), 300, float(fighter.hp()) / maxf(1, fighter.max_hp()), VERMILION, 12)
-	draw_text_line(Vector2(x + 320, y + 10), "%d/%d" % [fighter.hp(), fighter.max_hp()], INK_SOFT, 14)
+	draw_bar(Vector2(x, y), 300, float(fighter.hp()) / maxf(1, fighter.max_hp()), InkPalette.VERMILION, 12)
+	draw_text_line(Vector2(x + 320, y + 10), "%d/%d" % [fighter.hp(), fighter.max_hp()], InkPalette.INK_SOFT, 14)
 	y += 28
 	draw_text_line(Vector2(x, y), "气血 %d/%d · 攻 %d · 防 %d · 修为 %d" % [
 		fighter.hp(), fighter.max_hp(), fighter.power(), fighter.defense(), fighter.xp_reward,
-	], INK, 15)
+	], InkPalette.INK, 15)
 	y += 24
 	# 威胁 + 距离 + 本命五行
 	var threat := _assess_threat()
-	var threat_colors := {"凶": VERMILION, "慎": GOLD, "稳": Color("4A7C59")}
+	var threat_colors := {"凶": InkPalette.VERMILION, "慎": InkPalette.GOLD, "稳": InkPalette.SAFE}
 	draw_text_line(Vector2(x, y), "威胁 %s   距离 %d   五行属 %s" % [
 		threat, int(engine.player().distance_to(target)),
 		engine.content.text("element_" + target.element) if target.element != "" else "—",
-	], threat_colors.get(threat, INK), 16)
+	], threat_colors.get(threat, InkPalette.INK), 16)
 	y += 28
 	# 抗性统一口径：点数经护甲式边际递减折算后显示（五行=减伤%，状态=免疫概率/效果折减%）
 	var resists: Array = []
@@ -101,17 +101,17 @@ func _draw() -> void:
 			var label: String = engine.content.text("resist_" + kind).format({"v": shown}).replace("+", "")
 			resists.append(label)
 	draw_text_line(Vector2(x, y), "抗性：" + (" ".join(resists) if not resists.is_empty() else "无"),
-		Color("4A7C59") if not resists.is_empty() else INK_SOFT, 15)
+		InkPalette.SAFE if not resists.is_empty() else InkPalette.INK_SOFT, 15)
 	y += 24
 	# 爪击元素
 	if target.attack_tags.size() > 0:
 		var names: Array = []
 		for t in target.attack_tags:
 			names.append(engine.content.text("element_" + String(t)))
-		draw_text_line(Vector2(x, y), "爪击附 " + "、".join(names) + " 之息", Color("B4652A"), 15)
+		draw_text_line(Vector2(x, y), "爪击附 " + "、".join(names) + " 之息", InkPalette.WARN, 15)
 		y += 24
 	# 目击位置提示由棋盘高亮框承担
-	draw_text_line(Vector2(x, panel_rect.end.y - 18), "↑↓/Tab 换目标 · Esc/X 关闭", INK_SOFT, 13)
+	draw_text_line(Vector2(x, panel_rect.end.y - 18), "↑↓/Tab 换目标 · Esc/X 关闭", InkPalette.INK_SOFT, 13)
 
 
 func _assess_threat() -> String:

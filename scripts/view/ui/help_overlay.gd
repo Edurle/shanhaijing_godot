@@ -44,6 +44,6 @@ func _draw() -> void:
 	var x := panel_rect.position.x + 26
 	var y := panel_rect.position.y + 42
 	for row_key in ROW_KEYS:
-		draw_text_line(Vector2(x, y), "· " + engine.content.text(row_key), INK, 15)
+		draw_text_line(Vector2(x, y), "· " + engine.content.text(row_key), InkPalette.INK, 15)
 		y += 34
-	draw_text_line(Vector2(x, panel_rect.end.y - 22), engine.content.text("help_close"), INK_SOFT, 13)
+	draw_text_line(Vector2(x, panel_rect.end.y - 22), engine.content.text("help_close"), InkPalette.INK_SOFT, 13)

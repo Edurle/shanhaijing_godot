@@ -77,15 +77,15 @@ func _init() -> void:
 		failed += _check(state.player.equipment.weapon_damage() == [0, ""], "点击装备格卸下武器")
 
 	# ---- 装备品级着色：色表完备性与优先级（套装绿 > 品级 > 默认） ----
-	failed += _check(UiPanel.RARITY_COLORS.size() == 4, "非白品级应 4 色（实际 %d）" % UiPanel.RARITY_COLORS.size())
+	failed += _check(InkPalette.RARITY_COLORS.size() == 4, "非白品级应 4 色（实际 %d）" % InkPalette.RARITY_COLORS.size())
 	var ganjiang: Dictionary = content.build_item("w_ganjiang")
-	failed += _check(UiPanel.rarity_color(ganjiang) == UiPanel.RARITY_COLORS["legendary"], "橙装取橙")
+	failed += _check(UiPanel.rarity_color(ganjiang) == InkPalette.RARITY_COLORS["legendary"], "橙装取橙")
 	failed += _check(UiPanel.has_rarity_color(ganjiang), "橙装有品级色")
 	var taomu: Dictionary = content.build_item("w_taomu")
 	failed += _check(not UiPanel.has_rarity_color(taomu), "白装无品级色")
 	failed += _check(UiPanel.rarity_color(taomu, Color.RED) == Color.RED, "白装回落调用方默认色")
 	var denglin: Dictionary = content.build_item("p_denglin")
-	failed += _check(UiPanel.rarity_color(denglin) == UiPanel.SET_COLOR, "套装绿优先于品级色")
+	failed += _check(UiPanel.rarity_color(denglin) == InkPalette.SET_COLOR, "套装绿优先于品级色")
 
 	# ---- 消息日志：分段着色绘制冒烟 ----
 	var log_panel = load("res://scripts/view/ui/log_panel.gd").new()
@@ -105,7 +105,7 @@ func _init() -> void:
 	item_tip.setup(engine)
 	var kunwu_lines: Array = item_tip.build_item_lines(content.build_item("w_kunwu"), state.player)
 	failed += _check(String(kunwu_lines[0]["text"]) == "昆吾刀", "悬浮卡标题为物品名（%s）" % String(kunwu_lines[0]["text"]))
-	failed += _check(kunwu_lines[0]["color"] == UiPanel.RARITY_COLORS["magic"], "标题取品级色")
+	failed += _check(kunwu_lines[0]["color"] == InkPalette.RARITY_COLORS["magic"], "标题取品级色")
 	var kunwu_text := ""
 	for line in kunwu_lines:
 		kunwu_text += String(line["text"])
