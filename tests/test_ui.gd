@@ -100,6 +100,45 @@ func _init() -> void:
 	var pickup_text: String = String(pickup_msg["text"])
 	failed += _check(pickup_text.contains("邓林佩"), "分段消息全文仍含物品名（%s）" % pickup_text)
 
+	# ---- 装备悬浮卡：行组装 + 悬停命中 ----
+	var item_tip = load("res://scripts/view/ui/ui_tooltip.gd").new()
+	item_tip.setup(engine)
+	var kunwu_lines: Array = item_tip.build_item_lines(content.build_item("w_kunwu"), state.player)
+	failed += _check(String(kunwu_lines[0]["text"]) == "昆吾刀", "悬浮卡标题为物品名（%s）" % String(kunwu_lines[0]["text"]))
+	failed += _check(kunwu_lines[0]["color"] == UiPanel.RARITY_COLORS["magic"], "标题取品级色")
+	var kunwu_text := ""
+	for line in kunwu_lines:
+		kunwu_text += String(line["text"])
+	failed += _check(kunwu_text.contains("兵") and kunwu_text.contains("灵品"), "悬浮卡含槽位与品级（%s）" % kunwu_text)
+	failed += _check(kunwu_text.contains("物5") and kunwu_text.contains("金"), "悬浮卡含武器伤害面（%s）" % kunwu_text)
+	# 套装件：档位清单与激活态（先穿两件再悬浮）
+	state.player.equipment.equip(content.build_item("b_zhurilv"))
+	state.player.equipment.equip(content.build_item("p_denglin"))
+	var denglin_lines: Array = item_tip.build_item_lines(content.build_item("p_denglin"), state.player)
+	var tier_total := 0
+	var tier_active := false
+	for line in denglin_lines:
+		var line_text := String(line["text"])
+		if line_text.contains("件："):
+			tier_total += 1
+		if line_text.contains("✓ 2件"):
+			tier_active = true
+	failed += _check(tier_total == 2, "夸父套装应列 2 档（实际 %d）" % tier_total)
+	failed += _check(tier_active, "两件在身时档2应标记激活")
+	# 悬停命中：行囊行 / 已装备槽 / 空白处（行囊面板此前已打开并绘制）
+	char_menu._rebuild()
+	char_menu.queue_redraw()
+	await process_frame
+	var bag_x: float = char_menu.panel_rect.position.x + 300
+	var hover_bag: Dictionary = char_menu.hover(Vector2(bag_x + 60, char_menu.bag_first_y))
+	failed += _check(not hover_bag.is_empty(), "悬停行囊行应命中物品")
+	var hover_blank: Dictionary = char_menu.hover(char_menu.panel_rect.position + Vector2(150, 20))
+	failed += _check(hover_blank.is_empty(), "悬停面板空白处应无命中")
+	if char_menu.equip_rects.has("amulet"):
+		var hover_gear: Dictionary = char_menu.hover((char_menu.equip_rects["amulet"] as Rect2).get_center())
+		failed += _check(String(hover_gear.get("id", "")) == "p_denglin", "悬停佩槽应命中邓林佩（%s）" % String(hover_gear.get("id", "")))
+		failed += _check(char_menu.hover_slot == "amulet", "悬停槽高亮状态应记录")
+
 	# ---- 查看菜单：有可见敌时打开非空 ----
 	var monster = content.build_monster("zhulong", 11, 10)
 	map.actors.append(monster)

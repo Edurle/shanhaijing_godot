@@ -280,11 +280,19 @@ func _act(_acted: bool) -> void:
 
 # ---- 鼠标（现代操作） ----
 
-## 悬浮提示：技能栏（任意模式）与编排面板图标/槽位 → 技能说明。
+## 悬浮提示：行囊面板物品 > 技能栏（任意模式）> 编排面板图标/槽位 → 说明卡。
 func _update_tooltip(pos: Vector2) -> void:
 	if state == null or dragging_skill != "":
 		tooltip.hide_panel()
 		return
+	if menu_character.visible:
+		var hovered: Dictionary = menu_character.hover(pos)
+		if not hovered.is_empty():
+			tooltip.show_item(hovered, state.player, pos)
+			return
+		if menu_character.panel_rect.has_point(pos):
+			tooltip.hide_panel()  # 面板空白处不透传给下层技能栏
+			return
 	var bottom_slot: int = skill_bar.skill_slot_at(pos)
 	if bottom_slot > 0:
 		var sid := String(state.player.skill_bar[bottom_slot - 1])

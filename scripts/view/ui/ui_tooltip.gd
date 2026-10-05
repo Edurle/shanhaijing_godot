@@ -1,7 +1,8 @@
 class_name UiTooltip
 extends UiPanel
-## 全局技能悬浮说明：名称/重数/耗气灵/效果摘要/五行/绑定键位/描述（自动折行）。
-## 由主场景在技能栏或编排面板上悬停时驱动；贴锚点显示并夹在视口内。
+## 全局悬浮说明：技能（名称/重数/耗气灵/效果摘要/五行/绑定键位/描述）与
+## 物品（品级色标题/槽位品级/伤害面/加成词条/套装档位/同槽对比/典故）。
+## 由主场景在技能栏、编排面板或角色面板上悬停时驱动；贴锚点显示并夹在视口内。
 
 const WIDTH := 300.0
 
@@ -67,6 +68,110 @@ func show_skill(skill: Dictionary, player: Actor, pos: Vector2, bound_label := "
 	anchor = pos
 	visible = true
 	queue_redraw()
+
+
+# ---- 物品悬浮 ----
+
+## 组装某物品（装备/消耗品/材料）的悬浮行（headless 可测）。
+func build_item_lines(item: Dictionary, player: Actor) -> Array:
+	var out: Array = []
+	var is_gear := item.has("slot")
+	out.append({"text": String(item["label"]), "color": UiPanel.rarity_color(item, INK), "size": 17})
+	if is_gear:
+		var meta: String = engine.content.text("slot_" + String(item["slot"]))
+		meta += " · " + String(UiPanel.RARITY_LABELS.get(String(item.get("rarity", "common")), ""))
+		out.append({"text": meta, "color": GOLD, "size": 13})
+	if item.has("damage"):
+		out.append({"text": _item_brief(item), "color": GOLD, "size": 13})
+	var bonus_parts: Array = []
+	for key in ["power", "defense", "max_hp", "max_mp", "max_sp"]:
+		var value := int(item.get("bonuses", {}).get(key, 0))
+		if value > 0:
+			bonus_parts.append(engine.content.text("bon_" + key).format({"v": value}))
+	if not bonus_parts.is_empty():
+		out.append({"text": " ".join(bonus_parts), "color": GOLD, "size": 13})
+	var affix_parts: Array = []
+	for affix in item.get("affixes", []):
+		affix_parts.append(engine.content.text("aff_" + String(affix["id"])).format({"v": int(affix["value"])}))
+	if not affix_parts.is_empty():
+		out.append({"text": " · ".join(affix_parts), "color": GOLD, "size": 13})
+	if item.has("consumable"):
+		var summary := Consumables.summary(engine, item)
+		if summary != "":
+			out.append({"text": summary, "color": GOLD, "size": 13})
+	# 同槽对比：行囊中悬停装备时提示身上现役
+	if is_gear and not player.equipment.is_equipped(item):
+		var worn = player.equipment.slots.get(String(item["slot"]))
+		if worn != null:
+			out.append({"text": "已装备：%s（%s）" % [String(worn["label"]), _item_brief(worn)],
+				"color": INK_SOFT, "size": 12})
+	# 套装块：名称 + 持有计数 + 各档位激活态（✓ 已激活 / · 未激活）
+	var set_id := String(item.get("set_id", ""))
+	if set_id != "" and engine.content.sets.has(set_id):
+		var owned := _set_owned_count(player, set_id)
+		out.append({"text": "%s套装 · %d/%d" % [
+			engine.content.set_name(set_id), owned, engine.content.set_piece_total(set_id),
+		], "color": SET_COLOR, "size": 13})
+		var tiers: Dictionary = engine.content.sets[set_id].get("tiers", {})
+		var threshold_texts: Array = tiers.keys()
+		threshold_texts.sort_custom(func(a, b): return int(a) < int(b))
+		for threshold_text in threshold_texts:
+			var active := int(threshold_text) <= owned
+			out.append({
+				"text": "%s %d件：%s" % ["✓" if active else "·", int(threshold_text), _tier_brief(tiers[threshold_text])],
+				"color": SET_COLOR if active else INK_SOFT, "size": 12,
+			})
+	# 典故折行（运行时 dict 不带 lore，按 id 回查定义）
+	var idef: Dictionary = engine.content.items.get(String(item["id"]), {})
+	if idef.has("lore"):
+		for line in _wrap_cjk(engine.content.localize(idef["lore"]), 20):
+			out.append({"text": line, "color": INK_SOFT, "size": 12})
+	return out
+
+
+func show_item(item: Dictionary, player: Actor, pos: Vector2) -> void:
+	lines = build_item_lines(item, player)
+	anchor = pos
+	visible = true
+	queue_redraw()
+
+
+## 一句话物品概要（对比行用）：武器=伤害面，防具=加成，消耗品=摘要。
+func _item_brief(item: Dictionary) -> String:
+	if item.has("damage"):
+		var d: Dictionary = item["damage"]
+		var brief := "物%d" % int(d["physical"])
+		if String(d.get("element", "")) != "":
+			brief += "·" + engine.content.text("element_" + String(d["element"]))
+		return brief
+	var parts: Array = []
+	for key in ["power", "defense", "max_hp", "max_mp", "max_sp"]:
+		var value := int(item.get("bonuses", {}).get(key, 0))
+		if value > 0:
+			parts.append(engine.content.text("bon_" + key).format({"v": value}))
+	return " ".join(parts)
+
+
+## 套装档位加成描述（激活/未激活两态共用）。
+func _tier_brief(tier: Dictionary) -> String:
+	var parts: Array = []
+	for key in tier.get("bonuses", {}):
+		parts.append(engine.content.text("bon_" + String(key)).format({"v": int(tier["bonuses"][key])}))
+	for affix in tier.get("affixes", []):
+		parts.append(engine.content.text("aff_" + String(affix["id"])).format({"v": int(affix["value"])}))
+	return "，".join(parts)
+
+
+## 同套持有件数（行囊 + 已穿戴）。
+func _set_owned_count(player: Actor, set_id: String) -> int:
+	var count := 0
+	for held in player.inventory.items:
+		if String(held.get("set_id", "")) == set_id:
+			count += 1
+	for worn in player.equipment.equipped_items():
+		if String(worn.get("set_id", "")) == set_id:
+			count += 1
+	return count
 
 
 func hide_panel() -> void:

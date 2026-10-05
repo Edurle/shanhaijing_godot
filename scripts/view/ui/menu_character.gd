@@ -12,6 +12,8 @@ var cursor := 0
 var bag_items: Array = []
 var equip_rects := {}  # slot -> Rect2（点击命中）
 var bag_first_y := 0.0
+var hover_slot := ""   # 悬停中的装备槽（空 = 无；仅已装备槽）
+var hover_row := -1    # 悬停中的行囊行（-1 = 无）
 
 
 func setup_menu(p_engine) -> void:
@@ -21,6 +23,8 @@ func setup_menu(p_engine) -> void:
 func open() -> void:
 	visible = true
 	cursor = 0
+	hover_slot = ""
+	hover_row = -1
 	_rebuild()
 	relayout(_viewport_size())
 
@@ -119,6 +123,30 @@ func _bag_row_at(pos: Vector2) -> int:
 	return -1
 
 
+## 悬停命中：返回悬停物品（空 dict = 无）并维护朱印高亮；主场景鼠标移动驱动。
+func hover(pos: Vector2) -> Dictionary:
+	var hit := {}
+	var new_slot := ""
+	var new_row := -1
+	if visible and panel_rect.has_point(pos):
+		for slot in equip_rects:
+			if (equip_rects[slot] as Rect2).has_point(pos) and engine.player().equipment.slots.get(slot) != null:
+				new_slot = String(slot)
+				hit = engine.player().equipment.slots[new_slot]
+				break
+		if hit.is_empty():
+			new_row = _bag_row_at(pos)
+			if new_row >= 0 and new_row < bag_items.size():
+				hit = bag_items[new_row]
+			else:
+				new_row = -1
+	if new_slot != hover_slot or new_row != hover_row:
+		hover_slot = new_slot
+		hover_row = new_row
+		queue_redraw()
+	return hit
+
+
 func _draw() -> void:
 	if engine == null:
 		return
@@ -139,6 +167,8 @@ func _draw() -> void:
 		var item: Dictionary = player.equipment.slots[slot] if player.equipment.slots.get(slot) != null else {}
 		draw_rect(rect, Color(PAPER, 0.9) if not item.is_empty() else Color(PAPER_SHADOW, 0.5))
 		draw_rect(rect, INK if not item.is_empty() else INK_SOFT, false, 1.6)
+		if String(slot) == hover_slot:
+			draw_rect(rect, VERMILION, false, 2.0)  # 悬停朱印描边
 		if not item.is_empty():
 			var icon_color := INK
 			if UiPanel.has_rarity_color(item):
@@ -161,6 +191,8 @@ func _draw() -> void:
 	for i in range(bag_items.size()):
 		var item: Dictionary = bag_items[i]
 		var selected := i == cursor
+		if i == hover_row:
+			draw_rect(Rect2(bag_x - 10, ry - 18, panel_rect.size.x - 330, ROW_STEP), Color(PAPER_SHADOW, 0.6))
 		if selected:
 			draw_rect(Rect2(bag_x - 10, ry - 18, panel_rect.size.x - 330, ROW_STEP), Color(PAPER_SHADOW, 0.8))
 			draw_text_line(Vector2(bag_x - 8, ry), "►", VERMILION, 15)

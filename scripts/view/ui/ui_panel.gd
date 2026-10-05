@@ -29,6 +29,12 @@ const RARITY_COLORS := {
 ## 套装显示色（绿），优先于品级色。
 const SET_COLOR := Color("3E8E58")
 
+## 品级中文标签（编辑器 ENUM_LABELS 的游戏侧副本，悬浮卡等显示用）。
+const RARITY_LABELS := {
+	"common": "凡品(白)", "magic": "灵品(蓝)", "rare": "宝品(黄)",
+	"legendary": "仙品(橙)", "mythic": "神品(红)",
+}
+
 var panel_rect := Rect2(0, 0, 400, 300)
 var title := ""
 
