@@ -21,7 +21,7 @@ INK_DEEP = (0x2B, 0x26, 0x20)
 INK_MID = (0x6E, 0x67, 0x5C)
 INK_LIGHT = (0xB9, 0xB2, 0xA2)
 
-SIZE = {"beast": 128, "brush": 256, "paper": 512, "field": 512, "prop": 256}
+SIZE = {"beast": 128, "brush": 256, "paper": 512, "field": 512, "prop": 256, "figure": 512}
 WHITE_GATE = 238   # 亮度高于此 → 全透明
 INK_GATE = 108     # 亮度低于此 → 全不透明
 DEEP_SPLIT = 88    # posterize 分档
@@ -52,7 +52,10 @@ def retouch(src: Path, kind: str, deepen: bool = False) -> Image.Image:
     alpha = Image.eval(image, ink_alpha)
     if kind == "paper":
         return image.convert("RGB").resize((SIZE[kind], SIZE[kind]), Image.LANCZOS)
-    if kind == "brush":
+    if kind == "figure":
+        # 人物立绘：白底转 alpha，保留连续灰阶（面部淡墨层次不能三阶墨化）
+        out = Image.merge("RGBA", (*image.convert("RGB").split(), alpha))
+    elif kind == "brush":
         # 笔刷只做白底转 alpha，保留连续灰阶（运行时再上色）
         out = Image.merge("RGBA", (*image.convert("RGB").split(), alpha))
     elif kind == "field":
@@ -187,7 +190,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="水墨素材修板")
     parser.add_argument("src", type=Path)
     parser.add_argument("-o", "--out", type=Path, required=True)
-    parser.add_argument("--kind", choices=["beast", "brush", "paper", "field", "prop"], default="beast")
+    parser.add_argument("--kind", choices=["beast", "brush", "paper", "field", "prop", "figure"], default="beast")
     parser.add_argument("--deepen", action="store_true", help="墨阶整体加深一档（淡→中→浓）")
     parser.add_argument("--fade-bottom", type=float, default=0.0, help="底部渐隐比例（如 0.3 = 底部30%%线性淡出，山脚/树根虚化衔接）")
     args = parser.parse_args()

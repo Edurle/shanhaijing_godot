@@ -207,6 +207,7 @@ func _start_game(class_pair: Array) -> void:
 		get_tree().quit(1)
 		return
 	engine = CoreTurnEngine.new(state, content)
+	state.player.gender = menu_class.gender  # 形象（棋盘 icon/立绘按此取图）
 	log_panel.setup(engine)
 	log_panel.visible = true
 	target_info.setup(engine)

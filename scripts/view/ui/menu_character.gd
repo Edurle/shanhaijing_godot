@@ -3,8 +3,8 @@ extends UiPanel
 ## 角色面板（RPG 式 2 合 1）：左侧装备纸娃娃（五槽）+ 右侧行囊清单。
 ## 点击/Enter 使用或装备行囊物；点击装备格或 1-5 卸下；材料显示 ×N。
 
-const SLOT_TILE := 56.0
-const SLOT_STEP := 66.0
+const SLOT_TILE := 48.0
+const SLOT_STEP := 56.0
 const ROW_STEP := 26.0
 
 var engine
@@ -155,8 +155,10 @@ func _draw() -> void:
 	var x := panel_rect.position.x + 30
 	var y := panel_rect.position.y + 46
 
-	# ---- 左列：装备纸娃娃 ----
-	draw_text_line(Vector2(x, y), engine.content.text("char_equipped"), InkPalette.INK_SOFT, 14)
+	# ---- 左列：立绘 + 装备纸娃娃 ----
+	_draw_portrait(Vector2(x, y))
+	y += 184
+	draw_text_line(Vector2(x, y), engine.content.text("char_equipped") + " · 1-5 卸下", InkPalette.INK_SOFT, 14)
 	y += 26
 	equip_rects.clear()
 	var tile_x := x + 30.0
@@ -179,8 +181,6 @@ func _draw() -> void:
 		else:
 			_draw_tile_icon(rect, "·", InkPalette.INK_SOFT, str(i + 1))
 		y += SLOT_STEP
-	# 卸下数字提示
-	draw_text_line(Vector2(x, y + 6), "1-5 卸下", InkPalette.INK_SOFT, 12)
 
 	# ---- 右列：行囊 ----
 	var bag_x := panel_rect.position.x + 300
@@ -217,6 +217,25 @@ func _draw() -> void:
 
 	draw_text_line(Vector2(panel_rect.position.x + 30, panel_rect.end.y - 20),
 		engine.content.text("char_hint"), InkPalette.INK_SOFT, 12)
+
+
+## 立绘：左上 170px 纸底墨框——有图用图，无图画青墨点景人物占位。
+func _draw_portrait(pos: Vector2) -> void:
+	var frame := Rect2(pos.x, pos.y, 170, 170)
+	draw_rect(frame, Color(InkPalette.PAPER_UI, 0.9))
+	draw_rect(frame, InkPalette.INK, false, 1.5)
+	var center := frame.position + frame.size / 2.0
+	var tex := Board.hero_texture(String(engine.player().gender))
+	if tex != null:
+		var size := 162.0
+		draw_texture_rect(tex, Rect2(center - Vector2(size, size) / 2.0, Vector2(size, size)), false)
+	else:
+		var ink := InkPalette.PLAYER_INK
+		draw_circle(center + Vector2(0, -44), 12.0, ink)
+		draw_line(center + Vector2(0, -30), center + Vector2(0, 26), ink, 6.0)
+		draw_line(center + Vector2(-2, -28), center + Vector2(-24, 10), ink, 4.0)   # 衣袖
+		draw_line(center + Vector2(2, -28), center + Vector2(24, 10), ink, 4.0)
+		draw_line(center + Vector2(0, 6), center + Vector2(27, -16), ink, 2.5)      # 佩剑
 
 
 func _draw_tile_icon(rect: Rect2, icon: String, color: Color, badge := "") -> void:

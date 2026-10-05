@@ -36,6 +36,7 @@ var _grain_noise := FastNoiseLite.new()
 var _clump_noise := FastNoiseLite.new()
 
 static var _beast_cache := {}  # monster_id -> Texture2D/null（AI 素材缓存，棋盘/查看卡共享）
+static var _hero_cache := {}   # gender -> Texture2D/null（主角立像，棋盘/角色面板共享）
 
 
 func _ready() -> void:
@@ -471,6 +472,13 @@ func _draw_actor(actor: Actor) -> void:
 		return
 	var center := _cell_center(Vector2i(actor.x, actor.y))
 	if actor == player:
+		var hero := hero_texture(String(actor.gender))
+		if hero != null:
+			# 主角点景：全身立像 48px + 淡青墨罩染（青墨行者）；缺失回退墨点占位
+			var size := CELL + 16.0
+			var tint := Color(1, 1, 1, 1).lerp(InkPalette.PLAYER_INK, 0.22)
+			draw_texture_rect(hero, Rect2(center - Vector2(size, size) / 2.0, Vector2(size, size)), false, tint)
+			return
 		draw_circle(center, 9.0, InkPalette.PLAYER_INK)
 		draw_arc(center, 11.0, 0, TAU, 24, InkPalette.PAPER, 1.5)
 		# 行者朝向剑锋（占位：一短笔）
@@ -510,3 +518,12 @@ static func beast_texture(monster_id: String) -> Texture2D:
 		var path := "res://assets/art/beasts/%s.png" % monster_id
 		_beast_cache[monster_id] = load(path) if ResourceLoader.exists(path) else null
 	return _beast_cache[monster_id]
+
+
+## 主角立像（AI 素材期；缺失返回 null 回退程序化墨点占位）。棋盘/角色面板共用。
+static func hero_texture(gender: String) -> Texture2D:
+	var key := gender if gender == "female" else "male"
+	if not _hero_cache.has(key):
+		var path := "res://assets/art/actors/hero_%s.png" % key
+		_hero_cache[key] = load(path) if ResourceLoader.exists(path) else null
+	return _hero_cache[key]
