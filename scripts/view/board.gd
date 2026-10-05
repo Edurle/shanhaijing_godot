@@ -1,46 +1,135 @@
 class_name Board
 extends Node2D
-## 棋盘渲染（视图层）：阶段 1-2 用程序化水墨色块占位，AI 素材到位后切换为贴图绘制。
-## 重绘时机由 main 驱动（地图/视野/单位变动 → queue_redraw），无逐帧开销。
+## 棋盘渲染（视图层）：批次 4 起为程序化水墨地形——整幅宣纸底 + 半透明洗染 +
+## 水陆湿边 + 跨格连贯皴笔（长卷感核心）；AI 地形图集到位后可逐地形换贴图。
+## 重绘由 main 事件驱动，无逐帧开销；装饰参数在 setup 预计算，重绘期间稳定。
 
 const CELL := 32
 
 # 色板唯一来源：ink_palette.gd（theme.json 可覆盖），本文件不持有颜色常量。
+
+# —— 洗染参数：各地形"墨在纸上的浓度"，越小纸纹越透 ——
+const WASH_ALPHA := {
+	GameMap.T_FLOOR: 0.55, GameMap.T_PLAIN: 0.30, GameMap.T_FOREST: 0.88,
+	GameMap.T_HILL: 0.55, GameMap.T_MOUNTAIN: 0.94, GameMap.T_WATER: 0.78,
+	GameMap.T_RIVER: 0.66, GameMap.T_BRIDGE: 0.85, GameMap.T_ABYSS: 0.96,
+	GameMap.T_SNOW: 0.45, GameMap.T_SHORE: 0.60, GameMap.T_WALL: 0.85,
+}
+const GRAIN_STRENGTH := 0.05   # 连续明度颗粒幅度（色斑跨格、消瓷砖感的关键）
+const WET_TERRAINS := [GameMap.T_WATER, GameMap.T_RIVER]
+const WET_STEPS := [[5.0, 0.20], [3.0, 0.11], [1.8, 0.06]]  # 湿边渗带：宽度 / 浓度
 
 var map: GameMap
 var player: Actor
 var target_cell := Vector2i(-1, -1)  # 瞄准/查看高亮格
 var landing_cell := Vector2i(-1, -1)  # 择向落点预览
 var travel_cell := Vector2i(-1, -1)  # 点击旅行目标（淡金虚框）
-var _jitter := {}  # Vector2i -> 0..2 纸面颗粒抖动，避免大色块呆板
+
+var _paper: ImageTexture           # 宣纸底纹（±2.5% 纤维斑驳，镜像平铺）
+var _grain := {}                   # Vector2i -> float 连续明度颗粒
+var _deco := {}                    # Vector2i -> Dictionary 装饰参数
+var _grain_noise := FastNoiseLite.new()
+var _clump_noise := FastNoiseLite.new()
 
 static var _beast_cache := {}  # monster_id -> Texture2D/null（AI 素材缓存，棋盘/查看卡共享）
+
+
+func _ready() -> void:
+	_grain_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_grain_noise.frequency = 0.32
+	_clump_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_clump_noise.frequency = 0.11
+	texture_repeat = CanvasItem.TEXTURE_REPEAT_MIRROR
+	_build_paper()
+
+
+## 宣纸：Simplex 生成 256px 纸纹（±2.5% 纤维斑驳），镜像平铺满图——未探索区即带肌理的留白。
+func _build_paper() -> void:
+	var image := Image.create_empty(256, 256, false, Image.FORMAT_RGB8)
+	var fiber := FastNoiseLite.new()
+	fiber.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	fiber.frequency = 0.06
+	for y in range(256):
+		for x in range(256):
+			image.set_pixel(x, y, InkPalette.PAPER.lightened(fiber.get_noise_2d(x, y) * 0.025))
+	_paper = ImageTexture.create_from_image(image)
 
 
 func setup(p_map: GameMap, p_player: Actor = null) -> void:
 	map = p_map
 	player = p_player
-	_jitter.clear()
-	for x in range(map.width):
-		for y in range(map.height):
-			_jitter[Vector2i(x, y)] = (x * 7 + y * 13) % 3
+	_precompute()
 	queue_redraw()
+
+
+## 逐格预计算：明度颗粒（连续场）+ 装饰参数。种子按地图稳定（重进同层不闪变）。
+func _precompute() -> void:
+	var field_seed := (String(map.realm_id).hash() + map.width * 131 + map.height * 17 + map.floor_number * 397) % 100000
+	_grain_noise.seed = field_seed
+	_clump_noise.seed = field_seed + 7
+	var rng := RandomNumberGenerator.new()
+	rng.seed = field_seed + 13
+	_grain.clear()
+	_deco.clear()
+	for y in range(map.height):
+		for x in range(map.width):
+			var cell := Vector2i(x, y)
+			_grain[cell] = _grain_noise.get_noise_2d(x, y)
+			_deco[cell] = _build_deco(map.tile_at(x, y), x, y, rng)
+
+
+## 装饰参数（仅视野内绘制）：山脊笔高取平滑场（邻格连贯成脉），点苔/水纹密度取聚簇场（成片跨格）。
+func _build_deco(kind: int, x: int, y: int, rng: RandomNumberGenerator) -> Dictionary:
+	var clump := _clump_noise.get_noise_2d(x, y)
+	match kind:
+		GameMap.T_MOUNTAIN, GameMap.T_WALL:
+			return {
+				"r1": _grain_noise.get_noise_2d(x * 0.45, y * 1.7) * 0.5 + 0.5,
+				"r2": _grain_noise.get_noise_2d(x * 0.45 + 31.0, y * 1.7 + 17.0) * 0.5 + 0.5,
+				"peak": rng.randf() < 0.16,
+			}
+		GameMap.T_FOREST:
+			var dots: Array = []
+			if clump > -0.2:
+				var count := 3 + int(clampf((clump + 0.2) * 4.0, 0.0, 1.0) * rng.randf_range(2.0, 5.0))
+				for _i in range(count):
+					dots.append([rng.randf_range(4.0, 28.0), rng.randf_range(4.0, 28.0),
+						rng.randf_range(1.4, 2.6), rng.randf() < 0.5])
+			return {"dots": dots}
+		GameMap.T_WATER, GameMap.T_RIVER:
+			return {
+				"rip": clump > 0.05,
+				"rip2": rng.randf() < 0.4,
+				# 同行取一致相位 → 水纹横向流过邻格
+				"ry": _grain_noise.get_noise_2d(17.3, y * 1.6) * 0.5 + 0.5,
+			}
+		GameMap.T_HILL:
+			return {"phase": _grain_noise.get_noise_2d(x * 0.6, y * 0.9) * 0.5 + 0.5}
+		GameMap.T_SHORE, GameMap.T_SNOW:
+			var dots: Array = []
+			for _i in range(3):
+				dots.append([rng.randf_range(5.0, 27.0), rng.randf_range(5.0, 27.0)])
+			return {"dots": dots}
+	return {}
 
 
 func _draw() -> void:
 	if map == null:
 		return
-	draw_rect(Rect2(0, 0, map.width * CELL, map.height * CELL), InkPalette.PAPER)
-	for x in range(map.width):
-		for y in range(map.height):
+	# 整幅宣纸（镜像平铺）：全图共享一张纸，留白即未探索
+	draw_texture_rect(_paper, Rect2(0, 0, map.width * CELL, map.height * CELL), true)
+	for y in range(map.height):
+		for x in range(map.width):
 			if not map.is_explored(x, y):
 				continue
 			var seen := map.is_visible(x, y)
 			var kind := map.tile_at(x, y)
-			var color := _terrain_color(kind, x, y, seen)
-			draw_rect(Rect2(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2), color)
-			if seen and (kind == GameMap.T_MOUNTAIN or kind == GameMap.T_WALL):
-				_draw_mountain_stroke(x, y)
+			# 满格洗染（无 1px 缝：方格是逻辑的不是视觉的），纸纹自墨下透出
+			draw_rect(Rect2(x * CELL, y * CELL, CELL, CELL), _terrain_color(kind, x, y, seen))
+			if seen:
+				if kind in WET_TERRAINS:
+					_draw_wet_edges(x, y, kind)
+				_draw_decoration(x, y, kind)
 	_draw_stairs()
 	_draw_gates()
 	_draw_items()
@@ -77,28 +166,97 @@ func _draw_overlays() -> void:
 			draw_line(tpos + Vector2(seg * tsize.x / 4.0, tsize.y), tpos + Vector2((seg + 0.6) * tsize.x / 4.0, tsize.y), dash, 1.5)
 
 
+## 洗染色：地形色 × 连续明度颗粒，半透明罩在纸纹上（记忆态罩灰墨）。
 func _terrain_color(kind: int, x: int, y: int, seen: bool) -> Color:
 	var base: Color = InkPalette.TERRAIN_COLORS.get(kind, InkPalette.PAPER)
-	if kind == GameMap.T_PLAIN:
-		# 宣纸底 + 三档颗粒抖动，模拟纸面吸墨不匀
-		var j := int(_jitter.get(Vector2i(x, y), 0))
-		base = InkPalette.PAPER.lightened(0.0 if j == 0 else InkPalette.PLAIN_JITTER)
+	base = base.lightened(_grain.get(Vector2i(x, y), 0.0) * GRAIN_STRENGTH)
 	if not seen:
-		base = base.lerp(InkPalette.INK_LIGHT, InkPalette.FOG_LERP)  # 记忆态罩一层灰墨
-	return base
+		base = base.lerp(InkPalette.INK_LIGHT, InkPalette.FOG_LERP)
+	return Color(base, WASH_ALPHA.get(kind, 0.8))
 
 
-## 山体/石壁飞白：两笔浅色横皴，让浓墨块有笔触感（占位手法，素材期替换）。
-func _draw_mountain_stroke(x: int, y: int) -> void:
+## 湿边：水/河与陆地交界，水面侧三段渗带 + 一条边界沉积线（水彩边缘效应）。
+func _draw_wet_edges(x: int, y: int, kind: int) -> void:
+	var base: Color = InkPalette.TERRAIN_COLORS.get(kind, InkPalette.PAPER).darkened(0.35)
+	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var nx: int = x + dir.x
+		var ny: int = y + dir.y
+		if map.in_bounds(nx, ny):
+			var neighbor := map.tile_at(nx, ny)
+			if neighbor in WET_TERRAINS or neighbor == GameMap.T_ABYSS:
+				continue  # 水连水/渊：无交界
+		_draw_bleed_edge(x * CELL, y * CELL, dir, base)
+
+
+func _draw_bleed_edge(px: int, py: int, dir: Vector2i, color: Color) -> void:
+	var x0 := px + (CELL if dir.x == 1 else 0)
+	var y0 := py + (CELL if dir.y == 1 else 0)
+	var inset := 0.0
+	for step in WET_STEPS:
+		var w: float = step[0]
+		var a: float = step[1]
+		inset += w
+		if dir.x == 1:
+			draw_rect(Rect2(x0 - inset, py + 1.5, w, CELL - 3.0), Color(color, a))
+		elif dir.x == -1:
+			draw_rect(Rect2(x0, py + 1.5, w, CELL - 3.0), Color(color, a))
+		elif dir.y == 1:
+			draw_rect(Rect2(px + 1.5, y0 - inset, CELL - 3.0, w), Color(color, a))
+		else:
+			draw_rect(Rect2(px + 1.5, y0, CELL - 3.0, w), Color(color, a))
+	# 边界沉积线（渗得最深的一线）
+	if dir.x != 0:
+		draw_line(Vector2(x0, py + 1), Vector2(x0, py + CELL - 1), Color(color, 0.32), 1.5)
+	else:
+		draw_line(Vector2(px + 1, y0), Vector2(px + CELL - 1, y0), Color(color, 0.32), 1.5)
+
+
+## 笔墨装饰（仅视野内；记忆区只留洗染+雾，干净的回忆）。
+func _draw_decoration(x: int, y: int, kind: int) -> void:
+	var deco: Dictionary = _deco.get(Vector2i(x, y), {})
 	var px := x * CELL
 	var py := y * CELL
-	var stroke := InkPalette.INK_DEEP.lightened(0.28)
-	draw_line(
-		Vector2(px + 6, py + 10), Vector2(px + CELL - 8, py + 8), stroke, 2.0
-	)
-	draw_line(
-		Vector2(px + 10, py + CELL - 9), Vector2(px + CELL - 6, py + CELL - 12), stroke, 1.5
-	)
+	match kind:
+		GameMap.T_MOUNTAIN, GameMap.T_WALL:
+			# 斧劈皴两笔：笔高取平滑场，邻格连成山脊；偶发峰顶留白
+			var stroke := InkPalette.INK_DEEP.lightened(0.30)
+			var y1: float = py + 6.0 + float(deco.get("r1", 0.5)) * 14.0
+			var y2: float = py + 8.0 + float(deco.get("r2", 0.5)) * 14.0
+			draw_line(Vector2(px + 5, y1 + 2), Vector2(px + CELL - 6, y1 - 1), stroke, 2.0)
+			draw_line(Vector2(px + 10, y2 + 2), Vector2(px + CELL - 5, y2 - 1), stroke, 1.3)
+			if deco.get("peak", false):
+				draw_line(Vector2(px + 12, py + 4), Vector2(px + 22, py + 3), InkPalette.PAPER.lightened(0.06), 2.0)
+		GameMap.T_FOREST:
+			# 点苔：聚簇场驱动疏密，成片跨格
+			for dot in deco.get("dots", []):
+				var dot_color := InkPalette.INK_DEEP if dot[3] else InkPalette.INK_MID
+				draw_circle(Vector2(px + dot[0], py + dot[1]), dot[2], dot_color)
+		GameMap.T_WATER, GameMap.T_RIVER:
+			if not deco.get("rip", false):
+				return
+			var water: Color = InkPalette.TERRAIN_COLORS.get(kind, InkPalette.PAPER).darkened(0.18)
+			var cy: float = py + 8.0 + float(deco.get("ry", 0.5)) * 12.0
+			draw_arc(Vector2(px + 16.0, cy), 8.5, PI * 0.12, PI * 0.88, 10, water, 1.2)
+			if deco.get("rip2", false):
+				draw_arc(Vector2(px + 20.0, cy + 4.0), 5.5, PI * 0.15, PI * 0.85, 8, water, 1.0)
+		GameMap.T_HILL:
+			# 披麻皴：两短竖笔
+			var phase: float = float(deco.get("phase", 0.5))
+			draw_line(Vector2(px + 8.0, py + 8.0 + phase * 4.0), Vector2(px + 13.0, py + 22.0), InkPalette.INK_MID, 1.2)
+			draw_line(Vector2(px + 19.0, py + 6.0 + phase * 4.0), Vector2(px + 24.0, py + 20.0), InkPalette.INK_MID, 1.2)
+		GameMap.T_SHORE:
+			for dot in deco.get("dots", []):
+				draw_circle(Vector2(px + dot[0], py + dot[1]), 1.1, InkPalette.OCHRE.darkened(0.1))
+		GameMap.T_SNOW:
+			for dot in deco.get("dots", []):
+				draw_circle(Vector2(px + dot[0], py + dot[1]), 1.0, InkPalette.INK_LIGHT)
+		GameMap.T_BRIDGE:
+			var plank: Color = InkPalette.TERRAIN_COLORS[GameMap.T_BRIDGE].darkened(0.3)
+			for i in range(3):
+				var yy: float = py + 8.0 + i * 8.0
+				draw_line(Vector2(px + 3.0, yy), Vector2(px + 29.0, yy), plank, 1.0)
+		GameMap.T_ABYSS:
+			draw_rect(Rect2(px + 4.0, py + 4.0, 24.0, 24.0), Color(InkPalette.INK_DEEP, 0.3))
 
 
 ## 山径：下行（墨三角向下）/上行（淡三角向上），踏入交互的视觉锚点。

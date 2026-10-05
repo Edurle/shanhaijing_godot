@@ -43,7 +43,7 @@ static var KIND_COLORS := {
 	"summon": Color("#3A5A6E"), "descend": Color("#3A5A6E"),
 }
 static var TERRAIN_COLORS := {
-	GameMap.T_FLOOR: Color("#D8CFBA"), GameMap.T_WALL: Color("#E9E1CD"),
+	GameMap.T_FLOOR: Color("#D8CFBA"), GameMap.T_WALL: Color("#4A443A"),
 	GameMap.T_PLAIN: Color("#E9E1CD"), GameMap.T_FOREST: Color("#8A8674"),
 	GameMap.T_HILL: Color("#C4B99F"), GameMap.T_MOUNTAIN: Color("#2B2620"),
 	GameMap.T_WATER: Color("#9FB6C4"), GameMap.T_RIVER: Color("#B7C9D4"),
