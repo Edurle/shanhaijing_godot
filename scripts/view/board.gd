@@ -10,9 +10,10 @@ const GROUND_SHADER := preload("res://assets/shaders/paper_ground.gdshader")
 # 色板唯一来源：ink_palette.gd（theme.json 可覆盖），本文件不持有颜色常量。
 
 # —— 洗染参数：喂给 shader 的各地形"墨在纸上的浓度"，越小纸纹越透 ——
+# 山/林/丘是淡墨底（大剪影贴图承担主体质量），水/渊浓一些
 const WASH_ALPHA := {
-	GameMap.T_FLOOR: 0.55, GameMap.T_PLAIN: 0.30, GameMap.T_FOREST: 0.88,
-	GameMap.T_HILL: 0.55, GameMap.T_MOUNTAIN: 0.94, GameMap.T_WATER: 0.78,
+	GameMap.T_FLOOR: 0.55, GameMap.T_PLAIN: 0.30, GameMap.T_FOREST: 0.55,
+	GameMap.T_HILL: 0.45, GameMap.T_MOUNTAIN: 0.45, GameMap.T_WATER: 0.78,
 	GameMap.T_RIVER: 0.66, GameMap.T_BRIDGE: 0.85, GameMap.T_ABYSS: 0.96,
 	GameMap.T_SNOW: 0.45, GameMap.T_SHORE: 0.60, GameMap.T_WALL: 0.85,
 }
@@ -30,6 +31,7 @@ var _ground_mat: ShaderMaterial
 var _field_tex: ImageTexture       # 每格地形+雾态的数据纹理
 var _blank: ImageTexture           # 水贴图缺失时的透明兜底
 var _deco := {}                    # Vector2i -> Dictionary 装饰参数
+var _peaks: Array = []             # 区域大剪影摆放（山/树丛/土坡）[{x,y,size,kind,vseed,far}]
 var _grain_noise := FastNoiseLite.new()
 var _clump_noise := FastNoiseLite.new()
 
@@ -98,6 +100,141 @@ func _precompute() -> void:
 	for y in range(map.height):
 		for x in range(map.width):
 			_deco[Vector2i(x, y)] = _build_deco(map.tile_at(x, y), x, y, rng)
+	_place_region_sprites(rng)
+
+
+# ---- 区域大剪影（点景）：一片山=几座山峰、一片林=几丛树，逻辑格子不渲染边缘 ----
+
+## 同地形连通域（洪泛），返回每片的格列表。
+func _regions_of(kind: int) -> Array:
+	var visited := {}
+	var regions: Array = []
+	for y in range(map.height):
+		for x in range(map.width):
+			var cell := Vector2i(x, y)
+			if visited.has(cell) or map.tile_at(x, y) != kind:
+				continue
+			var region: Array = []
+			var stack := [cell]
+			visited[cell] = true
+			while not stack.is_empty():
+				var c: Vector2i = stack.pop_back()
+				region.append(c)
+				for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+					var n: Vector2i = c + d
+					if not visited.has(n) and map.in_bounds(n.x, n.y) and map.tile_at(n.x, n.y) == kind:
+						visited[n] = true
+						stack.append(n)
+			regions.append(region)
+	return regions
+
+
+## 每片区域按面积摆 N 座大剪影：候选取内部格（四邻同地形），最小间距约束，放不进逐步放宽。
+func _place_in_region(region: Array, kind: int, rng: RandomNumberGenerator, per_cells: float, min_dist: float, size_cells: float, max_count: int, kind_key: String) -> void:
+	var target := mini(max_count, maxi(1, int(round(region.size() / per_cells))))
+	var interior: Array = region.filter(func(c): return (
+		map.tile_at(c.x + 1, c.y) == kind and map.tile_at(c.x - 1, c.y) == kind
+		and map.tile_at(c.x, c.y + 1) == kind and map.tile_at(c.x, c.y - 1) == kind))
+	if interior.is_empty():
+		interior = region
+	var bbox := Rect2i(region[0].x, region[0].y, 1, 1)
+	for c in region:
+		bbox = bbox.expand(c)
+	var placed: Array = []
+	var tries := 0
+	var reach: float = min_dist
+	while placed.size() < target and tries < target * 40:
+		tries += 1
+		var c: Vector2i = interior[rng.randi_range(0, interior.size() - 1)]
+		var ok := true
+		for p in placed:
+			if Vector2(p.x - c.x, p.y - c.y).length() < reach:
+				ok = false
+				break
+		if ok:
+			placed.append(c)
+		elif tries % maxi(1, target * 10) == 0:
+			reach *= 0.85
+	var span_y := maxf(1.0, float(bbox.size.y))
+	for c in placed:
+		# 远近墨阶：区域上方的剪影更淡（远山），下方更浓（近山）
+		var far := clampf(1.0 - float(c.y - bbox.position.y) / span_y, 0.0, 1.0) * 0.22
+		_peaks.append({
+			"x": c.x, "y": c.y, "size": size_cells, "kind": kind_key,
+			"vseed": rng.randi() % 997, "far": far,
+		})
+
+
+func _place_region_sprites(rng: RandomNumberGenerator) -> void:
+	_peaks.clear()
+	for region in _regions_of(GameMap.T_MOUNTAIN):
+		_place_in_region(region, GameMap.T_MOUNTAIN, rng, 22.0, 4.2, 5.2, 16, "peak")
+	for region in _regions_of(GameMap.T_FOREST):
+		_place_in_region(region, GameMap.T_FOREST, rng, 10.0, 2.3, 3.2, 60, "forest")
+	for region in _regions_of(GameMap.T_HILL):
+		_place_in_region(region, GameMap.T_HILL, rng, 20.0, 3.4, 3.6, 20, "hill")
+	_peaks.sort_custom(func(a, b): return a["y"] < b["y"])  # 画家算法：上先下后
+
+
+## 大剪影绘制：底边对齐锚点格下缘；有 AI 贴图用贴图，否则程序化没骨山形占位。
+func _draw_peaks() -> void:
+	for p in _peaks:
+		var anchor := Vector2i(p["x"], p["y"])
+		if not map.is_explored(anchor.x, anchor.y):
+			continue
+		var size_px: float = p["size"] * CELL
+		var center := _cell_center(anchor)
+		var rect := Rect2(
+			center.x - size_px / 2.0,
+			center.y + CELL * 0.5 - size_px,
+			size_px, size_px)
+		var mod := Color(1, 1, 1, 1).lerp(InkPalette.PAPER, p["far"])
+		if not map.is_visible(anchor.x, anchor.y):
+			mod = mod.lerp(InkPalette.INK_LIGHT, InkPalette.FOG_LERP)
+			mod.a = 0.8
+		var tex := _variant_texture(String(p["kind"]), int(p["vseed"]))
+		if tex != null:
+			draw_texture_rect(tex, rect, false, mod)
+		else:
+			_draw_procedural_peak(rect, mod, p)
+
+
+## 程序化没骨山形（AI 山峰贴图到位前的占位）：折线山体 + 淡墨，底边贴锚点。
+func _draw_procedural_peak(rect: Rect2, mod: Color, p: Dictionary) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash("%d_%d_%d" % [p["x"], p["y"], p["vseed"]])
+	var cx := rect.position.x + rect.size.x / 2.0
+	var base_y := rect.position.y + rect.size.y
+	var half := rect.size.x / 2.0
+	var top_y := rect.position.y + rect.size.y * rng.randf_range(0.10, 0.28)
+	var pts := PackedVector2Array([
+		Vector2(cx - half, base_y),
+		Vector2(cx - half * rng.randf_range(0.5, 0.65), rect.position.y + rect.size.y * 0.55),
+		Vector2(cx - half * rng.randf_range(0.12, 0.25), top_y),
+		Vector2(cx + half * rng.randf_range(0.2, 0.35), top_y + rect.size.y * 0.1),
+		Vector2(cx + half * rng.randf_range(0.55, 0.7), rect.position.y + rect.size.y * 0.6),
+		Vector2(cx + half, base_y),
+	])
+	var body := InkPalette.INK_DEEP.lerp(InkPalette.PAPER, 0.12 + p["far"])
+	draw_colored_polygon(pts, Color(body.lerp(mod, 0.2), 0.85 * mod.a))
+
+
+## 剪影变体贴图：assets/art/terrain/<kind>_<n>.png 存在即入池（缺失回退程序化）。
+static var _variant_cache := {}
+
+
+static func _variant_texture(kind_key: String, vseed: int) -> Texture2D:
+	if not _variant_cache.has(kind_key):
+		var pool: Array = []
+		for i in range(1, 7):
+			var path := "res://assets/art/terrain/%s_%d.png" % [kind_key, i]
+			if ResourceLoader.exists(path):
+				pool.append(load(path))
+		_variant_cache[kind_key] = pool
+	var pool: Array = _variant_cache[kind_key]
+	if pool.is_empty():
+		return null
+	return pool[vseed % pool.size()]
 
 
 ## 装饰参数（仅视野内绘制）：山脊笔高取平滑场（邻格连贯成脉），点苔/水纹密度取聚簇场（成片跨格）。
@@ -138,7 +275,8 @@ func _build_deco(kind: int, x: int, y: int, rng: RandomNumberGenerator) -> Dicti
 func _draw() -> void:
 	if map == null:
 		return
-	# 地形场（宣纸/洗染/湿边/水纹）由 _ground 的 shader 渲染；此处只画笔墨装饰与实体
+	# 地形场（宣纸/洗染/湿边/水纹）由 _ground 的 shader 渲染；此处画区域大剪影与笔墨装饰
+	_draw_peaks()
 	for y in range(map.height):
 		for x in range(map.width):
 			if not map.is_visible(x, y):
@@ -249,8 +387,8 @@ func _draw_decoration(x: int, y: int, kind: int) -> void:
 	var px := x * CELL
 	var py := y * CELL
 	match kind:
-		GameMap.T_MOUNTAIN, GameMap.T_WALL:
-			# 斧劈皴两笔：笔高取平滑场，邻格连成山脊；偶发峰顶留白
+		GameMap.T_WALL:
+			# 斧劈皴两笔（秘境石壁）；世界山体由大剪影山峰承担，不再逐格皴
 			var stroke := InkPalette.INK_DEEP.lightened(0.30)
 			var y1: float = py + 6.0 + float(deco.get("r1", 0.5)) * 14.0
 			var y2: float = py + 8.0 + float(deco.get("r2", 0.5)) * 14.0

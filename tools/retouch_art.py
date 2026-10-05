@@ -81,6 +81,19 @@ def retouch(src: Path, kind: str, deepen: bool = False) -> Image.Image:
     return out
 
 
+def _fade_bottom(image: Image.Image, frac: float) -> Image.Image:
+    """底部 band 像素线性淡出到透明（山脚/树根虚化，没骨法衔接淡墨底）。"""
+    w, h = image.size
+    band = max(1, int(h * frac))
+    px = image.load()
+    for y in range(h - band, h):
+        fade = 1.0 - (y - (h - band)) / band
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            px[x, y] = (r, g, b, int(a * fade))
+    return image
+
+
 def _stretch(image: Image.Image, low_q: float = 0.02, high_q: float = 0.995) -> Image.Image:
     """按亮度百分位把实际动态范围拉到全量程（low_q→0，high_q→255）。"""
     hist = image.histogram()
@@ -176,8 +189,11 @@ def main() -> None:
     parser.add_argument("-o", "--out", type=Path, required=True)
     parser.add_argument("--kind", choices=["beast", "brush", "paper", "field"], default="beast")
     parser.add_argument("--deepen", action="store_true", help="墨阶整体加深一档（淡→中→浓）")
+    parser.add_argument("--fade-bottom", type=float, default=0.0, help="底部渐隐比例（如 0.3 = 底部30%%线性淡出，山脚/树根虚化衔接）")
     args = parser.parse_args()
     result = retouch(args.src, args.kind, args.deepen)
+    if args.fade_bottom > 0:
+        result = _fade_bottom(result, args.fade_bottom)
     out = args.out
     if out.is_dir():
         out = out / args.src.name
