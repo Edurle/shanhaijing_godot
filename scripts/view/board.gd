@@ -168,11 +168,11 @@ func _place_in_region(region: Array, kind: int, rng: RandomNumberGenerator, per_
 func _place_region_sprites(rng: RandomNumberGenerator) -> void:
 	_peaks.clear()
 	for region in _regions_of(GameMap.T_MOUNTAIN):
-		_place_in_region(region, GameMap.T_MOUNTAIN, rng, 22.0, 4.2, 5.2, 16, "peak")
+		_place_in_region(region, GameMap.T_MOUNTAIN, rng, 34.0, 6.0, 8.0, 12, "peak")
 	for region in _regions_of(GameMap.T_FOREST):
 		_place_in_region(region, GameMap.T_FOREST, rng, 10.0, 2.3, 3.2, 60, "forest")
 	for region in _regions_of(GameMap.T_HILL):
-		_place_in_region(region, GameMap.T_HILL, rng, 20.0, 3.4, 3.6, 20, "hill")
+		_place_in_region(region, GameMap.T_HILL, rng, 26.0, 4.6, 5.5, 20, "hill")
 	_peaks.sort_custom(func(a, b): return a["y"] < b["y"])  # 画家算法：上先下后
 
 
