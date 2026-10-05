@@ -13,7 +13,8 @@ var target_cell := Vector2i(-1, -1)  # 瞄准/查看高亮格
 var landing_cell := Vector2i(-1, -1)  # 择向落点预览
 var travel_cell := Vector2i(-1, -1)  # 点击旅行目标（淡金虚框）
 var _jitter := {}  # Vector2i -> 0..2 纸面颗粒抖动，避免大色块呆板
-var _beast_textures := {}  # monster_id -> Texture2D/null（AI 素材缓存，缺失回退程序化占位）
+
+static var _beast_cache := {}  # monster_id -> Texture2D/null（AI 素材缓存，棋盘/查看卡共享）
 
 
 func setup(p_map: GameMap, p_player: Actor = null) -> void:
@@ -163,7 +164,7 @@ func _draw_actor(actor: Actor) -> void:
 		draw_line(center + Vector2(4, -4), center + Vector2(11, -11), InkPalette.INK_DEEP, 2.0)
 		return
 	var radius := 8.0 if not actor.elite else 10.0
-	var texture := _beast_texture(actor)
+	var texture := beast_texture(String(actor.monster_id))
 	var below := radius + 7.0  # 血条距中心的纵向偏移
 	if texture != null:
 		# AI 素材期：40px 贴图（略溢出格子换辨识度，贴图自带留白边距）。
@@ -188,12 +189,11 @@ func _draw_actor(actor: Actor) -> void:
 		draw_rect(Rect2(center - Vector2(bar_w / 2, below), Vector2(bar_w * hp_ratio, 3)), InkPalette.VERMILION)
 
 
-## 异兽贴图（AI 素材期；缺失返回 null 回退程序化墨点占位）。
-func _beast_texture(actor: Actor) -> Texture2D:
-	var key := String(actor.monster_id)
-	if key == "":
+## 异兽贴图（AI 素材期；缺失返回 null 回退程序化墨点占位）。棋盘/查看卡共用。
+static func beast_texture(monster_id: String) -> Texture2D:
+	if monster_id == "":
 		return null
-	if not _beast_textures.has(key):
-		var path := "res://assets/art/beasts/%s.png" % key
-		_beast_textures[key] = load(path) if ResourceLoader.exists(path) else null
-	return _beast_textures[key]
+	if not _beast_cache.has(monster_id):
+		var path := "res://assets/art/beasts/%s.png" % monster_id
+		_beast_cache[monster_id] = load(path) if ResourceLoader.exists(path) else null
+	return _beast_cache[monster_id]

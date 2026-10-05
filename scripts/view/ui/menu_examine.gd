@@ -71,6 +71,9 @@ func _draw() -> void:
 	var fighter = target.fighter
 	var x := panel_rect.position.x + 28
 	var y := panel_rect.position.y + 40
+	var text_w := panel_rect.size.x - 28.0 * 2 - 184.0  # 右侧画像区让位
+
+	_draw_portrait(target, panel_rect.end.x - 28.0 - 168.0, y)
 
 	draw_text_line(Vector2(x, y), "%d/%d  %s" % [index + 1, targets.size(), target.label], InkPalette.INK, 20)
 	if target.elite:
@@ -100,9 +103,8 @@ func _draw() -> void:
 			var shown := int(round(Fighter.resist_reduction_percent(value)))
 			var label: String = engine.content.text("resist_" + kind).format({"v": shown}).replace("+", "")
 			resists.append(label)
-	draw_text_line(Vector2(x, y), "抗性：" + (" ".join(resists) if not resists.is_empty() else "无"),
-		InkPalette.SAFE if not resists.is_empty() else InkPalette.INK_SOFT, 15)
-	y += 24
+	var resist_color := InkPalette.SAFE if not resists.is_empty() else InkPalette.INK_SOFT
+	y += _draw_resists(x, y, resists, text_w, resist_color) + 24
 	# 爪击元素
 	if target.attack_tags.size() > 0:
 		var names: Array = []
@@ -112,6 +114,44 @@ func _draw() -> void:
 		y += 24
 	# 目击位置提示由棋盘高亮框承担
 	draw_text_line(Vector2(x, panel_rect.end.y - 18), "↑↓/Tab 换目标 · Esc/X 关闭", InkPalette.INK_SOFT, 13)
+
+
+## 画像：右侧 168px 纸底墨框——有贴图放大展示，无贴图画放大的占位墨点（含五行环/点睛/精英底）。
+func _draw_portrait(target: Actor, px: float, py: float) -> void:
+	var frame := Rect2(px, py, 168, 168)
+	draw_rect(frame, Color(InkPalette.PAPER_UI, 0.9))
+	draw_rect(frame, InkPalette.INK, false, 1.5)
+	var center := frame.position + frame.size / 2.0
+	var texture := Board.beast_texture(String(target.monster_id))
+	if texture != null:
+		var size := 160.0
+		draw_texture_rect(texture, Rect2(center - Vector2(size, size) / 2.0, Vector2(size, size)), false)
+	else:
+		draw_circle(center, 56.0, InkPalette.ELITE_GOLD.darkened(0.25) if target.elite else InkPalette.INK_DEEP)
+		draw_arc(center, 64.0, 0, TAU, 48, InkPalette.ELEMENT_COLORS.get(target.element, InkPalette.INK_MID), 3.0)
+		draw_circle(center + Vector2(-14, -14), 4.0, InkPalette.VERMILION)
+
+
+## 抗性行（含"抗性："前缀，超宽自动折行，续行缩进）：返回折行额外占用的纵向增量。
+func _draw_resists(x: float, y: float, resists: Array, width: float, color: Color) -> float:
+	var font := get_theme_default_font()
+	if resists.is_empty():
+		draw_text_line(Vector2(x, y), "抗性：无", color, 15)
+		return 0.0
+	var prefix := "抗性："
+	var prefix_w := font.get_string_size(prefix, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+	var rows: Array = [""]
+	for label in resists:
+		var candidate: String = rows[-1] + (" " if rows[-1] != "" else "") + String(label)
+		var indent := prefix_w if rows.size() == 1 else 24.0
+		if rows[-1] != "" and font.get_string_size(candidate, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x > width - indent:
+			rows.append(String(label))
+		else:
+			rows[-1] = candidate
+	for i in range(rows.size()):
+		var line_x := x + (prefix_w if i == 0 else 24.0)
+		draw_text_line(Vector2(line_x, y + i * 22.0), (prefix if i == 0 else "") + String(rows[i]), color, 15)
+	return (rows.size() - 1) * 22.0
 
 
 func _assess_threat() -> String:
