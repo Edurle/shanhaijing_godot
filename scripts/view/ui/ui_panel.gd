@@ -19,6 +19,16 @@ const ELEMENT_COLORS := {
 	"earth": Color("8C5A3C"),
 }
 
+## 装备品级 → 名称/图标色（白=common 不入表，即不着色；全 UI 单一色源）。
+const RARITY_COLORS := {
+	"magic": Color("3465A4"),
+	"rare": Color("B8860B"),
+	"legendary": Color("D2691E"),
+	"mythic": Color("C3272B"),
+}
+## 套装显示色（绿），优先于品级色。
+const SET_COLOR := Color("3E8E58")
+
 var panel_rect := Rect2(0, 0, 400, 300)
 var title := ""
 
@@ -73,3 +83,15 @@ func _viewport_size() -> Vector2:
 	if size.x < 200.0 or size.y < 200.0:
 		return Vector2(1280, 768)
 	return size
+
+
+## 物品显示色：套装绿 > 品级色 > fallback（白装/非装备回落调用方默认色）。
+static func rarity_color(item: Dictionary, fallback := INK) -> Color:
+	if String(item.get("set_id", "")) != "":
+		return SET_COLOR
+	return RARITY_COLORS.get(String(item.get("rarity", "common")), fallback)
+
+
+## 是否有品级/套装专属色（白装无，回落调用方既有配色）。
+static func has_rarity_color(item: Dictionary) -> bool:
+	return String(item.get("set_id", "")) != "" or RARITY_COLORS.has(String(item.get("rarity", "common")))

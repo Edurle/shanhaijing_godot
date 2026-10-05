@@ -1,6 +1,6 @@
 {
   "_schema": {
-    "说明": "物品定义。consumable.type 对应 consumable.py 的效果注册表；equipment.slot 对应 equipment.py 的五槽（weapon/armor/boots/amulet/helm）。武器槽只带 damage（physical 必填，element 可缺省=无属性，有属性时普攻整段参与生克折算），不带 bonuses/affixes；非武器槽反向。tier 影响怪物死亡掉落的楼层门槛。name/lore 可本地化（同 monsters.json 规则）。"
+    "说明": "物品定义。consumable.type 对应 consumable.py 的效果注册表；equipment.slot 对应 equipment.py 的五槽（weapon/armor/boots/amulet/helm）。武器槽只带 damage（physical 必填，element 可缺省=无属性，有属性时普攻整段参与生克折算），不带 bonuses/affixes；非武器槽反向。tier 影响怪物死亡掉落的楼层门槛。rarity 品级决定显示颜色与掉落权重（common 白/magic 蓝/rare 黄/legendary 橙/mythic 红，缺省 common 不落盘）；set_id 指向 sets.json 套装（显示绿色，同套槽位不得重复）。name/lore 可本地化（同 monsters.json 规则）。"
   },
   "lingzhi": {
     "name": {
@@ -198,6 +198,7 @@
       "en_US": "Forged of Kunwu iron; its sweeping aura flows like silk."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "weapon",
       "damage": {
@@ -226,6 +227,7 @@
       "en_US": "Moye gave herself to the furnace; this is the male of the pair."
     },
     "tier": 3,
+    "rarity": "legendary",
     "equipment": {
       "slot": "weapon",
       "damage": {
@@ -307,6 +309,7 @@
       "en_US": "Hide of the xi-rhino, laced into mail; blades leave only pale marks."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "armor",
       "bonuses": {
@@ -389,6 +392,7 @@
       "en_US": "Woven of cloud-brocade; mist bears each step."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "boots",
       "bonuses": {
@@ -444,6 +448,7 @@
       "en_US": "Hold it and rivers part; its coolness steels the mind."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "amulet",
       "bonuses": {
@@ -472,6 +477,7 @@
       "en_US": "Its light unmasks all fiends — and emboldens thunder."
     },
     "tier": 3,
+    "rarity": "rare",
     "equipment": {
       "slot": "amulet",
       "bonuses": {
@@ -508,6 +514,7 @@
       "en_US": "An old charm that fights venom with venom — and wins."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "amulet",
       "bonuses": {
@@ -599,6 +606,7 @@
       "en_US": "A taotie-masked visor; beneath it, only cold eyes."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "helm",
       "bonuses": {
@@ -626,6 +634,7 @@
       "en_US": "A crown of judgement; the xiezie gores the wicked, and winds answer."
     },
     "tier": 3,
+    "rarity": "rare",
     "equipment": {
       "slot": "helm",
       "bonuses": {
@@ -659,6 +668,7 @@
       "en_US": "Woven of southern tong-wood silk; flames lick it and leave only smoke."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "armor",
       "bonuses": {
@@ -691,6 +701,7 @@
       "en_US": "A hide circlet etched with thunder runes; sky-bolts soon feel like gnat-bites."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "helm",
       "bonuses": {
@@ -723,6 +734,7 @@
       "en_US": "The jade charm cools the wrist and stills the mind; bewitchment slides off."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "amulet",
       "bonuses": {
@@ -755,6 +767,7 @@
       "en_US": "Hemp shoes steeped nine times in herbal brew; mires and miasma leave no trace."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "boots",
       "bonuses": {
@@ -1170,6 +1183,7 @@
       "en_US": "An ancient blade of dark ore; swing it and you hear the sound of a river parting."
     },
     "tier": 5,
+    "rarity": "legendary",
     "equipment": {
       "slot": "weapon",
       "damage": {
@@ -1197,6 +1211,7 @@
       "en_US": "A true dragon's scale forged into the spine; thunder patterns flicker where it cuts."
     },
     "tier": 6,
+    "rarity": "legendary",
     "equipment": {
       "slot": "weapon",
       "damage": {
@@ -1224,6 +1239,7 @@
       "en_US": "Dark ore hammered a thousand times; wearing it is bearing a mountain - and the mountain bears you back."
     },
     "tier": 5,
+    "rarity": "legendary",
     "equipment": {
       "slot": "armor",
       "bonuses": {
@@ -1252,6 +1268,7 @@
       "en_US": "Lined with plumes; each step rides the cloud-qi."
     },
     "tier": 5,
+    "rarity": "legendary",
     "equipment": {
       "slot": "boots",
       "bonuses": {
@@ -1285,6 +1302,7 @@
       "en_US": "Cast from jade shards; worn, the spirit clears and qi runs long."
     },
     "tier": 5,
+    "rarity": "legendary",
     "equipment": {
       "slot": "amulet",
       "bonuses": {
@@ -1318,6 +1336,7 @@
       "en_US": "A demon core set at the brow, dark iron for the band; the head becomes a settled mountain."
     },
     "tier": 6,
+    "rarity": "legendary",
     "equipment": {
       "slot": "helm",
       "bonuses": {
@@ -1418,6 +1437,7 @@
       "en_US": "Quenched in dragon scale, soul-forged with twin essences - the summit of all craft."
     },
     "tier": 7,
+    "rarity": "mythic",
     "equipment": {
       "slot": "weapon",
       "damage": {
@@ -1537,6 +1557,7 @@
       "en_US": "A robe woven of sea-silk; tides part like a breeze before it."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "armor",
       "bonuses": {
@@ -1569,6 +1590,7 @@
       "en_US": "A block of mountain stone set in each sole; rockfall feels like drizzle."
     },
     "tier": 2,
+    "rarity": "magic",
     "equipment": {
       "slot": "boots",
       "bonuses": {
@@ -1601,6 +1623,7 @@
       "en_US": "Quenched three years in a cold pool; frost blooms where it is drawn."
     },
     "tier": 4,
+    "rarity": "legendary",
     "equipment": {
       "slot": "weapon",
       "damage": {
@@ -1628,6 +1651,7 @@
       "en_US": "A sovereign's blade; where its aura passes, the grass turns scarlet."
     },
     "tier": 5,
+    "rarity": "legendary",
     "equipment": {
       "slot": "weapon",
       "damage": {
@@ -1655,12 +1679,102 @@
       "en_US": "Its edge is half a mountain's silhouette; the ground flinches at every swing."
     },
     "tier": 4,
+    "rarity": "legendary",
     "equipment": {
       "slot": "weapon",
       "damage": {
         "physical": 9,
         "element": "earth"
       }
+    }
+  },
+  "w_kuafu_zhang": {
+    "name": {
+      "zh_CN": "夸父杖",
+      "en_US": "Kuafu Staff"
+    },
+    "char": "/",
+    "color": [
+      236,
+      160,
+      96
+    ],
+    "tags": [
+      "weapon"
+    ],
+    "lore": {
+      "zh_CN": "夸父逐日所持之杖，杖身犹带大荒风沙与日炙余温。",
+      "en_US": "The staff Kuafu bore against the sun; it still carries the wilderness wind and the sun's last heat."
+    },
+    "tier": 3,
+    "rarity": "rare",
+    "set_id": "kuafu",
+    "equipment": {
+      "slot": "weapon",
+      "damage": {
+        "physical": 6,
+        "element": "fire"
+      }
+    }
+  },
+  "b_zhurilv": {
+    "name": {
+      "zh_CN": "逐日履",
+      "en_US": "Sunchaser Boots"
+    },
+    "char": "=",
+    "color": [
+      250,
+      196,
+      120
+    ],
+    "tags": [
+      "boots"
+    ],
+    "lore": {
+      "zh_CN": "夸父遗履，着之步阔如逐日，大荒尽头犹有余力。",
+      "en_US": "Kuafu's shoes; each stride stretches like the chase itself, with strength to spare at the world's rim."
+    },
+    "tier": 3,
+    "rarity": "rare",
+    "set_id": "kuafu",
+    "equipment": {
+      "slot": "boots",
+      "bonuses": {
+        "defense": 1,
+        "max_hp": 6
+      },
+      "affixes": []
+    }
+  },
+  "p_denglin": {
+    "name": {
+      "zh_CN": "邓林佩",
+      "en_US": "Denglin Charm"
+    },
+    "char": "\"",
+    "color": [
+      190,
+      226,
+      150
+    ],
+    "tags": [
+      "amulet"
+    ],
+    "lore": {
+      "zh_CN": "夸父杖化邓林，桃林千里；此佩取邓林老桃之心雕成。",
+      "en_US": "Where Kuafu's staff took root grew the Denglin peach forest; this charm is carved from its heartwood."
+    },
+    "tier": 3,
+    "rarity": "rare",
+    "set_id": "kuafu",
+    "equipment": {
+      "slot": "amulet",
+      "bonuses": {
+        "max_mp": 8,
+        "max_hp": 4
+      },
+      "affixes": []
     }
   }
 }

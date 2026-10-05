@@ -96,6 +96,8 @@
   "class_chosen": "You follow the way of {primary}, with {secondary} as your second art.",
   "equip_on": "You equip the {item}.",
   "equip_off": "You remove the {item}.",
+  "set_bonus_on": "The power of \"{set}\" awakens ({count}/{total} pieces): {bonus}.",
+  "set_bonus_off": "The power of \"{set}\" fades ({count}/{total} pieces).",
   "slot_weapon": "Arm",
   "slot_armor": "Tor",
   "slot_boots": "Leg",

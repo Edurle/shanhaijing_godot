@@ -28,10 +28,18 @@ const VALID_AFFIX_IDS: PackedStringArray = [
 	"resist_root", "resist_sunder", "resist_daunt", "resist_knockback",
 ]
 const SLOT_ORDER: PackedStringArray = ["weapon", "armor", "boots", "amulet", "helm"]
+## 装备品级（白/蓝/黄/橙/红）；common 为缺省不落盘，颜色映射见 UiPanel.RARITY_COLORS。
+const RARITY_ORDER: PackedStringArray = ["common", "magic", "rare", "legendary", "mythic"]
+## 怪物掉落抽取的品级权重（tier 楼层门槛另算）。
+const RARITY_DROP_WEIGHTS := {"common": 100, "magic": 45, "rare": 18, "legendary": 6, "mythic": 2}
+## 套装加成档位（集齐件数）的合法区间；同套槽位不得重复，上限即五槽。
+const SET_TIER_MIN := 2
+const SET_TIER_MAX := 5
 const SUPPORTED_LANGS: PackedStringArray = ["zh_CN", "en_US"]
 
 var monsters: Dictionary = {}
 var items: Dictionary = {}
+var sets: Dictionary = {}
 var classes: Dictionary = {}
 var skills: Dictionary = {}
 var spawn_monsters: Array = []
@@ -54,6 +62,7 @@ func load_all(dir_path: String, p_lang := "zh_CN") -> PackedStringArray:
 	var errors := PackedStringArray()
 	_load_json_or_error(dir_path.path_join("monsters.json"), "monsters", errors)
 	_load_json_or_error(dir_path.path_join("items.json"), "items", errors)
+	_load_json_or_error(dir_path.path_join("sets.json"), "sets", errors)
 	_load_json_or_error(dir_path.path_join("classes.json"), "classes", errors)
 	_load_json_or_error(dir_path.path_join("skills.json"), "skills", errors)
 	_load_json_or_error(dir_path.path_join("player.json"), "player_def", errors)
@@ -145,6 +154,7 @@ func _validate(errors: PackedStringArray) -> void:
 	_validate_skills(errors)
 	_validate_monsters(errors)
 	_validate_items(errors)
+	_validate_sets(errors)
 	_validate_spawn(errors)
 
 
@@ -232,6 +242,12 @@ func _validate_items(errors: PackedStringArray) -> void:
 		if not SLOT_ORDER.has(slot):
 			errors.append("物品 %s 的装备槽 %s 非法" % [iid, slot])
 			continue
+		var rarity: String = String(idef.get("rarity", "common"))
+		if not RARITY_ORDER.has(rarity):
+			errors.append("物品 %s 的品级 %s 非法" % [iid, rarity])
+		var set_id: String = String(idef.get("set_id", ""))
+		if set_id != "" and not sets.has(set_id):
+			errors.append("物品 %s 引用了不存在的套装 %s" % [iid, set_id])
 		if slot == "weapon":
 			var damage = gear.get("damage")
 			if damage == null or not (damage is Dictionary):
@@ -254,6 +270,48 @@ func _validate_items(errors: PackedStringArray) -> void:
 			for affix in gear.get("affixes", []):
 				if not VALID_AFFIX_IDS.has(affix.get("id", "")):
 					errors.append("物品 %s 的词条 %s 非法" % [iid, affix.get("id", "")])
+
+
+## 套装不变式：每个套装 ≥2 件装备且槽位互不重复（否则永难成套）；档位在区间内且 ≤ 件数；加成/词条走白名单。
+func _validate_sets(errors: PackedStringArray) -> void:
+	var piece_slots := {}
+	for iid in items:
+		var idef: Dictionary = items[iid]
+		if not idef.has("equipment"):
+			continue
+		var set_id := String(idef.get("set_id", ""))
+		if set_id == "":
+			continue
+		if not piece_slots.has(set_id):
+			piece_slots[set_id] = {}
+		var slot := String(idef["equipment"].get("slot", ""))
+		if piece_slots[set_id].has(slot):
+			errors.append("套装 %s 的槽位 %s 重复（%s 与 %s），永难成套" % [set_id, slot, piece_slots[set_id][slot], iid])
+		else:
+			piece_slots[set_id][slot] = String(iid)
+	for sid in sets:
+		var sdef: Dictionary = sets[sid]
+		if not sdef.has("name"):
+			errors.append("套装 %s 缺少 name" % sid)
+		var count: int = piece_slots.get(sid, {}).size()
+		if count < SET_TIER_MIN:
+			errors.append("套装 %s 至少需要 %d 件不同槽位的装备（现 %d 件）" % [sid, SET_TIER_MIN, count])
+		for tier_text in sdef.get("tiers", {}):
+			var tier := int(tier_text)
+			var tier_def: Dictionary = sdef["tiers"][tier_text]
+			if tier < SET_TIER_MIN or tier > SET_TIER_MAX:
+				errors.append("套装 %s 的加成档位 %s 须在 %d-%d" % [sid, tier_text, SET_TIER_MIN, SET_TIER_MAX])
+			elif tier > count:
+				errors.append("套装 %s 的加成档位 %d 超过件数 %d" % [sid, tier, count])
+			for key in tier_def.get("bonuses", {}):
+				if not VALID_BONUS_KEYS.has(key):
+					errors.append("套装 %s 档位 %s 的加成键 %s 非法" % [sid, tier_text, key])
+			for affix in tier_def.get("affixes", []):
+				if not VALID_AFFIX_IDS.has(affix.get("id", "")):
+					errors.append("套装 %s 档位 %s 的词条 %s 非法" % [sid, tier_text, affix.get("id", "")])
+	for sid in piece_slots:
+		if not sets.has(sid):
+			errors.append("物品引用的套装 %s 未在 sets.json 注册" % sid)
 
 
 func _validate_spawn(errors: PackedStringArray) -> void:
@@ -319,6 +377,9 @@ func build_item(iid: String, x := -1, y := -1) -> Dictionary:
 		item["slot"] = String(gear["slot"])
 		item["bonuses"] = gear.get("bonuses", {})
 		item["affixes"] = gear.get("affixes", [])
+		item["rarity"] = String(idef.get("rarity", "common"))
+		if String(idef.get("set_id", "")) != "":
+			item["set_id"] = String(idef["set_id"])
 		if gear.has("damage"):
 			item["damage"] = gear["damage"]
 	if idef.has("consumable"):
@@ -344,6 +405,7 @@ func build_player(class_ids: Array, x: int, y: int) -> Actor:
 	player.fighter = Fighter.new(hp, int(primary["power"]), int(primary["defense"]), 0, mp, sp)
 	player.fighter.owner = player
 	player.equipment = Equipment.new()
+	player.equipment.set_defs = sets  # 成套加成聚合依赖的套装登记表
 	var level_data: Dictionary = player_def["level"]
 	player.inventory = Inventory.new()
 	player.level = Level.new()
@@ -439,20 +501,46 @@ func skills_for_class(class_id: String) -> Array:
 	return result
 
 
-## 怪物死亡装备掉落：tier ≤ difficulty//4+2 的装备池随机一件；空池返回 ""。
+## 怪物死亡装备掉落：tier ≤ difficulty//4+2 的装备池按品级权重抽取；空池返回 ""。
 func random_equipment_id(difficulty: int, rng: RandomNumberGenerator) -> String:
 	var cap := difficulty / 4 + 2
 	var pool: Array = []
+	var weights: Array = []
 	for iid in items:
 		var idef: Dictionary = items[iid]
 		if not idef.has("equipment"):
 			continue
 		if int(idef.get("tier", 1)) <= cap:
 			pool.append(String(iid))
+			weights.append(int(RARITY_DROP_WEIGHTS.get(String(idef.get("rarity", "common")), 1)))
 	if pool.is_empty():
 		return ""
-	pool.sort()
-	return pool[rng.randi_range(0, pool.size() - 1)]
+	var total := 0
+	for w in weights:
+		total += int(w)
+	var roll := rng.randi_range(1, total)
+	for i in range(pool.size()):
+		roll -= int(weights[i])
+		if roll <= 0:
+			return pool[i]
+	return pool[pool.size() - 1]
+
+
+## 套装显示名（本地化）；未注册回退 id 本身。
+func set_name(set_id: String) -> String:
+	if not sets.has(set_id):
+		return set_id
+	return localize(sets[set_id]["name"])
+
+
+## 全库该套装的装备件数（不论是否持有）。
+func set_piece_total(set_id: String) -> int:
+	var total := 0
+	for iid in items:
+		var idef: Dictionary = items[iid]
+		if idef.has("equipment") and String(idef.get("set_id", "")) == set_id:
+			total += 1
+	return total
 
 
 ## 按怪物 tags 的首个命中映射掉炼制材料（drops 表顺序即优先级）。

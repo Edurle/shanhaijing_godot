@@ -76,6 +76,30 @@ func _init() -> void:
 		char_menu.click_at(char_menu.equip_rects["weapon"].get_center())
 		failed += _check(state.player.equipment.weapon_damage() == [0, ""], "点击装备格卸下武器")
 
+	# ---- 装备品级着色：色表完备性与优先级（套装绿 > 品级 > 默认） ----
+	failed += _check(UiPanel.RARITY_COLORS.size() == 4, "非白品级应 4 色（实际 %d）" % UiPanel.RARITY_COLORS.size())
+	var ganjiang: Dictionary = content.build_item("w_ganjiang")
+	failed += _check(UiPanel.rarity_color(ganjiang) == UiPanel.RARITY_COLORS["legendary"], "橙装取橙")
+	failed += _check(UiPanel.has_rarity_color(ganjiang), "橙装有品级色")
+	var taomu: Dictionary = content.build_item("w_taomu")
+	failed += _check(not UiPanel.has_rarity_color(taomu), "白装无品级色")
+	failed += _check(UiPanel.rarity_color(taomu, Color.RED) == Color.RED, "白装回落调用方默认色")
+	var denglin: Dictionary = content.build_item("p_denglin")
+	failed += _check(UiPanel.rarity_color(denglin) == UiPanel.SET_COLOR, "套装绿优先于品级色")
+
+	# ---- 消息日志：分段着色绘制冒烟 ----
+	var log_panel = load("res://scripts/view/ui/log_panel.gd").new()
+	root.add_child.call_deferred(log_panel)
+	await process_frame
+	log_panel.setup(engine)
+	engine.log_item_message("pickup", denglin, "loot")
+	log_panel.refresh()
+	await process_frame  # 触发 _draw 分段绘制路径
+	var pickup_msg: Dictionary = engine.messages[engine.messages.size() - 1]
+	failed += _check(pickup_msg.has("segments"), "拾取装备消息应含分段")
+	var pickup_text: String = String(pickup_msg["text"])
+	failed += _check(pickup_text.contains("邓林佩"), "分段消息全文仍含物品名（%s）" % pickup_text)
+
 	# ---- 查看菜单：有可见敌时打开非空 ----
 	var monster = content.build_monster("zhulong", 11, 10)
 	map.actors.append(monster)

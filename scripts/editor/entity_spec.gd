@@ -8,7 +8,7 @@ const ContentDbScript := preload("res://scripts/core/content_db.gd")
 ## 实体类型（物品按 equipment/consumable/material 分三个子型；技能按归属分职业/怪物两型）。
 const TYPES: PackedStringArray = [
 	"monster", "class", "player", "skill", "skill_monster",
-	"item_weapon", "item_gear", "item_consumable", "item_material",
+	"item_weapon", "item_gear", "item_consumable", "item_material", "set",
 ]
 
 ## 枚举值的中文显示标签（缺省回退原值）。
@@ -31,6 +31,8 @@ const ENUM_LABELS := {
 	"resist_root": "缠绕抗", "resist_sunder": "破甲抗", "resist_daunt": "挫志抗",
 	"resist_knockback": "击退抗",
 	"alchemy": "炼丹", "forge": "炼器", "talisman": "炼符",
+	"common": "凡品(白)", "magic": "灵品(蓝)", "rare": "宝品(黄)",
+	"legendary": "仙品(橙)", "mythic": "神品(红)",
 }
 
 
@@ -64,6 +66,8 @@ static func fields_for(entity_type: String) -> Array:
 			return item_common_fields(false) + item_consumable_fields()
 		"item_material":
 			return item_common_fields(false)
+		"set":
+			return set_fields()
 	return []
 
 
@@ -314,6 +318,11 @@ static func item_common_fields(with_tier: bool) -> Array:
 	]
 	if with_tier:
 		fields.append(f("tier", "品阶(掉落门槛)", "int", "基础", {"min": 1, "max": 9}))
+		fields.append(f("rarity", "品级(白蓝黄橙红)", "enum", "基础", {
+			"enum_values": Array(ContentDbScript.RARITY_ORDER).duplicate(),
+			"omit_equals": "common",
+		}))
+		fields.append(f("set_id", "套装id", "string", "基础", {"optional": true, "omit_empty": true}))
 	return fields
 
 
@@ -350,6 +359,33 @@ static func item_consumable_fields() -> Array:
 	return [
 		f("consumable.type", "效果类型", "enum", "效果", {"enum_values": Array(CONSUMABLE_PARAMS.keys()).duplicate(), "shape": true}),
 	]
+
+
+## 套装：名称 + 按集齐件数（2-5）的档位开关；档位内为加成字段与词条列表。
+## 档位累积生效（已穿件数 ≥ 阈值的每一档都计入装备栏聚合）。
+static func set_fields() -> Array:
+	var fields: Array = [
+		f("name", "名称", "localized", "基础"),
+	]
+	for threshold in range(ContentDbScript.SET_TIER_MIN, ContentDbScript.SET_TIER_MAX + 1):
+		var children: Array = []
+		for bonus_key in ContentDbScript.VALID_BONUS_KEYS:
+			children.append({
+				"key": "tiers.%d.bonuses.%s" % [threshold, bonus_key],
+				"label": "加成·%s" % bonus_key, "kind": "int", "min": 0, "max": 99,
+			})
+		children.append({
+			"key": "tiers.%d.affixes" % threshold,
+			"label": "词条列表", "kind": "struct_list",
+			"item_fields": [
+				{"key": "id", "label": "词条", "kind": "enum", "enum_values": Array(ContentDbScript.VALID_AFFIX_IDS).duplicate()},
+				{"key": "value", "label": "数值", "kind": "int", "min": 1, "max": 99},
+			],
+		})
+		fields.append(f("tiers.%d" % threshold, "%d 件档" % threshold, "subdict", "套装加成", {
+			"children": children, "optional": true,
+		}))
+	return fields
 
 
 ## 物品子型判定：按 equipment/consumable/tags 判，与数据约定一致。
@@ -469,6 +505,12 @@ static func find_references(all_data: Dictionary, entity_id: String) -> PackedSt
 		for bound_skill in monsters[mid].get("skills", []):
 			if String(bound_skill) == entity_id:
 				refs.append("怪物 %s 绑定了该技能" % mid)
+	var items_table: Dictionary = all_data.get("items", {})
+	for iid in items_table:
+		if String(iid).begins_with("_"):
+			continue
+		if String(items_table[iid].get("set_id", "")) == entity_id:
+			refs.append("物品 %s 属于该套装" % iid)
 	return refs
 
 
@@ -571,6 +613,8 @@ static func new_entity_template(entity_type: String, ctx := {}) -> Dictionary:
 			})
 		"item_material":
 			return _item_blank({"tags": ["material"]})
+		"set":
+			return {"name": {"zh_CN": "新套装", "en_US": ""}, "tiers": {}}
 	return {}
 
 

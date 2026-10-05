@@ -54,13 +54,13 @@ func _make_sandbox() -> void:
 ## 序列化不弄脏 diff：未改动时输出应与原文件字节一致（crafting 源含 1.0 写法，允许文本差异但语义等价）。
 func _test_round_trip(store) -> void:
 	var byte_perfect := 0
-	for file_key in ["monsters", "items", "classes", "skills", "player", "spawn_tables"]:
+	for file_key in ["monsters", "items", "sets", "classes", "skills", "player", "spawn_tables"]:
 		var original := FileAccess.get_file_as_string(SANDBOX.path_join("%s.json" % file_key))
 		if store.serialize(file_key) == original:
 			byte_perfect += 1
 		else:
 			print("FAIL round-trip 不一致: %s" % file_key)
-	failed += _check(byte_perfect == 6, "6 个数据文件 round-trip 字节一致（实际 %d）" % byte_perfect)
+	failed += _check(byte_perfect == 7, "7 个数据文件 round-trip 字节一致（实际 %d）" % byte_perfect)
 	failed += _check(not store.is_file_changed("crafting"), "crafting 未改动时语义等价")
 	failed += _check(not store.is_dirty(), "刚加载完不应有未保存修改")
 
@@ -182,6 +182,21 @@ func _test_spec_registry(store) -> void:
 	var monster_skill_spec: Array = EntitySpec.fields_for("skill_monster")
 	failed += _check(monster_skill_spec.any(func(field): return String(field.get("key")) == "cooldown"), "怪物技能字段表应含 cooldown")
 
+	# 装备品级/套装字段：武器与防具均有，耗材与材料均无；套装字段表含档位开关
+	for gear_type in ["item_weapon", "item_gear"]:
+		var gear_spec: Array = EntitySpec.fields_for(gear_type)
+		failed += _check(gear_spec.any(func(field): return String(field.get("key")) == "rarity"), "%s 字段表应含品级 rarity" % gear_type)
+		failed += _check(gear_spec.any(func(field): return String(field.get("key")) == "set_id"), "%s 字段表应含套装 set_id" % gear_type)
+	for plain_type in ["item_consumable", "item_material"]:
+		var plain_spec: Array = EntitySpec.fields_for(plain_type)
+		failed += _check(not plain_spec.any(func(field): return String(field.get("key")) == "rarity"), "%s 字段表不应含 rarity" % plain_type)
+	var set_spec: Array = EntitySpec.fields_for("set")
+	failed += _check(set_spec.size() == 1 + 4, "套装字段表 = 名称 + 4 档位（实际 %d）" % set_spec.size())
+	failed += _check(set_spec.any(func(field): return String(field.get("key")) == "tiers.2"), "套装字段表应含 2 件档")
+	# 引用扫描：删除被物品引用的套装应被阻止
+	var set_refs := EntitySpec.find_references(store.data, "kuafu")
+	failed += _check(not set_refs.is_empty(), "套装 kuafu 的物品归属应被引用扫描捕获: %s" % str(set_refs))
+
 
 	# 4. 新建模板合法：交给 ContentDb 校验应能通过基本结构（字段路径齐全）
 	var template_monster: Dictionary = EntitySpec.new_entity_template("monster")
@@ -233,6 +248,9 @@ func _sample_entities(store, entity_type: String) -> Array:
 				var idef: Dictionary = store.file_data("items")[id]
 				if (idef.get("tags", []) as Array).has("material"):
 					out.append(idef)
+		"set":
+			for id in JsonStore.entity_ids(store.file_data("sets")):
+				out.append(store.file_data("sets")[id])
 	return out
 
 
@@ -257,9 +275,9 @@ func _test_editor_scene(_store) -> void:
 		editor._ready()
 	# 页签逐一构建（怪物页签在 _ready 里已建）
 	var tab_expectations := {
-		0: "怪物", 1: "物品", 2: "技能", 3: "职业·玩家", 4: "投放", 5: "炼制",
+		0: "怪物", 1: "物品", 2: "套装", 3: "技能", 4: "职业·玩家", 5: "投放", 6: "炼制",
 	}
-	for tab_index in [1, 2, 3, 4, 5, 0]:
+	for tab_index in [1, 2, 3, 4, 5, 6, 0]:
 		editor._select_tab(tab_index)
 		var kind_name: String = tab_expectations[tab_index]
 		var has_content: bool = editor.form_box.get_child_count() > 0
@@ -282,8 +300,8 @@ func _test_editor_scene(_store) -> void:
 	failed += _check(editor.store.is_dirty(), "经编辑器改 hp 后应出现脏标记")
 	hp_path["hp"] = old_hp
 	failed += _check(not editor.store.is_dirty(), "改回后脏标记应消失")
-	# 表格视图：怪物/装备/技能三种列配置填充行
-	for tab_index in [0, 1, 2]:
+	# 表格视图：怪物/装备/技能三种列配置填充行（技能页现为 3 号页签）
+	for tab_index in [0, 1, 3]:
 		editor._select_tab(tab_index)
 		editor.view_toggle.button_pressed = true
 		editor._on_toggle_grid()
@@ -292,7 +310,7 @@ func _test_editor_scene(_store) -> void:
 		editor.view_toggle.button_pressed = false
 		editor._on_toggle_grid()
 	# 炼制页选中第一个配方 → 配方表单生成（含 struct_list 行与引用下拉）
-	editor._select_tab(5)
+	editor._select_tab(6)
 	if editor.spawn_craft.recipe_list.item_count > 0:
 		editor.spawn_craft.recipe_list.select(0)
 		editor.spawn_craft.recipe_list.item_selected.emit(0)

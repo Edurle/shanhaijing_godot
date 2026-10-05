@@ -6,7 +6,7 @@ const ContentDbScript := preload("res://scripts/core/content_db.gd")
 
 ## 编辑器可编辑的 content 文件；其余文件校验时按原样拷贝。
 const EDITABLE_FILES: PackedStringArray = [
-	"monsters", "items", "classes", "skills", "player", "spawn_tables", "crafting",
+	"monsters", "items", "sets", "classes", "skills", "player", "spawn_tables", "crafting",
 ]
 const COPY_FILES: PackedStringArray = ["theme", "regions", "realms"]
 

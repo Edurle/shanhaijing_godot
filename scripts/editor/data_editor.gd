@@ -12,10 +12,11 @@ const SpawnCraftEditor := preload("res://scripts/editor/spawn_craft_editor.gd")
 const CONTENT_DIR := "res://data/content"
 const TAB_MONSTER := 0
 const TAB_ITEM := 1
-const TAB_SKILL := 2
-const TAB_CLASS := 3
-const TAB_SPAWN := 4
-const TAB_CRAFT := 5
+const TAB_SET := 2
+const TAB_SKILL := 3
+const TAB_CLASS := 4
+const TAB_SPAWN := 5
+const TAB_CRAFT := 6
 
 const PAPER := Color("EFE8D6")
 const PAPER_DIM := Color("E4DBC6")
@@ -113,7 +114,7 @@ func _build_layout() -> void:
 	# 页签
 	tab_bar = TabBar.new()
 	tab_bar.tab_close_display_policy = TabBar.CLOSE_BUTTON_SHOW_NEVER
-	for tab_name in ["怪物", "物品", "技能", "职业·玩家", "投放", "炼制"]:
+	for tab_name in ["怪物", "物品", "套装", "技能", "职业·玩家", "投放", "炼制"]:
 		tab_bar.add_tab(tab_name)
 	tab_bar.tab_changed.connect(_select_tab)
 	root.add_child(tab_bar)
@@ -208,9 +209,9 @@ func _select_tab(index: int) -> void:
 	grid_mode = false
 	view_toggle.button_pressed = false
 	view_toggle.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SKILL]
-	action_new.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SKILL, TAB_CLASS]
-	action_dup.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SKILL, TAB_CLASS]
-	action_del.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SKILL, TAB_CLASS]
+	action_new.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS]
+	action_dup.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS]
+	action_del.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS]
 	_rebuild_enum_context()
 	_rebuild_entity_list()
 	if index == TAB_SPAWN:
@@ -230,6 +231,7 @@ func _tab_file() -> String:
 	match current_tab:
 		TAB_MONSTER: return "monsters"
 		TAB_ITEM: return "items"
+		TAB_SET: return "sets"
 		TAB_SKILL: return "skills"
 		TAB_CLASS: return "classes"
 	return ""
@@ -240,7 +242,7 @@ func _tab_entries() -> Array:
 	var entries: Array = []
 	var filter_text := search_input.text.strip_edges().to_lower()
 	match current_tab:
-		TAB_MONSTER, TAB_ITEM, TAB_SKILL, TAB_CLASS:
+		TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS:
 			pass
 		_:
 			return entries
@@ -278,6 +280,7 @@ func _tab_entries() -> Array:
 func _tab_entity_type() -> String:
 	match current_tab:
 		TAB_MONSTER: return "monster"
+		TAB_SET: return "set"
 		TAB_SKILL: return "skill"
 	return ""
 
@@ -298,7 +301,7 @@ func _rebuild_entity_list() -> void:
 	if entity_list.item_count > 0 and current_tab != TAB_SPAWN and current_tab != TAB_CRAFT:
 		entity_list.select(0)
 		current_id = String(entries[0]["id"])
-	if current_tab in [TAB_MONSTER, TAB_ITEM, TAB_SKILL, TAB_CLASS]:
+	if current_tab in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS]:
 		_show_current_form()
 
 
@@ -316,7 +319,7 @@ func _current_entity() -> Dictionary:
 	if current_id == "":
 		return {}
 	match current_tab:
-		TAB_MONSTER, TAB_ITEM, TAB_SKILL:
+		TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL:
 			return store.file_data(_tab_file()).get(current_id, {})
 		TAB_CLASS:
 			if current_id == "player":
@@ -411,6 +414,8 @@ func _on_new_entity() -> void:
 			_prompt_new("新建怪物", "monster", {})
 		TAB_ITEM:
 			_prompt_new_item()
+		TAB_SET:
+			_prompt_new("新建套装", "set", {})
 		TAB_SKILL:
 			_prompt_choose_skill_kind()
 		TAB_CLASS:
@@ -427,6 +432,8 @@ func _on_duplicate_entity() -> void:
 		TAB_ITEM:
 			var kind := Spec.item_kind(entity)
 			_prompt_new_item_with(kind, entity.duplicate(true))
+		TAB_SET:
+			_prompt_new("复制套装（源自 %s）" % current_id, "set", {"template": entity.duplicate(true)})
 		TAB_SKILL:
 			if _current_entity_type() == "skill_monster":
 				_prompt_new_monster_skill(entity.duplicate(true))
@@ -519,7 +526,7 @@ func _on_delete_entity() -> void:
 
 
 func _id_exists(candidate: String) -> bool:
-	for file_key in ["monsters", "items", "skills", "classes"]:
+	for file_key in ["monsters", "items", "sets", "skills", "classes"]:
 		if store.file_data(file_key).has(candidate):
 			return true
 	return false
@@ -806,8 +813,8 @@ func _refresh_status() -> void:
 func _locate_error(message: String) -> void:
 	var tokens := message.replace("：", " ").replace("，", " ").split(" ", false)
 	var targets := [
-		["monsters", TAB_MONSTER], ["items", TAB_ITEM], ["skills", TAB_SKILL],
-		["classes", TAB_CLASS], ["player", TAB_CLASS],
+		["monsters", TAB_MONSTER], ["items", TAB_ITEM], ["sets", TAB_SET],
+		["skills", TAB_SKILL], ["classes", TAB_CLASS], ["player", TAB_CLASS],
 	]
 	for pair in targets:
 		var file_key: String = pair[0]

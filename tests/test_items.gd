@@ -86,6 +86,42 @@ func _init() -> void:
 	failed += _check(learn_ult.is_empty(), "前置齐+魔核足时大招可学（%s）" % learn_ult)
 	failed += _check(inv.count_material("mat_demon_core") == 1, "魔核消耗后余 1（先前剩 1+新 1-耗 1）")
 
+	# ---- 套装：档位累积激活与回落 ----
+	var boots: Dictionary = content.build_item("b_zhurilv")
+	var charm: Dictionary = content.build_item("p_denglin")
+	var staff: Dictionary = content.build_item("w_kuafu_zhang")
+	inv.add(boots)
+	engine.player_equip(boots)
+	failed += _check(player.equipment.bonus("max_hp") == 6, "单件不成套：仅自带 血+6（实际 %d）" % player.equipment.bonus("max_hp"))
+	inv.add(charm)
+	engine.player_equip(charm)
+	failed += _check(player.equipment.bonus("max_hp") == 6 + 4 + 10, "两件成套：并入档2 血+10（实际 %d）" % player.equipment.bonus("max_hp"))
+	inv.add(staff)
+	engine.player_equip(staff)
+	failed += _check(player.equipment.bonus("power") == 2, "三件成套：并入档3 攻+2（实际 %d）" % player.equipment.bonus("power"))
+	# 消息：套装觉醒日志 + 装备名分段（套装标记）
+	var set_msg := ""
+	for msg in engine.messages:
+		if String(msg["kind"]) == "buff" and String(msg["text"]).contains("夸父"):
+			set_msg = String(msg["text"])
+	failed += _check(set_msg.contains("3/3"), "三件觉醒日志含 3/3（%s）" % set_msg)
+	var equip_msg: Dictionary = {}
+	for msg in engine.messages:
+		if msg.has("segments") and String(msg["text"]).contains("夸父杖"):
+			equip_msg = msg
+			break
+	failed += _check(not equip_msg.is_empty(), "装备日志应含夸父杖分段消息")
+	var name_marked := false
+	if equip_msg.has("segments"):
+		for segment in equip_msg["segments"]:
+			if String(segment.get("set_id", "")) == "kuafu" and String(segment.get("rarity", "")) == "rare":
+				name_marked = true
+	failed += _check(name_marked, "夸父杖名称段应带 rare+kuafu 标记")
+	# 卸一件：档3 回落、档2 仍生效
+	engine.player_unequip("amulet")
+	failed += _check(player.equipment.bonus("max_hp") == 6 + 10, "卸一件后档2 仍生效（实际 %d）" % player.equipment.bonus("max_hp"))
+	failed += _check(player.equipment.bonus("power") == 0, "卸一件后档3 应回落（实际 %d）" % player.equipment.bonus("power"))
+
 	if failed > 0:
 		print("FAIL 共 %d 项未过" % failed)
 		quit(1)

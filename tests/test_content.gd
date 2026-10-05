@@ -97,6 +97,62 @@ func _init() -> void:
 	failed += _check(not map.is_visible(10, 5), "山后直线应被遮挡")
 	failed += _check(map.is_visible(12, 12), "开阔处应可见")
 
+	# 8. 装备品级与套装不变式
+	failed += _check(content.sets.has("kuafu"), "示例套装 kuafu 应注册")
+	failed += _check(content.set_piece_total("kuafu") == 3, "夸父套装应 3 件（实际 %d）" % content.set_piece_total("kuafu"))
+	var set_slots := {}
+	for iid in content.items:
+		var idef: Dictionary = content.items[iid]
+		if idef.has("equipment") and String(idef.get("set_id", "")) == "kuafu":
+			set_slots[String(idef["equipment"]["slot"])] = true
+	failed += _check(set_slots.size() == 3, "同套槽位不得重复（%s）" % str(set_slots.keys()))
+	# 运行时透传：品级缺省 common；非白品与套装标记到位
+	failed += _check(String(content.build_item("w_taomu")["rarity"]) == "common", "白装缺省品级 common")
+	failed += _check(String(content.build_item("w_xuanyuan")["rarity"]) == "mythic", "轩辕剑应为神品(红)")
+	failed += _check(String(content.build_item("p_denglin").get("set_id", "")) == "kuafu", "邓林佩应携带套装标记")
+	failed += _check(content.set_name("kuafu") == "夸父", "套装显示名本地化")
+	# 校验拒绝探针：非法品级 / 未注册套装 / 同套槽位重复 / 档位超件数
+	var rarity_probe = load("res://scripts/core/content_db.gd").new()
+	rarity_probe.load_all("res://data/content")
+	rarity_probe.items["w_taomu"]["rarity"] = "divine"
+	var rarity_errors := PackedStringArray()
+	rarity_probe._validate(rarity_errors)
+	failed += _check(_probe_errors_has(rarity_errors, "品级"), "非法品级应报错: %s" % str(rarity_errors))
+	rarity_probe.items["w_taomu"]["rarity"] = "common"
+	rarity_probe.items["w_taomu"]["set_id"] = "set_not_exist_42"
+	rarity_errors.clear()
+	rarity_probe._validate(rarity_errors)
+	failed += _check(_probe_errors_has(rarity_errors, "不存在的套装"), "未注册套装应报错: %s" % str(rarity_errors))
+	rarity_probe.items["w_taomu"].erase("set_id")
+	rarity_probe.items["p_denglin"]["equipment"]["slot"] = "boots"  # 与逐日履同槽
+	rarity_errors.clear()
+	rarity_probe._validate(rarity_errors)
+	failed += _check(_probe_errors_has(rarity_errors, "槽位"), "同套槽位重复应报错: %s" % str(rarity_errors))
+	rarity_probe.items["p_denglin"]["equipment"]["slot"] = "amulet"
+	rarity_probe.sets["kuafu"]["tiers"]["4"] = {"bonuses": {"power": 1}}  # 超过 3 件
+	rarity_errors.clear()
+	rarity_probe._validate(rarity_errors)
+	failed += _check(_probe_errors_has(rarity_errors, "超过件数"), "档位超件数应报错: %s" % str(rarity_errors))
+
+	# 9. 加权掉落：白装显著多于橙红；tier 门槛仍生效（低层不出高 tier 件）
+	var drop_rng := RandomNumberGenerator.new()
+	drop_rng.seed = 42
+	var rarity_hits := {}
+	for _i in range(600):
+		var drop_id: String = content.random_equipment_id(20, drop_rng)
+		var rarity := String(content.items[drop_id].get("rarity", "common"))
+		rarity_hits[rarity] = int(rarity_hits.get(rarity, 0)) + 1
+	failed += _check(int(rarity_hits.get("common", 0)) > int(rarity_hits.get("legendary", 0)),
+		"白装应多于橙装（%s）" % str(rarity_hits))
+	failed += _check(int(rarity_hits.get("common", 0)) + int(rarity_hits.get("magic", 0)) > int(rarity_hits.get("mythic", 0)) * 4,
+		"红装应显著稀少（%s）" % str(rarity_hits))
+	var low_tier_hit := false
+	for _i in range(200):
+		var low_id: String = content.random_equipment_id(1, drop_rng)
+		if int(content.items[low_id].get("tier", 1)) > 2:
+			low_tier_hit = true
+	failed += _check(not low_tier_hit, "低层（cap=2）不得掉出高 tier 件")
+
 	if failed > 0:
 		print("FAIL 共 %d 项未过" % failed)
 		quit(1)

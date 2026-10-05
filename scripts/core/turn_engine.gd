@@ -101,6 +101,32 @@ func log_message(text: String, kind := "info") -> void:
 		messages.pop_front()
 
 
+## 带 {item} 占位的物品消息：物品名段携带品级/套装标记（segments），由视图层解析着色。
+## 非装备（无 rarity）退化为普通整行消息。
+func log_item_message(key: String, item: Dictionary, kind := "loot", extra := {}) -> void:
+	var template := content.text(key)
+	var parts := template.split("{item}")
+	var label := String(item["label"])
+	var values := extra.duplicate()
+	values["item"] = label
+	var text := template.format(values)
+	if parts.size() < 2 or not item.has("rarity"):
+		log_message(text, kind)
+		return
+	var segments: Array = []
+	if parts[0] != "":
+		segments.append({"text": parts[0].format(values)})
+	var name_segment := {"text": label, "rarity": String(item["rarity"])}
+	if item.has("set_id"):
+		name_segment["set_id"] = String(item["set_id"])
+	segments.append(name_segment)
+	for i in range(1, parts.size()):
+		if parts[i] != "":
+			segments.append({"text": parts[i].format(values)})
+	log_message(text, kind)
+	messages[messages.size() - 1]["segments"] = segments
+
+
 func emit_event(etype: String, x: int, y: int, data: Dictionary = {}) -> void:
 	events.append({"type": etype, "x": x, "y": y, "data": data})
 
@@ -154,7 +180,7 @@ func player_pickup() -> bool:
 	item["x"] = -1
 	item["y"] = -1
 	player().inventory.add(item)
-	log_message(content.text("pickup").format({"item": item["label"]}), "loot")
+	log_item_message("pickup", item, "loot")
 	emit_event("pickup", player().x, player().y, {})
 	end_turn()
 	return true
@@ -170,30 +196,78 @@ func player_use_item(item: Dictionary) -> String:
 	return ""
 
 
-## 装备行囊中的一件（被顶替的旧件回行囊）。
+## 装备行囊中的一件（被顶替的旧件回行囊）；跨越套装档位时出觉醒/消退提示。
 func player_equip(item: Dictionary) -> String:
 	if not item.has("slot"):
 		return content.text("no_item_here")
+	var tiers_before := _active_tier_keys(player().equipment)
 	var replaced: Dictionary = player().equipment.equip(item)
 	player().inventory.remove(item)
 	if not replaced.is_empty():
 		player().inventory.add(replaced)
 	player().fighter.clamp_vitals()
-	log_message(content.text("equip_on").format({"item": item["label"]}), "loot")
+	log_item_message("equip_on", item, "loot")
+	_log_set_tier_change(tiers_before)
 	end_turn()
 	return ""
 
 
-## 卸下指定槽位。
+## 卸下指定槽位；跨越套装档位时出觉醒/消退提示。
 func player_unequip(slot: String) -> String:
+	var tiers_before := _active_tier_keys(player().equipment)
 	var item: Dictionary = player().equipment.unequip_slot(slot)
 	if item.is_empty():
 		return content.text("no_item_here")
 	player().inventory.add(item)
 	player().fighter.clamp_vitals()
-	log_message(content.text("equip_off").format({"item": item["label"]}), "loot")
+	log_item_message("equip_off", item, "loot")
+	_log_set_tier_change(tiers_before)
 	end_turn()
 	return ""
+
+
+## 当前激活套装档位键集合（"set_id:threshold"），穿脱前后比对用。
+func _active_tier_keys(equipment: Equipment) -> Array:
+	var keys: Array = []
+	for tier in equipment.active_set_tiers():
+		keys.append("%s:%d" % [tier["set_id"], tier["threshold"]])
+	return keys
+
+
+## 穿脱后比对激活档位：新觉醒出 set_bonus_on，消退出 set_bonus_off。
+func _log_set_tier_change(keys_before: Array) -> void:
+	var keys_after := _active_tier_keys(player().equipment)
+	for tier in player().equipment.active_set_tiers():
+		var mark := "%s:%d" % [tier["set_id"], tier["threshold"]]
+		if keys_before.has(mark):
+			continue
+		log_message(content.text("set_bonus_on").format({
+			"set": content.set_name(String(tier["set_id"])),
+			"count": player().equipment.set_piece_count(String(tier["set_id"])),
+			"total": content.set_piece_total(String(tier["set_id"])),
+			"bonus": _set_tier_summary(tier),
+		}), "buff")
+	for mark_value in keys_before:
+		var mark := String(mark_value)
+		if keys_after.has(mark):
+			continue
+		var split_at := mark.find(":")
+		var set_id := mark.substr(0, split_at)
+		log_message(content.text("set_bonus_off").format({
+			"set": content.set_name(set_id),
+			"count": player().equipment.set_piece_count(set_id),
+			"total": content.set_piece_total(set_id),
+		}), "info")
+
+
+## 套装档位加成描述（复用 bon_*/aff_* 文案键），如「血+10，攻+2」。
+func _set_tier_summary(tier: Dictionary) -> String:
+	var parts: Array = []
+	for key in tier["bonuses"]:
+		parts.append(content.text("bon_" + String(key)).format({"v": int(tier["bonuses"][key])}))
+	for affix in tier["affixes"]:
+		parts.append(content.text("aff_" + String(affix["id"])).format({"v": int(affix["value"])}))
+	return "，".join(parts)
 
 
 ## 参悟/修习技能（不消耗回合）：前置 + 技能点 + 材料门槛。
@@ -354,9 +428,7 @@ func _roll_equipment_drop(victim: Actor, x: int, y: int) -> void:
 		return
 	var item: Dictionary = content.build_item(item_id, x, y)
 	map().items.append(item)
-	log_message(content.text("monster_drop").format({
-		"monster": victim.label, "item": item["label"],
-	}), "loot")
+	log_item_message("monster_drop", item, "loot", {"monster": victim.label})
 
 
 func _roll_material_drop(victim: Actor, x: int, y: int) -> void:
@@ -369,9 +441,7 @@ func _roll_material_drop(victim: Actor, x: int, y: int) -> void:
 	for mid in drops:
 		var item: Dictionary = content.build_item(mid, x, y)
 		map().items.append(item)
-		log_message(content.text("material_drop").format({
-			"monster": victim.label, "item": item["label"],
-		}), "loot")
+		log_item_message("material_drop", item, "loot", {"monster": victim.label})
 
 
 ## 击退：沿 (dx,dy) 推 actor 至多 push 格，遇墙/越界/实体截停；返回实际格数。

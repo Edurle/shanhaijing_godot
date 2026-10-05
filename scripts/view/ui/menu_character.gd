@@ -141,10 +141,10 @@ func _draw() -> void:
 		draw_rect(rect, INK if not item.is_empty() else INK_SOFT, false, 1.6)
 		if not item.is_empty():
 			var icon_color := INK
-			if item.has("damage"):
-				var element := String(item["damage"].get("element", ""))
-				if element != "":
-					icon_color = _element_color(element)
+			if UiPanel.has_rarity_color(item):
+				icon_color = UiPanel.rarity_color(item)
+			elif item.has("damage") and String(item["damage"].get("element", "")) != "":
+				icon_color = _element_color(String(item["damage"]["element"]))
 			_draw_tile_icon(rect, String(item["label"].substr(0, 1)), icon_color, str(i + 1))
 		else:
 			_draw_tile_icon(rect, "·", INK_SOFT, str(i + 1))
@@ -165,16 +165,18 @@ func _draw() -> void:
 			draw_rect(Rect2(bag_x - 10, ry - 18, panel_rect.size.x - 330, ROW_STEP), Color(PAPER_SHADOW, 0.8))
 			draw_text_line(Vector2(bag_x - 8, ry), "►", VERMILION, 15)
 		var icon_color := INK
-		if item.has("damage") and String(item["damage"].get("element", "")) != "":
+		if player.inventory.is_material(item):
+			icon_color = Color("8C5A3C")
+		elif UiPanel.has_rarity_color(item):
+			icon_color = UiPanel.rarity_color(item)
+		elif item.has("damage") and String(item["damage"].get("element", "")) != "":
 			icon_color = _element_color(String(item["damage"]["element"]))
 		elif item.has("slot"):
 			icon_color = INK_SOFT
-		elif player.inventory.is_material(item):
-			icon_color = Color("8C5A3C")
 		draw_string(get_theme_default_font(), Vector2(bag_x + 16, ry), String(item["label"].substr(0, 1)),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, icon_color)
 		var tail := _item_tail(item)
-		draw_text_line(Vector2(bag_x + 40, ry), String(item["label"]), INK, 15)
+		draw_text_line(Vector2(bag_x + 40, ry), String(item["label"]), UiPanel.rarity_color(item, INK), 15)
 		if tail != "":
 			draw_text_line(Vector2(panel_rect.end.x - 30 - tail.length() * 8, ry), tail, INK_SOFT, 12)
 		ry += ROW_STEP
@@ -197,12 +199,15 @@ func _draw_tile_icon(rect: Rect2, icon: String, color: Color, badge := "") -> vo
 func _item_tail(item: Dictionary) -> String:
 	if engine.player().inventory.is_material(item):
 		return "×%d" % int(item.get("stack", 1))
+	var tail := ""
+	if String(item.get("set_id", "")) != "":
+		tail = "套%d/%d" % [_set_owned_count(item), engine.content.set_piece_total(String(item["set_id"]))]
 	if item.has("damage"):
 		var d: Dictionary = item["damage"]
 		var summary := "物%d" % int(d["physical"])
 		if String(d.get("element", "")) != "":
 			summary += "·" + engine.content.text("element_" + String(d["element"]))
-		return summary
+		return tail + " " + summary if tail != "" else summary
 	if item.has("consumable"):
 		return Consumables.summary(engine, item)
 	var parts: Array = []
@@ -210,7 +215,23 @@ func _item_tail(item: Dictionary) -> String:
 		var value: int = int(item.get("bonuses", {}).get(key, 0))
 		if value > 0:
 			parts.append("%s+%d" % [key, value])
-	return " ".join(parts)
+	var bonus_text := " ".join(parts)
+	if tail != "":
+		return tail + " " + bonus_text if bonus_text != "" else tail
+	return bonus_text
+
+
+## 同套件持有数（行囊 + 已穿戴）。
+func _set_owned_count(item: Dictionary) -> int:
+	var set_id := String(item.get("set_id", ""))
+	var count := 0
+	for held in engine.player().inventory.items:
+		if String(held.get("set_id", "")) == set_id:
+			count += 1
+	for worn in engine.player().equipment.equipped_items():
+		if String(worn.get("set_id", "")) == set_id:
+			count += 1
+	return count
 
 
 func _element_color(element: String) -> Color:

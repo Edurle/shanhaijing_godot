@@ -97,6 +97,8 @@ func commit_edit() -> void:
 		Spec.erase_path(entity, path)
 	elif String(col.get("kind", "")) == "enum" and String(value) == "":
 		Spec.erase_path(entity, path)
+	elif col.has("omit_equals") and String(value) == String(col["omit_equals"]):
+		Spec.erase_path(entity, path)
 	else:
 		Spec.write_path(entity, path, value)
 	item.set_text(col_index, text)
@@ -173,10 +175,13 @@ func _item_columns() -> Array:
 	var slot_values: Array = Array(preload("res://scripts/core/content_db.gd").SLOT_ORDER).duplicate()
 	var element_values: Array = Array(preload("res://scripts/core/content_db.gd").ELEMENTS).duplicate()
 	element_values.append("")
+	var rarity_values: Array = Array(preload("res://scripts/core/content_db.gd").RARITY_ORDER).duplicate()
 	return [
 		{"title": "id", "path": "__id__", "kind": "string", "readonly": true, "width": 110},
 		{"title": "名称", "kind": "name", "readonly": true, "width": 100},
 		{"title": "槽位", "path": "equipment.slot", "kind": "enum", "enum_values": slot_values, "width": 60},
+		{"title": "品级", "path": "rarity", "kind": "enum", "enum_values": rarity_values, "create": true, "omit_equals": "common", "width": 88},
+		{"title": "套装", "path": "set_id", "kind": "string", "create": true, "width": 70},
 		{"title": "物伤", "path": "equipment.damage.physical", "kind": "int", "min": 1, "max": 99},
 		{"title": "属性", "path": "equipment.damage.element", "kind": "enum", "enum_values": element_values},
 		{"title": "加攻", "path": "equipment.bonuses.power", "kind": "int", "min": 0, "max": 99, "create": true, "omit_zero": true},

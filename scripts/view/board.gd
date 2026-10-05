@@ -164,7 +164,7 @@ func _cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell.x * CELL + CELL / 2.0, cell.y * CELL + CELL / 2.0)
 
 
-## 地面物品：赭墨小方点（拾取交互阶段 4 接入）。
+## 地面物品：装备按品级着色（白装/材料/消耗品维持赭墨小方点）。
 func _draw_items() -> void:
 	for item in map.items:
 		var x: int = item["x"]
@@ -172,7 +172,8 @@ func _draw_items() -> void:
 		if not map.is_visible(x, y):
 			continue
 		var c := _cell_center(Vector2i(x, y))
-		draw_rect(Rect2(c - Vector2(4, 4), Vector2(8, 8)), Color("8C5A3C"))
+		var dot := UiPanel.rarity_color(item, Color("8C5A3C"))
+		draw_rect(Rect2(c - Vector2(4, 4), Vector2(8, 8)), dot)
 		draw_rect(Rect2(c - Vector2(4, 4), Vector2(8, 8)), INK_DEEP, false, 1.0)
 
 

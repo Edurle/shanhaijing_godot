@@ -1,0 +1,23 @@
+{
+  "_schema": {
+    "说明": "套装登记。items.json 中带 set_id 的装备属于对应套装（名称绿色显示）；tiers 键为集齐件数档位（2-5），集齐后 bonuses/affixes 按白名单累积生效并叠加进装备栏聚合。同套槽位不得重复（校验强制）。"
+  },
+  "kuafu": {
+    "name": {
+      "zh_CN": "夸父",
+      "en_US": "Kuafu"
+    },
+    "tiers": {
+      "2": {
+        "bonuses": {
+          "max_hp": 10
+        }
+      },
+      "3": {
+        "bonuses": {
+          "power": 2
+        }
+      }
+    }
+  }
+}

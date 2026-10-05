@@ -97,6 +97,8 @@
   "class_chosen": "你以「{primary}」为业，「{secondary}」为辅。",
   "equip_on": "你装备了{item}。",
   "equip_off": "你卸下了{item}。",
+  "set_bonus_on": "「{set}」之威觉醒（{count}/{total}件）：{bonus}。",
+  "set_bonus_off": "「{set}」之力消退（{count}/{total}件）。",
   "slot_weapon": "兵",
   "slot_armor": "甲",
   "slot_boots": "履",
