@@ -130,17 +130,22 @@ void fragment() {
 	base *= 1.0 + grain * grain_strength;
 
 	if (waterness > 0.02) {
-		// 水纹：双层错向慢滚（2.5/1.2px每秒：墨迹未干的时间感）+ 噪声域扭曲
+		// 水纹三重动势（克制但可感知）：
+		// 1) 域摆动——线身随时间起伏（长横线的上下波动最可见，顺线平移不可见）
 		vec2 wob = vec2(
-			vnoise(world_px * 0.008 + vec2(time * 0.05, 0.0)),
-			vnoise(world_px * 0.008 + vec2(0.0, 27.0 - time * 0.04))
+			vnoise(world_px * 0.008 + vec2(time * 0.12, 0.0)),
+			vnoise(world_px * 0.008 + vec2(0.0, 27.0 - time * 0.09))
 		) - 0.5;
-		vec2 uv_a = (world_px + wob * 24.0 + vec2(time * 2.5, time * 0.3)) / 512.0;
-		vec2 uv_b = (world_px + wob * 18.0 + vec2(-time * 1.2, time * 0.15)) / 512.0;
+		// 2) 双层错向漂移（纵向分量给足：跨线运动才被看见）
+		vec2 uv_a = (world_px + wob * 36.0 + vec2(time * 2.0, time * 1.2)) / 512.0;
+		vec2 uv_b = (world_px + wob * 28.0 + vec2(-time * 1.5, time * 0.8)) / 512.0;
 		float lines = texture(water_a, uv_a).a * 0.65 + texture(water_b, uv_b).a * 0.45;
 		base *= 1.0 - clamp(lines, 0.0, 1.0) * 0.38 * waterness;
+		// 3) 流光——低幅行波（约 10px/s 横移的明暗起伏，墨面的"活"）
+		float shimmer = vnoise(world_px * 0.012 + vec2(time * 0.12, time * 0.03)) - 0.5;
+		base *= 1.0 + shimmer * 0.06 * waterness;
 		// 整域呼吸（无世界项=全域同相：一片水是一个整体）
-		alpha *= 1.0 + 0.05 * sin(time * 0.35) * waterness;
+		alpha *= 1.0 + 0.05 * sin(time * 0.5) * waterness;
 		// 湿边：双线性水性权重 × 到（扭曲后）最近格边的距离——边界最深处一线沉积
 		float dist_edge = min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y)) * cell_px;
 		float edge = clamp(waterness * (1.0 - waterness) * 4.0, 0.0, 1.0)
