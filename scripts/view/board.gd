@@ -34,6 +34,7 @@ var _deco := {}                    # Vector2i -> Dictionary 装饰参数
 var _peaks: Array = []             # 区域大剪影摆放（山/树丛/土坡）[{x,y,size,kind,vseed,far}]
 var _grain_noise := FastNoiseLite.new()
 var _clump_noise := FastNoiseLite.new()
+var _pulse := 0.0  # 墨震强度（杀戮/生克命中触发，_process 衰减）
 
 static var _beast_cache := {}  # monster_id -> Texture2D/null（AI 素材缓存，棋盘/查看卡共享）
 static var _hero_cache := {}   # gender -> Texture2D/null（主角立像，棋盘/角色面板共享）
@@ -290,11 +291,31 @@ func _draw() -> void:
 	_draw_overlays()
 
 
-## 水纹时间：shader 的 time uniform + 单 quad 重绘（每帧一次，开销可忽略）。
-func _process(_delta: float) -> void:
+## 水纹时间 + 墨震衰减：shader 的 time/pulse uniform + 单 quad 重绘。
+func _process(delta: float) -> void:
 	if _ground_mat != null:
 		_ground_mat.set_shader_parameter("time", float(Time.get_ticks_msec()) / 1000.0)
+		if _pulse > 0.0:
+			_pulse = maxf(0.0, _pulse - delta * 2.4)
+			_ground_mat.set_shader_parameter("pulse", _pulse)
 		_ground.queue_redraw()
+
+
+## 墨震：全图墨浓度+晕影脉动（纸不该抖，墨会震）。amount 取历史峰值。
+func ink_pulse(amount: float) -> void:
+	_pulse = maxf(_pulse, clampf(amount, 0.0, 1.0))
+	if _ground_mat != null:
+		_ground_mat.set_shader_parameter("pulse", _pulse)
+
+
+## 秘境墨调：整卷罩染（theme.json realm_tones 按 realms.json 的 theme 键取；空=无罩染）。
+func set_realm_tone(theme_key: String) -> void:
+	if _ground_mat == null:
+		return
+	var tone: Dictionary = InkPalette.REALM_TONES.get(theme_key, {})
+	var tint: Color = tone.get("tint", Color.WHITE)
+	_ground_mat.set_shader_parameter("realm_tint", Vector3(tint.r, tint.g, tint.b))
+	_ground_mat.set_shader_parameter("realm_strength", float(tone.get("strength", 0.0)))
 
 
 ## 绑定 shader 材质：尺寸/纸纹/水纹/调色板（InkPalette → uniform，theme.json 换肤即生效）。
@@ -316,6 +337,7 @@ func _bind_material() -> void:
 	_ground_mat.set_shader_parameter("fog_color", InkPalette.INK_LIGHT)
 	_ground_mat.set_shader_parameter("fog_lerp", InkPalette.FOG_LERP)
 	_ground_mat.set_shader_parameter("grain_strength", GRAIN_STRENGTH)
+	set_realm_tone("")  # 重绑复位罩染（main 随后按境设置）
 
 
 func _load_texture(path: String) -> ImageTexture:
@@ -344,6 +366,8 @@ func _sync_field() -> void:
 	else:
 		_field_tex.update(image)
 	_ground_mat.set_shader_parameter("data_tex", _field_tex)
+	if player != null:
+		_ground_mat.set_shader_parameter("player_cell", Vector2(player.x, player.y))
 
 
 ## FOV/地形变化后同步数据纹理（main._refresh 每回合调用；setup 内自动调一次）。

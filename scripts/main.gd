@@ -55,6 +55,8 @@ var dir_delta := Vector2i.ZERO
 
 # 现代操作：点击旅行 / 长按连走
 var travel_target := Vector2i(-1, -1)
+var _shake := 0.0            # Boss/处决的实体微震强度（衰减）
+var _camera_base := Vector2.ZERO
 var dragging_skill := ""  # 拖拽中的技能 id（编排面板 → 技能栏）
 var travel_attack := false
 var _travel_clock := 0.0
@@ -225,6 +227,7 @@ func _start_game(class_pair: Array) -> void:
 	help_overlay.setup_panel(engine)
 	menu_class.visible = false
 	board.setup(state.current, state.player)
+	_apply_realm_tone()
 	_set_mode(Mode.PLAY)
 	_on_viewport_resized()  # 窗口启动即最大化时 size_changed 不会触发，主动按真实视口排布
 	_refresh()
@@ -482,6 +485,9 @@ func _stop_travel() -> void:
 
 
 func _process(delta: float) -> void:
+	if engine != null and _shake > 0.0:
+		_shake = maxf(0.0, _shake - delta * 10.0)
+		camera.position = _camera_base + Vector2(randf() - 0.5, randf() - 0.5) * 6.0 * _shake
 	if mode != Mode.PLAY or engine == null or engine.game_over or travel_target.x < 0:
 		return
 	_travel_clock += delta
@@ -732,7 +738,16 @@ func _interact_up() -> void:
 func _after_map_switch() -> void:
 	travel_target = Vector2i(-1, -1)
 	board.setup(state.current, state.player)
+	_apply_realm_tone()
 	_refresh()
+
+
+## 秘境墨调：realms.json 的 theme 键 → theme.json realm_tones 整卷罩染（世界无罩染）。
+func _apply_realm_tone() -> void:
+	var key := ""
+	if state.current.map_type == "realm":
+		key = String(content.realms.get(state.current.realm_id, {}).get("theme", ""))
+	board.set_realm_tone(key)
 
 
 # ---- 视口自适应 ----
@@ -773,12 +788,24 @@ func _refresh() -> void:
 		return
 	board.sync_field()  # 地形/雾态数据纹理（shader 场在重绘前拿到最新状态）
 	if not engine.events.is_empty():
+		vfx.map = state.current  # 落子惊水的水陆判定
+		for event in engine.events:
+			var etype := String(event.get("type", ""))
+			if etype == "kill":
+				if bool(event.get("data", {}).get("boss", false)):
+					board.ink_pulse(0.9)
+					_shake = 1.0  # Boss/处决保留 2-3px 实体微震
+				else:
+					board.ink_pulse(0.5)
+			elif etype == "hit" and bool(event.get("data", {}).get("countered", false)):
+				board.ink_pulse(0.3)  # 生克点睛：墨震一记
 		vfx.play(engine.events)  # 演出事件一次性消费（引擎约定：视图消费后清空）
 		engine.events.clear()
 	camera.position = Vector2(
 		(state.player.x + 0.5) * ViewBoard.CELL,
 		(state.player.y + 0.5) * ViewBoard.CELL
 	)
+	_camera_base = camera.position
 	log_panel.refresh()
 	hud_vitals.refresh()
 	skill_bar.refresh()

@@ -42,6 +42,7 @@ static var KIND_COLORS := {
 	"buff": Color("#C9A662"), "levelup": Color("#C9A662"), "info": Color("#6E675C"),
 	"summon": Color("#3A5A6E"), "descend": Color("#3A5A6E"),
 }
+static var REALM_TONES := {}  # theme 键 -> {tint: Color, strength: float}（秘境整卷罩染）
 static var TERRAIN_COLORS := {
 	GameMap.T_FLOOR: Color("#D8CFBA"), GameMap.T_WALL: Color("#4A443A"),
 	GameMap.T_PLAIN: Color("#E9E1CD"), GameMap.T_FOREST: Color("#8A8674"),
@@ -100,6 +101,13 @@ static func apply(theme: Dictionary) -> void:
 	var params: Dictionary = theme.get("params", {})
 	FOG_LERP = float(params.get("fog_lerp", FOG_LERP))
 	PLAIN_JITTER = float(params.get("plain_jitter", PLAIN_JITTER))
+	var tones: Dictionary = theme.get("realm_tones", {})
+	for key in tones:
+		var entry: Dictionary = tones[key]
+		REALM_TONES[key] = {
+			"tint": _c(entry, "tint", Color.WHITE),
+			"strength": float(entry.get("strength", 0.0)),
+		}
 
 
 static func _c(dict: Dictionary, key: String, fallback: Color) -> Color:

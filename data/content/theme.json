@@ -64,5 +64,43 @@
   "params": {
     "fog_lerp": 0.45,
     "plain_jitter": -0.025
+  },
+  "realm_tones": {
+    "jade": {
+      "tint": "#4A7C59",
+      "strength": 0.1
+    },
+    "charm": {
+      "tint": "#A85C68",
+      "strength": 0.1
+    },
+    "thunder": {
+      "tint": "#6E5A9E",
+      "strength": 0.12
+    },
+    "stone": {
+      "tint": "#8C8577",
+      "strength": 0.12
+    },
+    "water": {
+      "tint": "#4A6E8C",
+      "strength": 0.12
+    },
+    "ice": {
+      "tint": "#7FA3B8",
+      "strength": 0.14
+    },
+    "dark": {
+      "tint": "#3A3A42",
+      "strength": 0.16
+    },
+    "abyss": {
+      "tint": "#2A2432",
+      "strength": 0.18
+    },
+    "ember": {
+      "tint": "#9C5A3C",
+      "strength": 0.14
+    }
   }
 }

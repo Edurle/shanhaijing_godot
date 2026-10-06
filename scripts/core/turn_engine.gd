@@ -166,6 +166,16 @@ func player_step(delta: Vector2i) -> bool:
 	return true
 
 
+## 跳过回合：原地对息直接推进回合。眩晕/缠绕中被控时唯一的主动过回合手段。
+func player_wait() -> bool:
+	if game_over:
+		return false
+	if player().fighter.stun_turns > 0:
+		log_message(content.text("stunned_tick").format({"name": player().label}), "warn")
+	else:
+		log_message(content.text("wait_turn"), "info")
+	end_turn()
+	return true
 
 
 # ---- 行囊与装备动作（成功即消耗回合） ----
@@ -416,7 +426,7 @@ func _apply_damage(killer: Actor, victim: Actor, damage: int) -> void:
 		victim.fighter = null
 		return
 	log_message(content.text("monster_dies").format({"name": victim.label}), "kill")
-	emit_event("kill", victim.x, victim.y, {})
+	emit_event("kill", victim.x, victim.y, {"boss": victim.tags.has("boss")})
 	var x := victim.x
 	var y := victim.y
 	# 经验：任何原因击杀异兽都归玩家（DOT/召唤兽代杀同理）
@@ -492,6 +502,7 @@ func move_actor(actor: Actor, dx: int, dy: int) -> void:
 		return
 	actor.x += dx
 	actor.y += dy
+	emit_event("step", actor.x, actor.y)  # 落子惊水/脚印等演出线索
 	if actor == player():
 		update_fov()
 

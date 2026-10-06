@@ -22,6 +22,11 @@ uniform float wash_alpha[12];
 uniform vec4 fog_color = vec4(0.725, 0.698, 0.635, 1.0);
 uniform float fog_lerp = 0.45;
 uniform float grain_strength = 0.05;
+uniform vec2 player_cell = vec2(-999.0, -999.0);  // 近浓远淡中心
+uniform float sight_radius = 8.0;
+uniform vec3 realm_tint = vec3(1.0);              // 秘境墨调（整卷罩染）
+uniform float realm_strength = 0.0;
+uniform float pulse = 0.0;                        // 墨震（浓度+晕影瞬时脉动）
 
 const int WATER = 6;
 const int RIVER = 7;
@@ -153,11 +158,23 @@ void fragment() {
 		base *= 1.0 - edge * 0.30;
 	}
 
+	// 近浓远淡：视之所及近实远虚（8 格内洗染 100%→82%；视野外由雾接手）
+	vec2 true_cell = world_px / cell_px;
+	alpha *= mix(0.82, 1.0, clamp(1.0 - distance(true_cell, player_cell) / sight_radius, 0.0, 1.0));
+
 	// 雾态连续化：可见度把洗染淡出到纸（未探索=纯留白），记忆态罩灰墨
 	alpha *= clamp(fog_f * 0.5, 0.0, 1.0);
 	col = mix(col, base, clamp(alpha, 0.0, 1.0));
 	float memory = clamp(2.0 - fog_f, 0.0, 1.0);
 	col = mix(col, fog_color.rgb, memory * fog_lerp);
+
+	// 秘境墨调：整卷罩染（纸与墨同染，换境换调）
+	col = mix(col, col * realm_tint, realm_strength);
+
+	// 墨震：全图墨浓度 + 边缘晕影瞬时脉动（杀戮/生克命中；纸不该抖，墨会震）
+	col *= 1.0 + pulse * 0.18;
+	float vig = smoothstep(0.35, 0.75, distance(SCREEN_UV, vec2(0.5)));
+	col *= 1.0 - vig * pulse * 0.35;
 
 	COLOR = vec4(col, 1.0);
 }

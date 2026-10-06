@@ -10,7 +10,10 @@ const DUR_SPLASH := 0.15   # 墨点飞溅
 const DUR_FLASH := 0.12    # 受击处墨色加深（闪 = 更浓的墨，不闪白）
 const DUR_BLOT := 0.35     # 击杀墨渍晕开
 const DUR_NUMBER := 0.5    # 伤害数字上浮
+const DUR_RIPPLE := 0.45   # 落子惊水涟漪
 const NUMBER_RISE := 16.0  # 数字上浮行程（世界像素）
+
+var map  # 当前 GameMap（落子惊水的水陆判定；main._refresh 注入）
 
 var speed_scale := 1.0  # 快速演出倍率（阶段 6 设置项预留；>1 更快）
 
@@ -55,6 +58,7 @@ func _spawn(event: Dictionary) -> void:
 	match String(event.get("type", "")):
 		"hit":
 			_spawn_hit(cell, data)
+			_spawn_ripple_near(cell)  # 落点贴水 → 水回应
 		"kill":
 			_effects.append({"kind": "blot", "cell": cell, "age": 0.0})
 		"heal":
@@ -62,8 +66,28 @@ func _spawn(event: Dictionary) -> void:
 		"dot_tick":
 			_spawn_number(cell, "-%d" % int(data.get("amount", 0)),
 				InkPalette.ELEMENT_COLORS.get(String(data.get("kind", "")), InkPalette.WARN))
+		"step":
+			_spawn_ripple_near(cell)
 		"pickup", "levelup", "stun", "root", "smoke", "summon", "trail":
 			pass  # 后续批次：金粉/朱印/飞白拖影等
+
+
+## 落子惊水：上桥（脚下即水）或落点贴水 → 在水格上荡开涟漪（仅可见区）。
+func _spawn_ripple_near(cell: Vector2i) -> void:
+	if map == null or not map.is_visible(cell.x, cell.y):
+		return
+	if map.tile_at(cell.x, cell.y) == GameMap.T_BRIDGE:
+		_effects.append({"kind": "ripple", "cell": cell, "age": 0.0})
+		return
+	var spawned := 0
+	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var nx: int = cell.x + dir.x
+		var ny: int = cell.y + dir.y
+		if map.in_bounds(nx, ny) and map.is_visible(nx, ny) and spawned < 2:
+			var kind: int = map.tile_at(nx, ny)
+			if kind == GameMap.T_WATER or kind == GameMap.T_RIVER:
+				_effects.append({"kind": "ripple", "cell": Vector2i(nx, ny), "age": 0.0})
+				spawned += 1
 
 
 func _spawn_hit(cell: Vector2i, data: Dictionary) -> void:
@@ -113,6 +137,8 @@ func _lifetime(kind: String) -> float:
 			return DUR_FLASH
 		"blot":
 			return DUR_BLOT
+		"ripple":
+			return DUR_RIPPLE
 	return DUR_NUMBER
 
 
@@ -127,6 +153,8 @@ func _draw() -> void:
 				_draw_splash(effect)
 			"blot":
 				_draw_blot(effect)
+			"ripple":
+				_draw_ripple(effect)
 			"number":
 				_draw_number(effect)
 
@@ -158,6 +186,17 @@ func _draw_blot(effect: Dictionary) -> void:
 	draw_circle(center, radius, Color(InkPalette.INK_DEEP, 0.7 * (1.0 - t)))
 	draw_circle(center + Vector2(10, -6), 2.4 * (1.0 - t), Color(InkPalette.INK_DEEP, 0.55 * (1.0 - t)))
 	draw_circle(center + Vector2(-9, 7), 1.8 * (1.0 - t), Color(InkPalette.INK_DEEP, 0.5 * (1.0 - t)))
+
+
+## 涟漪：双圈错相扩散的墨纹弧（落子惊水——静止的画只有被惊动时才活）。
+func _draw_ripple(effect: Dictionary) -> void:
+	var center := _cell_center(effect["cell"])
+	for ring in range(2):
+		var t := clampf(float(effect["age"]) / DUR_RIPPLE - ring * 0.14, 0.0, 1.0)
+		if t <= 0.0:
+			continue
+		var radius := lerpf(4.0, 19.0, 1.0 - (1.0 - t) * (1.0 - t))
+		draw_arc(center, radius, 0, TAU, 24, Color(InkPalette.INK_MID, 0.45 * (1.0 - t)), 1.2)
 
 
 func _draw_number(effect: Dictionary) -> void:
