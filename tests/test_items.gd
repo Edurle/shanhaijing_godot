@@ -19,7 +19,7 @@ func _init() -> void:
 		for y in range(21):
 			map.set_tile(x, y, 2)
 	state.current = map
-	state.player = content.build_player(["leifa", "fushi"], 10, 10)
+	state.player = content.build_player("leifa", 10, 10)
 	map.actors.append(state.player)
 	var engine = load("res://scripts/core/turn_engine.gd").new(state, content)
 	state.rng.seed = 7

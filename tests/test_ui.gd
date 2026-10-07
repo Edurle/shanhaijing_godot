@@ -19,18 +19,18 @@ func _init() -> void:
 		for y in range(21):
 			map.set_tile(x, y, 2)
 	state.current = map
-	state.player = content.build_player(["leifa", "fushi"], 10, 10)
+	state.player = content.build_player("leifa", 10, 10)
 	map.actors.append(state.player)
 	var engine = load("res://scripts/core/turn_engine.gd").new(state, content)
 	state.rng.seed = 5
 
-	# ---- 参悟菜单（技能树）：两页各 8 节点，页眉含职业名，深度分列 + 前置连线 ----
+	# ---- 参悟菜单（技能树）：单职业一页 8 节点，页眉含职业名，深度分列 + 前置连线 ----
 	var learn = load("res://scripts/view/ui/menu_learn.gd").new()
 	root.add_child.call_deferred(learn)  # 挂树获得 viewport（headless 回退基准尺寸）
 	await process_frame
 	learn.setup_menu(engine)
 	learn.open()
-	failed += _check(learn.nodes.size() == 8, "参悟主职业树应 8 技能（实际 %d）" % learn.nodes.size())
+	failed += _check(learn.nodes.size() == 8, "参悟职业技能树应 8 技能（实际 %d）" % learn.nodes.size())
 	failed += _check(
 		String(learn.header_extra).find(content.class_display_name("leifa")) >= 0,
 		"参悟页眉含职业名（%s）" % learn.header_extra
@@ -38,10 +38,9 @@ func _init() -> void:
 	# 雷法树形：深度 0-3 共 4 列；8 技能中 5 个有前置 → 5 条连线
 	failed += _check(learn.columns.size() == 4, "雷法技能树分 4 列（实际 %d）" % learn.columns.size())
 	failed += _check(learn.links.size() == 5, "雷法前置连线 5 条（实际 %d）" % learn.links.size())
-	learn.page = 1
-	learn.cursor = 0
-	learn._rebuild()
-	failed += _check(learn.nodes.size() == 8, "参悟副职业树应 8 技能（实际 %d）" % learn.nodes.size())
+	# 单职业：仅一页，Tab 不换页
+	learn.handle_key(KEY_TAB)
+	failed += _check(learn.page_count == 1 and learn.page == 0, "单职业参悟仅一页，Tab 不换页")
 	# 格命中（拖拽起拖/悬浮路由用）：首格中心 → 索引 0 与技能 id
 	var cell0: Rect2 = learn.nodes[0]["rect"]
 	var node0: int = learn.node_index_at(cell0.get_center())
@@ -207,9 +206,9 @@ func _init() -> void:
 	failed += _check(skill_bar.skill_slot_at(rect12.get_center()) == 12, "第12槽命中（Shift组）")
 	failed += _check(rect12.size.x == rect12.size.y, "技能格为正方形（%s）" % rect12.size)
 	failed += _check(String(state.player.skill_bar[11]) == "", "初始技能栏全空（槽12未绑定，无悬浮）")
-	# 自由重排：绑定火符到槽 3，原槽清空逻辑由编排面板负责
-	state.player.skill_bar[2] = "s_fushi_1"
-	failed += _check(String(state.player.skill_bar[2]) == "s_fushi_1", "自由重排槽3=火符")
+	# 自由重排：绑定掌心雷到槽 3，原槽清空逻辑由编排面板负责
+	state.player.skill_bar[2] = "s_leifa_1"
+	failed += _check(String(state.player.skill_bar[2]) == "s_leifa_1", "自由重排槽3=掌心雷")
 	failed += _check(UiSkillBar.key_label(3) == "3" and UiSkillBar.key_label(12) == "S4", "键位标签 3/S4")
 
 	# 悬浮说明行：标题/摘要/描述折行
@@ -232,10 +231,10 @@ func _init() -> void:
 	var icon: String = skill_bar.icon_char(engine, content.skill_for_slot("leifa", 1))
 	failed += _check(icon.length() == 1, "技能图标占位为单字（%s）" % icon)
 
-	# ---- 技能摘要：主副职业首技能均非空 ----
+	# ---- 技能摘要：本职业各槽位非空 ----
 	var s1: String = Skills.summary(engine, state.player, content.skill_for_slot("leifa", 1))
-	var s2: String = Skills.summary(engine, state.player, content.skill_for_slot("fushi", 1))
-	failed += _check(s1 != "" and s2 != "", "双职业技能摘要非空（%s / %s）" % [s1, s2])
+	var s2: String = Skills.summary(engine, state.player, content.skill_for_slot("leifa", 4))
+	failed += _check(s1 != "" and s2 != "", "职业技能摘要非空（%s / %s）" % [s1, s2])
 
 	if failed > 0:
 		print("FAIL 共 %d 项未过" % failed)

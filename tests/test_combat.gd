@@ -51,7 +51,7 @@ func _init() -> void:
 		for y in range(21):
 			map.set_tile(x, y, 2)  # 平原
 	state.current = map
-	state.player = content.build_player(["leifa", "fushi"], 10, 10)
+	state.player = content.build_player("leifa", 10, 10)
 	map.actors.append(state.player)
 	var engine = load("res://scripts/core/turn_engine.gd").new(state, content)
 	state.rng.seed = 42
@@ -154,6 +154,22 @@ func _init() -> void:
 	var sp_guard: int = player.fighter.sp()
 	failed += _check(not SkillsScript.cast(engine, player, buff_skill).is_empty(), "灵力不足拒绝施放")
 	failed += _check(player.fighter.mp() == mp_guard and player.fighter.sp() == sp_guard, "失败不扣资源")
+
+	# ---- 攻击距离：指向性技能超距拒放，缺省=地图视野半径 ----
+	var bolt_skill: Dictionary = content.skill_for_slot("leifa", 1)  # 掌心雷 cast_range=7
+	var far_fox = put.call("xingxing", 18, 10)  # 距玩家 8 格
+	player.fighter.base_max_mp = 50
+	player.fighter.restore_mp(50)
+	var mp_far: int = player.fighter.mp()
+	failed += _check(SkillsScript.cast(engine, player, bolt_skill, far_fox) == content.text("target_too_far"), "超距施放被拒")
+	failed += _check(player.fighter.mp() == mp_far, "超距拒绝不扣真气")
+	far_fox.x = 16  # 挪近到 6 格（≤7）
+	failed += _check(SkillsScript.cast(engine, player, bolt_skill, far_fox).is_empty(), "攻击距离内施放成功")
+	failed += _check(player.fighter.mp() < mp_far, "施放扣真气")
+	map.actors.erase(far_fox)
+	failed += _check(SkillsScript.cast_reach(engine, bolt_skill) == 7, "cast_range 显式值生效")
+	bolt_skill.erase("cast_range")
+	failed += _check(SkillsScript.cast_reach(engine, bolt_skill) == map.fov_radius, "未设置时缺省=视野半径")
 
 	# ---- 击杀：经验与移除 ----
 	var weak = put.call("xingxing", 10, 9)

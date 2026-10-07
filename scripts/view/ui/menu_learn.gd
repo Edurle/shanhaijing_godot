@@ -1,6 +1,6 @@
 class_name UiMenuLearn
 extends UiPanel
-## 参悟面板（技能树）：双职业页（Tab），技能按前置深度分列，左根右叶。
+## 参悟面板（技能树）：按职业分页（Tab；单职业即一页），技能按前置深度分列，左根右叶。
 ## 图标格暂以技能名首字汉字代替（素材期换贴图），格下注技能名，父子连线随习得状态着色。
 ## 交互：方向键移动游标，Enter/原地点击参悟，拖格入技能栏或数字键绑定，悬浮看详情。
 
@@ -20,7 +20,7 @@ var links: Array = []     # [{from, to}]（节点索引；子状态决定连线�
 var columns: Array = []   # columns[col] = [节点索引…]（列内按技能号序）
 var cursor := 0
 var page := 0
-var page_count := 2
+var page_count := 1
 var header_extra := ""
 
 
@@ -55,6 +55,7 @@ func relayout(view_size: Vector2) -> void:
 ## 重建树：深度分层 → 列内排序 → 父子连线。
 func _rebuild() -> void:
 	var player = engine.player()
+	page_count = player.class_ids.size()
 	var class_id := String(player.class_ids[page])
 	var essence: int = player.inventory.count_material("mat_elite_essence")
 	var core: int = player.inventory.count_material("mat_demon_core")
@@ -170,8 +171,11 @@ func _draw() -> void:
 			draw_rect(rect.grow(4), InkPalette.VERMILION, false, 2.0)
 		draw_string(font, Vector2(rect.get_center().x - label.length() * 5.5, rect.end.y + NAME_ROW - 3), label,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, InkPalette.INK if st == "learned" else InkPalette.INK_SOFT)
+	var footer := "←→↑↓ 移动 · Enter 参悟 · 拖入技能栏/数字键 绑定 · Esc 关闭"
+	if page_count > 1:
+		footer = "←→↑↓ 移动 · Tab 换页 · " + footer.substr("←→↑↓ 移动 · ".length())
 	draw_text_line(Vector2(panel_rect.position.x + 24, panel_rect.end.y - 16),
-		"←→↑↓ 移动 · Tab 换页 · Enter 参悟 · 拖入技能栏/数字键 绑定 · Esc 关闭", InkPalette.INK_SOFT, 13)
+		footer, InkPalette.INK_SOFT, 13)
 
 
 ## 网格游标：左右取相邻列最近行，上下在同列环绕。

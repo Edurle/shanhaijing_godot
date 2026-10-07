@@ -1,5 +1,5 @@
 extends SceneTree
-## 机制对齐测试：DOT 击杀经验语义 / 怪物掉落 / 副职业技能页 / 效果摘要。
+## 机制对齐测试：DOT 击杀经验语义 / 怪物掉落 / 单职业技能页 / 效果摘要。
 
 
 func _init() -> void:
@@ -19,7 +19,7 @@ func _init() -> void:
 		for y in range(21):
 			map.set_tile(x, y, 2)
 	state.current = map
-	state.player = content.build_player(["leifa", "fushi"], 10, 10)
+	state.player = content.build_player("leifa", 10, 10)
 	map.actors.append(state.player)
 	var engine = load("res://scripts/core/turn_engine.gd").new(state, content)
 	state.rng.seed = 4242
@@ -71,14 +71,14 @@ func _init() -> void:
 
 	# ---- 5. 技能栏自由编排施法 ----
 	player.skill_points = 1
-	var learn_error: String = engine.learn_skill("s_fushi_1")  # 火符（副职业 slot1）
-	failed += _check(learn_error.is_empty(), "参悟副职业技能（%s）" % learn_error)
+	var learn_error: String = engine.learn_skill("s_leifa_1")  # 掌心雷（本职业 slot1）
+	failed += _check(learn_error.is_empty(), "参悟本职业技能（%s）" % learn_error)
 	failed += _check(String(player.skill_bar[0]) == "", "参悟后不自动入槽")
-	var reject_error: String = engine.bind_skill(1, "s_fushi_2")  # 未参悟技能
+	var reject_error: String = engine.bind_skill(1, "s_leifa_2")  # 未参悟技能
 	failed += _check(not reject_error.is_empty(), "未参悟技能拒绝绑定（%s）" % reject_error)
 	failed += _check(String(player.skill_bar[0]) == "", "拒绝后槽保持为空")
-	var bind_error: String = engine.bind_skill(1, "s_fushi_1")  # 自由编排：槽1 绑火符
-	failed += _check(bind_error.is_empty() and String(player.skill_bar[0]) == "s_fushi_1", "已参悟技能可绑定（%s）" % bind_error)
+	var bind_error: String = engine.bind_skill(1, "s_leifa_1")  # 自由编排：槽1 绑掌心雷
+	failed += _check(bind_error.is_empty() and String(player.skill_bar[0]) == "s_leifa_1", "已参悟技能可绑定（%s）" % bind_error)
 	var mp0: int = player.fighter.mp()
 	player.fighter.base_max_mp = 50
 	player.fighter.restore_mp(50)
@@ -87,8 +87,8 @@ func _init() -> void:
 	fox.fighter.heal(300)
 	var hp0: int = fox.fighter.hp()
 	var cast_error: String = engine.execute_bound_skill(1, fox)
-	failed += _check(cast_error.is_empty(), "绑定施放火符（%s）" % cast_error)
-	failed += _check(fox.fighter.hp() < hp0, "火符造成伤害（%d → %d）" % [hp0, fox.fighter.hp()])
+	failed += _check(cast_error.is_empty(), "绑定施放掌心雷（%s）" % cast_error)
+	failed += _check(fox.fighter.hp() < hp0, "掌心雷造成伤害（%d → %d）" % [hp0, fox.fighter.hp()])
 	failed += _check(player.fighter.mp() < player.fighter.max_mp(), "扣真气")
 
 	# ---- 6. 技能效果摘要非空 ----
@@ -96,7 +96,7 @@ func _init() -> void:
 	var summary: String = Skills.summary(engine, player, skill1)
 	failed += _check(summary != "" and summary.find("伤") >= 0, "掌心雷摘要含伤害（%s）" % summary)
 	var dot_skill: Dictionary = content.skill_by_id("s_wuzhu_2")  # 蚀心蛊
-	player.class_ids = ["wuzhu", "jianke"]
+	player.class_ids = ["wuzhu"]
 	player.skill_levels[dot_skill["id"]] = 1
 	var dot_summary: String = Skills.summary(engine, player, dot_skill)
 	failed += _check(dot_summary.find("蛊毒") >= 0, "元素 DOT 摘要含状态名（%s）" % dot_summary)
@@ -153,7 +153,7 @@ func _init() -> void:
 		print("FAIL 共 %d 项未过" % failed)
 		quit(1)
 	else:
-		print("PASS 机制对齐（DOT经验/掉落/BOSS魔核/掉落表/副职业页/摘要/跳过回合）")
+		print("PASS 机制对齐（DOT经验/掉落/BOSS魔核/掉落表/单职业技能页/摘要/跳过回合）")
 		quit(0)
 
 

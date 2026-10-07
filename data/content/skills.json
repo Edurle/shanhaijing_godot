@@ -16,6 +16,7 @@
     "mp": 4,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 6,
@@ -163,6 +164,7 @@
     "requires": [
       "s_leifa_3"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 12,
@@ -218,6 +220,7 @@
     "mp": 3,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 8,
@@ -294,6 +297,7 @@
     "requires": [
       "s_jianke_1"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 14,
@@ -420,6 +424,7 @@
     "mp": 3,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 5,
@@ -446,6 +451,7 @@
     "requires": [
       "s_wuzhu_1"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "element_dot",
       "damage": 3,
@@ -544,6 +550,7 @@
     "requires": [
       "s_wuzhu_4"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 16,
@@ -625,6 +632,7 @@
     "mp": 3,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 7,
@@ -672,6 +680,7 @@
     "requires": [
       "s_yishe_1"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 5,
@@ -696,6 +705,7 @@
     "requires": [
       "s_yishe_3"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 13,
@@ -768,6 +778,7 @@
     "requires": [
       "s_yishe_6"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 18,
@@ -890,6 +901,7 @@
     "requires": [
       "s_kuafu_1"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 12,
@@ -1024,6 +1036,7 @@
     "mp": 3,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 7,
@@ -1070,6 +1083,7 @@
     "requires": [
       "s_yingwei_1"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 5,
@@ -1094,6 +1108,7 @@
     "requires": [
       "s_yingwei_3"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 15,
@@ -1167,6 +1182,7 @@
     "requires": [
       "s_yingwei_6"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 20,
@@ -1218,6 +1234,7 @@
     "mp": 4,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "element_dot",
       "damage": 3,
@@ -1271,6 +1288,7 @@
     "mp": 3,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 6,
@@ -1297,6 +1315,7 @@
     "requires": [
       "s_gushi_1"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 10,
@@ -1346,6 +1365,7 @@
     "requires": [
       "s_gushi_4"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "element_dot",
       "damage": 5,
@@ -1372,6 +1392,7 @@
     "requires": [
       "s_gushi_3"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 12,
@@ -1463,6 +1484,7 @@
     "mp": 4,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 7,
@@ -1588,6 +1610,7 @@
     "requires": [
       "s_yushou_2"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 14,
@@ -1648,6 +1671,7 @@
     "mp": 3,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 6,
@@ -1695,6 +1719,7 @@
     "requires": [
       "s_fushi_1"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 5,
@@ -1774,6 +1799,7 @@
     "requires": [
       "s_fushi_4"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 13,
@@ -1856,6 +1882,7 @@
     "mp": 3,
     "cost": 1,
     "requires": [],
+    "cast_range": 7,
     "effect": {
       "type": "damage_nearest",
       "power": 5,
@@ -1957,6 +1984,7 @@
     "requires": [
       "s_yueshi_1"
     ],
+    "cast_range": 7,
     "effect": {
       "type": "element_dot",
       "damage": 3,

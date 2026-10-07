@@ -58,6 +58,9 @@ var travel_target := Vector2i(-1, -1)
 var _shake := 0.0            # Boss/处决的实体微震强度（衰减）
 var _camera_base := Vector2.ZERO
 var dragging_skill := ""  # 拖拽中的技能 id（编排面板 → 技能栏）
+var press_learn_sid := ""  # 参悟格按下未起拖的技能 id（单击/拖拽待区分）
+var press_learn_pos := Vector2.ZERO
+const DRAG_THRESHOLD_PX := 6.0  # 位移超过该阈值才算拖拽，否则按单击参悟
 var travel_attack := false
 var _travel_clock := 0.0
 var _last_move_msec := -100000
@@ -119,6 +122,13 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
+		# 参悟格按住后位移过阈值才起拖（此前按下即拖，单击加点会被误判）
+		if dragging_skill == "" and press_learn_sid != "" \
+				and event.position.distance_to(press_learn_pos) > DRAG_THRESHOLD_PX:
+			dragging_skill = press_learn_sid
+			press_learn_sid = ""
+			drag_ghost.begin_drag(content.skill_by_id(dragging_skill))
+			tooltip.hide_panel()
 		drag_ghost.queue_redraw() if dragging_skill != "" else null
 		_update_tooltip(event.position)
 		return
@@ -153,7 +163,7 @@ func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 				return
 			menu_class.handle_key(keycode)
 			if menu_class.done:
-				_start_game([menu_class.picked_primary, menu_class.picked_secondary])
+				_start_game(menu_class.picked_primary)
 		Mode.PLAY:
 			_handle_play(keycode, is_echo, shift)
 		Mode.INVENTORY:
@@ -200,10 +210,10 @@ func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 				_refresh()
 
 
-func _start_game(class_pair: Array) -> void:
+func _start_game(class_id: String) -> void:
 	state = CoreWorldState.new()
 	state.content = content
-	var gen_error := state.generate_new_world(class_pair)
+	var gen_error := state.generate_new_world(class_id)
 	if not gen_error.is_empty():
 		push_error("世界生成失败：%s" % gen_error)
 		get_tree().quit(1)
@@ -297,7 +307,7 @@ func _act(_acted: bool) -> void:
 
 ## 悬浮提示：行囊面板物品 > 技能栏（任意模式）> 编排面板图标/槽位 → 说明卡。
 func _update_tooltip(pos: Vector2) -> void:
-	if state == null or dragging_skill != "":
+	if state == null or dragging_skill != "" or press_learn_sid != "":
 		tooltip.hide_panel()
 		return
 	if menu_character.visible:
@@ -327,9 +337,17 @@ func _update_tooltip(pos: Vector2) -> void:
 	tooltip.hide_panel()
 
 
-## 拖拽收尾：释放于技能栏槽位 → 绑定（未参悟拒绝）；面板内原地释放 = 参悟；其余视为取消。
+## 鼠标释放收尾：拖拽中 → 技能栏槽位绑定（未参悟拒绝），其余位置视为取消；
+## 未拖起（位移小于阈值）→ 释放点仍在原技能格 = 单击参悟。
 func _end_drag(pos: Vector2) -> void:
 	if dragging_skill == "":
+		if press_learn_sid != "":
+			var sid := press_learn_sid
+			press_learn_sid = ""
+			if mode == Mode.LEARN and menu_learn.visible \
+					and menu_learn.node_skill_at(pos) == sid:
+				menu_learn.confirmed.emit(sid)
+				_refresh()
 		return
 	var sid := dragging_skill
 	dragging_skill = ""
@@ -344,8 +362,6 @@ func _end_drag(pos: Vector2) -> void:
 			}), "info")
 		else:
 			engine.log_message(bind_error, "warn")
-	elif mode == Mode.LEARN and menu_learn.visible and menu_learn.panel_rect.has_point(pos):
-		menu_learn.confirmed.emit(sid)  # 原地释放 = 参悟该技能（等价点击）
 	_refresh()
 
 
@@ -384,22 +400,22 @@ func _handle_click(pos: Vector2) -> void:
 		Mode.CLASS_SELECT:
 			menu_class.click_at(pos)
 			if menu_class.done:
-				_start_game([menu_class.picked_primary, menu_class.picked_secondary])
+				_start_game(menu_class.picked_primary)
 		Mode.INVENTORY:
 			menu_character.click_at(pos)
 			if not menu_character.visible:
 				_set_mode(Mode.PLAY)
 			_refresh()
 		Mode.LEARN:
-			# 按下技能格 → 起拖（拖到技能栏绑定；原地点击仍走参悟确认）
+			# 按下技能格仅记录：位移过阈值才起拖（→技能栏绑定），原地释放 = 单击参悟
 			var press_sid: String = menu_learn.node_skill_at(pos)
 			if press_sid != "":
 				var node_index: int = menu_learn.node_index_at(pos)
 				if node_index >= 0:
 					menu_learn.cursor = node_index
 					menu_learn.queue_redraw()
-				dragging_skill = press_sid
-				drag_ghost.begin_drag(content.skill_by_id(press_sid))
+				press_learn_sid = press_sid
+				press_learn_pos = pos
 				tooltip.hide_panel()
 				return
 			menu_learn.click_at(pos)
@@ -588,9 +604,18 @@ func _cast_binding(slot: int) -> void:
 	Skills._ensure_registry()
 	var effect = Skills.EFFECTS[skill["effect"]["type"]]
 	if effect.needs_target:
-		target_candidates = engine.visible_enemies(state.player)
-		if target_candidates.is_empty():
+		var seen := engine.visible_enemies(state.player)
+		if seen.is_empty():
 			engine.log_message(content.text("no_enemy_sight"), "warn")
+			_refresh()
+			return
+		var reach := Skills.cast_reach(engine, pending_skill)
+		target_candidates = []
+		for enemy in seen:
+			if state.player.distance_to(enemy) <= reach:
+				target_candidates.append(enemy)
+		if target_candidates.is_empty():
+			engine.log_message(content.text("no_enemy_in_range"), "warn")
 			_refresh()
 			return
 		target_index = 0
@@ -778,9 +803,18 @@ func _set_mode(new_mode: Mode) -> void:
 	if new_mode != Mode.INVENTORY:
 		menu_character.close()
 	if new_mode != Mode.LEARN:
+		_cancel_skill_drag()
 		menu_learn.close()
 	if new_mode != Mode.EXAMINE:
 		menu_examine.close()
+
+
+## 清除参悟格的按压/拖拽状态（离开参悟面板：切模式、右键、Esc）。
+func _cancel_skill_drag() -> void:
+	press_learn_sid = ""
+	if dragging_skill != "":
+		dragging_skill = ""
+		drag_ghost.end_drag()
 
 
 func _refresh() -> void:

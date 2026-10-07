@@ -387,16 +387,15 @@ func build_item(iid: String, x := -1, y := -1) -> Dictionary:
 	return item
 
 
-## 行者实体：双职业合并（主全量 + 副气血/真气/灵力各半）。
-func build_player(class_ids: Array, x: int, y: int) -> Actor:
-	var primary: Dictionary = classes[class_ids[0]]
-	var secondary: Dictionary = classes[class_ids[1]]
-	var hp := int(primary["hp"]) + (int(secondary["hp"]) + 1) / 2
-	var mp := int(primary["mp"]) + (int(secondary["mp"]) + 1) / 2
-	var sp := int(primary.get("sp", 0)) + (int(secondary.get("sp", 0)) + 1) / 2
+## 行者实体：单职业（属性全量）。
+func build_player(class_id: String, x: int, y: int) -> Actor:
+	var primary: Dictionary = classes[class_id]
+	var hp := int(primary["hp"])
+	var mp := int(primary["mp"])
+	var sp := int(primary.get("sp", 0))
 	var player := Actor.new(x, y, localize(player_def["name"]))
 	player.team = "player"
-	player.class_ids = class_ids.duplicate()
+	player.class_ids = [class_id]
 	player.skill_points = 2
 	# 初始 16 槽全空：学习了技能并拖入槽位才绑定（图标/悬浮/施法随绑定出现）
 	player.skill_bar.resize(16)

@@ -153,11 +153,12 @@ static func skill_fields() -> Array:
 		f("mp", "耗气", "int", "消耗", {"min": 0, "max": 999}),
 		f("cost", "行动点(1/2)", "int", "消耗", {"min": 1, "max": 2}),
 		f("requires", "前置技能(逗号分隔id)", "tags", "消耗", {"optional": true, "omit_empty": true, "ref": "skills"}),
+		f("cast_range", "攻击距离(0=视野半径)", "int", "消耗", {"min": 0, "max": 20, "optional": true, "omit_zero": true}),
 		f("effect.type", "效果类型", "enum", "效果", {"enum_values": Array(ContentDbScript.SKILL_EFFECT_TYPES).duplicate(), "shape": true}),
 	]
 
 
-## 怪物专属技能（class 为空）：无职业/槽位/学习消耗/前置，多冷却与 AI 施法距离。
+## 怪物专属技能（class 为空）：无职业/槽位/学习消耗/前置，多冷却；cast_range 兼作 AI 施法距离门控。
 static func skill_monster_fields() -> Array:
 	return [
 		f("name", "名称", "localized", "基础"),
@@ -589,7 +590,7 @@ static func new_entity_template(entity_type: String, ctx := {}) -> Dictionary:
 			return {
 				"class": ctx.get("class_id", ""), "slot": ctx.get("slot", 1),
 				"name": {"zh_CN": "新技能", "en_US": ""}, "desc": blank_name.duplicate(),
-				"tags": [], "mp": 4, "cost": 1, "requires": [],
+				"tags": [], "mp": 4, "cost": 1, "requires": [], "cast_range": 7,
 				"effect": {"type": "damage_nearest", "power": 5, "scale": 1.5, "hits": 1},
 			}
 		"skill_monster":

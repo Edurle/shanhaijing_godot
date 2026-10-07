@@ -126,7 +126,14 @@ static func _walk_scale(node, mult: float):
 
 # ---- 施放 ----
 
-## 统一入口：真气/灵力/气血检查 → 效果执行（按技能等级缩放）→ 扣耗。
+## 攻击距离：指向性技能（needs_target）的目标距离上限；
+## 缺省（0/未设）= 当前地图视野半径（与怪物 AI「缺省=感知半径」同语义）。
+static func cast_reach(engine, skill: Dictionary) -> int:
+	var reach := int(skill.get("cast_range", 0))
+	return reach if reach > 0 else engine.state.current.fov_radius
+
+
+## 统一入口：真气/灵力/气血检查 → 距离检查（指向性）→ 效果执行（按技能等级缩放）→ 扣耗。
 ## 返回错误串（空 = 成功）；"need_target"/"need_direction" 为控制流信号。
 static func cast(engine, actor: Actor, skill: Dictionary, target = null) -> String:
 	_ensure_registry()
@@ -139,6 +146,8 @@ static func cast(engine, actor: Actor, skill: Dictionary, target = null) -> Stri
 	var hp_cost := int(skill["effect"].get("hp_cost", 0))
 	if hp_cost > 0 and actor.fighter.hp() <= hp_cost:
 		return engine.content.text("hp_low")
+	if target is Actor and actor.distance_to(target) > cast_reach(engine, skill):
+		return engine.content.text("target_too_far")
 	var level := int(actor.skill_levels.get(skill.get("id", ""), 1))
 	var error: String = EFFECTS[skill["effect"]["type"]].perform(engine, actor, skill_effect_scaled(skill, level), target)
 	if not error.is_empty():
