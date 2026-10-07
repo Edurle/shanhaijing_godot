@@ -39,8 +39,9 @@ func _draw() -> void:
 	var final_damage: int = target.fighter.mitigate_incoming(raw, skill.get("tags", []))
 	var notes := _resist_note() + _counter_note()
 	draw_text_line(Vector2(panel_rect.position.x + 12, panel_rect.position.y + 24),
-		"%s（气血 %d/%d）· 预计伤害 %d%s" % [
-			target.label, target.fighter.hp(), target.fighter.max_hp(), final_damage, notes,
+		"%s（气血 %d/%d）· 距 %d · 预计伤害 %d%s" % [
+			target.label, target.fighter.hp(), target.fighter.max_hp(),
+			int(player.distance_to(target)), final_damage, notes,
 		], InkPalette.INK, 16)
 	draw_text_line(Vector2(panel_rect.position.x + 12, panel_rect.position.y + 52),
 		"Enter 施放 · ↑↓/Tab 换目标 · Esc 取消", InkPalette.INK_SOFT, 13)

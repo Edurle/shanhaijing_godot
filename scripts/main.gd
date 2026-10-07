@@ -392,6 +392,22 @@ func _handle_right_click(pos := Vector2(-1, -1)) -> void:
 				}), "info")
 				_refresh()
 				return
+			# 右键可见异兽 = 打开查看卡并定位该怪（左键仍是走过去攻击）
+			if pos.x >= 0:
+				var rcell := _screen_to_cell(pos)
+				if state.current.is_visible(rcell.x, rcell.y):
+					var victim = state.current.actor_at(rcell.x, rcell.y)
+					if victim != null and victim.team != "player":
+						_stop_travel()
+						menu_examine.open()
+						var victim_index: int = menu_examine.targets.find(victim)
+						if victim_index >= 0:
+							menu_examine.index = victim_index
+						if menu_examine.visible:
+							_set_mode(Mode.EXAMINE)
+							_sync_examine_marker()
+						board.queue_redraw()
+						return
 			_stop_travel()
 
 
@@ -440,6 +456,10 @@ func _handle_click(pos: Vector2) -> void:
 					target_index = i
 					_finish_cast(t)
 					return
+			# 候选未命中：点中可见敌但超距 → 距离提示（候选已按攻击距离过滤）
+			var beyond = state.current.actor_at(cell.x, cell.y)
+			if beyond != null and beyond.team != "player" and state.current.is_visible(cell.x, cell.y):
+				engine.log_message(content.text("target_too_far"), "warn")
 		Mode.DIRECTION:
 			_exit_cast()
 			_refresh()

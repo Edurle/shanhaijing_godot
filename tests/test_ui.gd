@@ -138,16 +138,21 @@ func _init() -> void:
 		failed += _check(String(hover_gear.get("id", "")) == "p_denglin", "悬停佩槽应命中邓林佩（%s）" % String(hover_gear.get("id", "")))
 		failed += _check(char_menu.hover_slot == "amulet", "悬停槽高亮状态应记录")
 
-	# ---- 查看菜单：有可见敌时打开非空 ----
+	# ---- 查看菜单：有可见敌时打开非空；右键点怪可定位 ----
 	var monster = content.build_monster("zhulong", 11, 10)
 	map.actors.append(monster)
+	var monster2 = content.build_monster("jiuweihu", 11, 9)
+	map.actors.append(monster2)
 	map.compute_fov(10, 10)
 	var examine = load("res://scripts/view/ui/menu_examine.gd").new()
 	root.add_child.call_deferred(examine)
 	await process_frame
 	examine.setup_menu(engine)
 	examine.open()
-	failed += _check(examine.visible and examine.targets.size() == 1, "查看菜单应列出可见敌")
+	failed += _check(examine.visible and examine.targets.size() == 2, "查看菜单应列出可见敌（%d 只）" % examine.targets.size())
+	examine.index = examine.targets.find(monster2)
+	failed += _check(examine.current_target() == monster2, "查看卡定位到被点的怪")
+	map.actors.erase(monster2)  # 移出，避免干扰后续提示条断言
 
 	# ---- 瞄准面板：显示目标不崩 ----
 	var target_info = load("res://scripts/view/ui/target_info.gd").new()
