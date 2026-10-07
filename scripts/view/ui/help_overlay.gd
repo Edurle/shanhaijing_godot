@@ -4,7 +4,7 @@ extends UiPanel
 
 const ROW_KEYS: PackedStringArray = [
 	"help_row_move", "help_row_combat", "help_row_skill", "help_row_target",
-	"help_row_item", "help_row_grow", "help_row_interact", "help_row_view",
+	"help_row_item", "help_row_wait", "help_row_grow", "help_row_interact", "help_row_view",
 ]
 
 var engine

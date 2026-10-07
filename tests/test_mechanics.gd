@@ -101,6 +101,20 @@ func _init() -> void:
 	var dot_summary: String = Skills.summary(engine, player, dot_skill)
 	failed += _check(dot_summary.find("蛊毒") >= 0, "元素 DOT 摘要含状态名（%s）" % dot_summary)
 
+	# ---- 7. 跳过回合：被控（缠绕/眩晕）时唯一的主动过回合手段 ----
+	engine._apply_damage(player, fox, 9999)  # 清掉第 5 节的靶狐，腾出 (11,10)
+	player.fighter.rooted_turns = 3
+	failed += _check(not engine.player_step(Vector2i(1, 0)), "缠绕中移动被拒且不耗回合")
+	var turns0: int = engine.turn_count
+	failed += _check(engine.player_wait() and engine.turn_count == turns0 + 1, "跳过回合推进一回合")
+	failed += _check(player.fighter.rooted_turns == 2, "缠绕随跳过递减（实际 %d）" % player.fighter.rooted_turns)
+	player.fighter.stun_turns = 2
+	var turns1: int = engine.turn_count
+	failed += _check(engine.player_wait() and player.fighter.stun_turns == 1 and engine.turn_count == turns1 + 1,
+		"眩晕中跳过同样推进并递减（眩晕剩 %d，回合 %d→%d）" % [player.fighter.stun_turns, turns1, engine.turn_count])
+	player.fighter.rooted_turns = 0
+	player.fighter.stun_turns = 0
+
 	# ---- 状态抗性两段式+边际递减：点数经护甲式折算（50点→33%），先掷免疫再折减效果 ----
 	var roll := RandomNumberGenerator.new()
 	roll.seed = 20261004
@@ -139,7 +153,7 @@ func _init() -> void:
 		print("FAIL 共 %d 项未过" % failed)
 		quit(1)
 	else:
-		print("PASS 机制对齐（DOT经验/掉落/BOSS魔核/掉落表/副职业页/摘要）")
+		print("PASS 机制对齐（DOT经验/掉落/BOSS魔核/掉落表/副职业页/摘要/跳过回合）")
 		quit(0)
 
 

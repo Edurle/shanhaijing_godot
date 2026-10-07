@@ -35,6 +35,9 @@ func current_hint() -> String:
 	var player = engine.player()
 	if engine.game_over:
 		return engine.content.text("hint_game_over")
+	# 被眩晕/缠绕：唯一出路是跳过回合，置顶提示
+	if player.fighter.stun_turns > 0 or player.fighter.rooted_turns > 0:
+		return "Space " + engine.content.text("hint_wait")
 	var xy := Vector2i(player.x, player.y)
 	var map = engine.state.current
 	# 脚下交互物
