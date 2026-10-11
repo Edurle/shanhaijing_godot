@@ -204,6 +204,7 @@
   "title_menu_settings": "设置",
   "title_menu_quit": "离开",
   "title_menu_hint": "↑↓ 选择 · 回车 确认",
+  "title_menu_skip": "（按任意键展开）",
   "settings_title": "设置（←→ 调整 · Esc 返回）",
   "settings_lang": "语言",
   "settings_map": "画面",
@@ -317,5 +318,11 @@
   "char_bag": "行囊",
   "slot_empty_skill": "此槽未绑定技能（K 参悟面板拖入）",
   "assign_bound": "「{skill}」已绑定至 {slot}。",
-  "slot_unbound": "{slot} 槽已解绑。"
+  "slot_unbound": "{slot} 槽已解绑。",
+  "summ_dash": "冲{v}·伤{d}",
+  "dash_blocked": "此方向无处可冲。",
+  "cast_dash": "{skill}：掠阵而出。",
+  "passive_rally_log": "「{passive}」发动：{bonus}（{turns} 回合）",
+  "passive_sum_lifesteal": "普攻命中回血{v}",
+  "passive_sum_rally": "击杀后{turns}回合{bonus}"
 }

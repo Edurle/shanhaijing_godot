@@ -370,6 +370,8 @@ func melee_attack(attacker: Actor, target: Actor) -> void:
 					"element": content.text("element_" + element_tags[0]),
 				}), "combat_blocked")
 		_apply_damage(attacker, target, damage)
+		# 职业被动钩子：普攻吸血（如剑士「剑锋饮血」）；怪物无被动空转
+		Passives.on_melee_hit(self, attacker, target)
 	else:
 		log_message(content.text("attack_blocked").format({
 			"attacker": attacker.label, "target": target.label,
@@ -427,6 +429,9 @@ func _apply_damage(killer: Actor, victim: Actor, damage: int) -> void:
 		return
 	log_message(content.text("monster_dies").format({"name": victim.label}), "kill")
 	emit_event("kill", victim.x, victim.y, {"boss": victim.tags.has("boss")})
+	# 氏族被动钩子：击杀增益（如蚩尤氏「兵主血勇」）；仅玩家直接击杀触发
+	if killer == player() and killer.is_alive():
+		Passives.on_kill(self, killer, victim)
 	var x := victim.x
 	var y := victim.y
 	# 经验：任何原因击杀异兽都归玩家（DOT/召唤兽代杀同理）

@@ -207,12 +207,12 @@
     "class": "jianke",
     "slot": 1,
     "name": {
-      "zh_CN": "斩铁",
-      "en_US": "Iron Cleaver"
+      "zh_CN": "昆吾剑锋",
+      "en_US": "Kunwu Edge"
     },
     "desc": {
-      "zh_CN": "一剑之下，铁石俱裂。",
-      "en_US": "One stroke shears iron and stone alike."
+      "zh_CN": "昆吾赤铜所铸之锋，切玉如泥。",
+      "en_US": "An edge of Kunwu copper, cleaving jade like mud."
     },
     "tags": [
       "metal"
@@ -220,57 +220,29 @@
     "mp": 3,
     "cost": 1,
     "requires": [],
-    "cast_range": 7,
+    "cast_range": 2,
     "effect": {
       "type": "damage_nearest",
-      "power": 8,
+      "power": 7,
       "scale": 2,
-      "hits": 1,
-      "dot": {
-        "damage": 2,
-        "turns": 4
-      }
+      "hits": 1
     }
   },
   "s_jianke_2": {
     "class": "jianke",
     "slot": 2,
     "name": {
-      "zh_CN": "剑罡",
-      "en_US": "Sword Aura"
+      "zh_CN": "疾风剑步",
+      "en_US": "Gale Step"
     },
     "desc": {
-      "zh_CN": "罡气外放，伤及周身。",
-      "en_US": "Sword-aura spills outward, wounding all around."
-    },
-    "tags": [
-      "aoe"
-    ],
-    "mp": 5,
-    "cost": 1,
-    "requires": [],
-    "effect": {
-      "type": "damage_aoe_self",
-      "radius": 1,
-      "power": 5,
-      "scale": 1
-    }
-  },
-  "s_jianke_3": {
-    "class": "jianke",
-    "slot": 3,
-    "name": {
-      "zh_CN": "瞬步",
-      "en_US": "Flash Step"
-    },
-    "desc": {
-      "zh_CN": "步随身动，瞬息即至。",
-      "en_US": "A single breath, a single step."
+      "zh_CN": "身随剑走，疾风掠影。",
+      "en_US": "Body follows blade, swift as a passing gale."
     },
     "tags": [
       "move"
     ],
-    "mp": 3,
+    "mp": 5,
     "cost": 1,
     "requires": [],
     "effect": {
@@ -278,34 +250,61 @@
       "range": 3
     }
   },
-  "s_jianke_4": {
+  "s_jianke_3": {
     "class": "jianke",
-    "slot": 4,
+    "slot": 3,
     "name": {
-      "zh_CN": "裂空斩",
-      "en_US": "Sky-Rending Cut"
+      "zh_CN": "裂石剑罡",
+      "en_US": "Stone-Sunder Aura"
     },
     "desc": {
-      "zh_CN": "剑气裂空，破甲穿云。",
-      "en_US": "A cut that rends the air and shatters mail."
+      "zh_CN": "罡气外放，周身俱裂。",
+      "en_US": "Sword-aura spills out, cracking stone and foe alike."
     },
     "tags": [
-      "metal"
+      "metal",
+      "aoe"
     ],
-    "mp": 8,
+    "mp": 5,
     "cost": 1,
     "requires": [
       "s_jianke_1"
     ],
-    "cast_range": 7,
+    "effect": {
+      "type": "damage_aoe_self",
+      "radius": 1,
+      "power": 5,
+      "scale": 1
+    }
+  },
+  "s_jianke_4": {
+    "class": "jianke",
+    "slot": 4,
+    "name": {
+      "zh_CN": "破锋斩",
+      "en_US": "Guard-Breaking Cut"
+    },
+    "desc": {
+      "zh_CN": "一剑破锋，甲胄无光。",
+      "en_US": "One cut through the guard; armor dulls and fails."
+    },
+    "tags": [
+      "metal"
+    ],
+    "mp": 6,
+    "cost": 1,
+    "requires": [
+      "s_jianke_1"
+    ],
+    "cast_range": 2,
     "effect": {
       "type": "damage_nearest",
-      "power": 14,
-      "scale": 3,
+      "power": 10,
+      "scale": 2,
       "hits": 1,
       "sunder": {
         "amount": 3,
-        "turns": 4
+        "turns": 3
       }
     }
   },
@@ -313,12 +312,12 @@
     "class": "jianke",
     "slot": 5,
     "name": {
-      "zh_CN": "铁骨咒",
-      "en_US": "Ironbone Ward"
+      "zh_CN": "心斋剑守",
+      "en_US": "Heart-Fasting Guard"
     },
     "desc": {
-      "zh_CN": "咒固筋骨，坚如铁石。",
-      "en_US": "A ward that tempers bone to iron."
+      "zh_CN": "心斋坐忘，剑守不移。",
+      "en_US": "A fasting heart, a blade that does not waver."
     },
     "tags": [
       "buff"
@@ -336,6 +335,32 @@
     "class": "jianke",
     "slot": 6,
     "name": {
+      "zh_CN": "贯甲冲锋",
+      "en_US": "Armor-Piercing Charge"
+    },
+    "desc": {
+      "zh_CN": "以身助剑，撞阵斩敌。",
+      "en_US": "Body drives the blade: charge the line, cut through mail."
+    },
+    "tags": [
+      "metal"
+    ],
+    "mp": 8,
+    "cost": 1,
+    "requires": [
+      "s_jianke_2"
+    ],
+    "effect": {
+      "type": "dash_strike",
+      "range": 3,
+      "power": 9,
+      "scale": 2
+    }
+  },
+  "s_jianke_7": {
+    "class": "jianke",
+    "slot": 7,
+    "name": {
       "zh_CN": "剑气长河",
       "en_US": "Sword River"
     },
@@ -344,12 +369,13 @@
       "en_US": "Sword-aura flows like an unending river."
     },
     "tags": [
+      "metal",
       "aoe"
     ],
     "mp": 10,
     "cost": 1,
     "requires": [
-      "s_jianke_2"
+      "s_jianke_3"
     ],
     "effect": {
       "type": "damage_aoe_self",
@@ -358,49 +384,25 @@
       "scale": 1.5
     }
   },
-  "s_jianke_7": {
-    "class": "jianke",
-    "slot": 7,
-    "name": {
-      "zh_CN": "无我",
-      "en_US": "Selfless Blade"
-    },
-    "desc": {
-      "zh_CN": "忘我而剑，其锋愈锐。",
-      "en_US": "Forget the self; the blade sharpens."
-    },
-    "tags": [
-      "buff"
-    ],
-    "mp": 8,
-    "cost": 1,
-    "requires": [
-      "s_jianke_5"
-    ],
-    "effect": {
-      "type": "buff_power",
-      "amount": 4,
-      "turns": 12
-    }
-  },
   "s_jianke_8": {
     "class": "jianke",
     "slot": 8,
     "name": {
-      "zh_CN": "人剑合一",
-      "en_US": "Blade Unity"
+      "zh_CN": "万剑归宗",
+      "en_US": "Ten Thousand Blades"
     },
     "desc": {
-      "zh_CN": "人剑合一，剑气纵横十步。",
-      "en_US": "Sword and wielder become one; aura sweeps ten paces."
+      "zh_CN": "万剑齐鸣，罡风十步。",
+      "en_US": "Ten thousand blades cry out as one; the gale spans ten paces."
     },
     "tags": [
+      "metal",
       "aoe"
     ],
-    "mp": 18,
+    "mp": 16,
     "cost": 2,
     "requires": [
-      "s_jianke_6"
+      "s_jianke_7"
     ],
     "effect": {
       "type": "damage_aoe_self",

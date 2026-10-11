@@ -10,6 +10,7 @@ const ViewBoard := preload("res://scripts/view/board.gd")
 const ViewVfxLayer := preload("res://scripts/view/vfx_layer.gd")
 const UiLogScript := preload("res://scripts/view/ui/log_panel.gd")
 const UiTargetInfoScript := preload("res://scripts/view/ui/target_info.gd")
+const MenuClanSelect := preload("res://scripts/view/ui/menu_clan_select.gd")
 const MenuClassSelect := preload("res://scripts/view/ui/menu_class_select.gd")
 const MenuCharacter := preload("res://scripts/view/ui/menu_character.gd")
 const MenuLearn := preload("res://scripts/view/ui/menu_learn.gd")
@@ -20,8 +21,9 @@ const UiHudVitalsScript := preload("res://scripts/view/ui/hud_vitals.gd")
 const UiSkillBarScript := preload("res://scripts/view/ui/skill_bar.gd")
 const UiTooltipScript := preload("res://scripts/view/ui/ui_tooltip.gd")
 const UiDragGhostScript := preload("res://scripts/view/ui/drag_ghost.gd")
+const TitleScreen := preload("res://scripts/view/ui/title_screen.gd")
 
-enum Mode { CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP }
+enum Mode { TITLE, CLAN_SELECT, CLASS_SELECT, PLAY, INVENTORY, LEARN, EXAMINE, TARGETING, DIRECTION, HELP }
 
 const MOVE_REPEAT_MSEC := 130  # 长按连走节流
 const TRAVEL_STEP_INTERVAL := 0.075  # 点击旅行的步进节奏（秒/格）
@@ -35,7 +37,8 @@ var camera: Camera2D
 var ui: CanvasLayer
 var log_panel
 var target_info
-var menu_class: MenuClassSelect
+var menu_clan: UiMenuClanSelect
+var menu_class: UiMenuClassSelect
 var menu_character: MenuCharacter
 var menu_learn: MenuLearn
 var menu_examine: MenuExamine
@@ -45,7 +48,8 @@ var hud_vitals
 var skill_bar
 var tooltip
 var drag_ghost
-var mode := Mode.CLASS_SELECT
+var title_screen: UiTitleScreen
+var mode := Mode.TITLE
 
 # 瞄准/择向的进行中技能
 var pending_skill: Dictionary = {}
@@ -91,6 +95,7 @@ func _ready() -> void:
 	add_child(ui)
 	log_panel = UiLogScript.new()
 	target_info = UiTargetInfoScript.new()
+	menu_clan = MenuClanSelect.new()
 	menu_class = MenuClassSelect.new()
 	menu_character = MenuCharacter.new()
 	menu_learn = MenuLearn.new()
@@ -101,7 +106,7 @@ func _ready() -> void:
 	skill_bar = UiSkillBarScript.new()
 	tooltip = UiTooltipScript.new()
 	drag_ghost = UiDragGhostScript.new()
-	for panel in [log_panel, target_info, menu_class, menu_character, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar, tooltip, drag_ghost]:
+	for panel in [log_panel, target_info, menu_clan, menu_class, menu_character, menu_learn, menu_examine, hint_bar, help_overlay, hud_vitals, skill_bar, tooltip, drag_ghost]:
 		ui.add_child(panel)
 	tooltip.visible = false
 	drag_ghost.visible = false
@@ -113,8 +118,11 @@ func _ready() -> void:
 	for panel in [log_panel, menu_character, menu_learn, menu_examine]:
 		panel.visible = false
 
-	menu_class.setup_menu(content)
-	menu_class.open()
+	menu_clan.setup_menu(content)  # 氏族页待开卷确认后再打开
+	title_screen = TitleScreen.new()
+	ui.add_child(title_screen)  # 最后挂载：开卷期盖住其余 UI
+	title_screen.setup(content)
+	title_screen.open()
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_on_viewport_resized()
 	set_process(true)
@@ -154,16 +162,39 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 	match mode:
-		Mode.CLASS_SELECT:
+		Mode.TITLE:
+			if is_echo:
+				return  # 快进后连按防误确认
 			if keycode == KEY_F9 and OS.is_debug_build():
 				# 调试捷径：直达数据编辑器。路径运行时拼接，避免导出依赖扫描把编辑器场景打进产物
 				var editor_scene = load("res://scenes/data_" + "editor.tscn")
 				if editor_scene != null:
 					get_tree().change_scene_to_packed(editor_scene)
 				return
+			title_screen.handle_key(keycode)
+			if title_screen.done:
+				_title_action()
+		Mode.CLAN_SELECT:
+			if keycode == KEY_F9 and OS.is_debug_build():
+				# 调试捷径：直达数据编辑器。路径运行时拼接，避免导出依赖扫描把编辑器场景打进产物
+				var editor_scene = load("res://scenes/data_" + "editor.tscn")
+				if editor_scene != null:
+					get_tree().change_scene_to_packed(editor_scene)
+				return
+			menu_clan.handle_key(keycode)
+			if menu_clan.done:
+				_open_class_select()
+		Mode.CLASS_SELECT:
+			if keycode == KEY_F9 and OS.is_debug_build():
+				return
 			menu_class.handle_key(keycode)
 			if menu_class.done:
-				_start_game(menu_class.picked_primary)
+				_start_game(menu_class.picked_primary, menu_clan.picked)
+			elif not menu_class.visible:
+				# Esc 退回氏族页（重开保留氏族游标）
+				menu_clan.done = false
+				menu_clan.open()
+				_set_mode(Mode.CLAN_SELECT)
 		Mode.PLAY:
 			_handle_play(keycode, is_echo, shift)
 		Mode.INVENTORY:
@@ -210,10 +241,30 @@ func _dispatch(keycode: int, is_echo: bool, shift := false) -> void:
 				_refresh()
 
 
-func _start_game(class_id: String) -> void:
+## 开卷已定：新游历 → 氏族选择；离开 → 退出。
+func _title_action() -> void:
+	title_screen.visible = false
+	if title_screen.action == "quit":
+		get_tree().quit()
+		return
+	menu_clan.done = false
+	menu_clan.open()
+	_set_mode(Mode.CLAN_SELECT)
+
+
+## 氏族已定：打开该氏族的职业选择页（可反复进出，须重置完成态）。
+func _open_class_select() -> void:
+	menu_class.done = false
+	menu_class.picked_primary = ""
+	menu_class.setup_menu(content, menu_clan.picked)
+	menu_class.open()
+	_set_mode(Mode.CLASS_SELECT)
+
+
+func _start_game(class_id: String, clan_id := "") -> void:
 	state = CoreWorldState.new()
 	state.content = content
-	var gen_error := state.generate_new_world(class_id)
+	var gen_error := state.generate_new_world(class_id, clan_id)
 	if not gen_error.is_empty():
 		push_error("世界生成失败：%s" % gen_error)
 		get_tree().quit(1)
@@ -235,6 +286,7 @@ func _start_game(class_id: String) -> void:
 	skill_bar.setup(engine)
 	skill_bar.visible = true
 	help_overlay.setup_panel(engine)
+	menu_clan.visible = false
 	menu_class.visible = false
 	board.setup(state.current, state.player)
 	_apply_realm_tone()
@@ -413,10 +465,22 @@ func _handle_right_click(pos := Vector2(-1, -1)) -> void:
 
 func _handle_click(pos: Vector2) -> void:
 	match mode:
+		Mode.TITLE:
+			title_screen.click_at(pos)
+			if title_screen.done:
+				_title_action()
+		Mode.CLAN_SELECT:
+			menu_clan.click_at(pos)
+			if menu_clan.done:
+				_open_class_select()
 		Mode.CLASS_SELECT:
 			menu_class.click_at(pos)
 			if menu_class.done:
-				_start_game(menu_class.picked_primary)
+				_start_game(menu_class.picked_primary, menu_clan.picked)
+			elif not menu_class.visible:
+				menu_clan.done = false
+				menu_clan.open()
+				_set_mode(Mode.CLAN_SELECT)
 		Mode.INVENTORY:
 			menu_character.click_at(pos)
 			if not menu_character.visible:
@@ -806,6 +870,10 @@ func _on_viewport_resized() -> void:
 	if help_overlay.visible:
 		help_overlay.relayout(view)
 	tooltip.set_view_size(view)
+	if title_screen != null and title_screen.visible:
+		title_screen.relayout(view)
+	if menu_clan.visible:
+		menu_clan.relayout(view)
 	if menu_class.visible:
 		menu_class.relayout(view)
 	if menu_character.visible:

@@ -24,6 +24,58 @@ func _init() -> void:
 	var engine = load("res://scripts/core/turn_engine.gd").new(state, content)
 	state.rng.seed = 5
 
+	# ---- 开卷界面：动画推进 + 快进 + 菜单确认（主流程首屏） ----
+	var title = load("res://scripts/view/ui/title_screen.gd").new()
+	root.add_child.call_deferred(title)
+	await process_frame
+	title.setup(content)
+	title.open()
+	failed += _check(title.rows.size() == 2 and String(title.rows[0]["act"]) == "new",
+		"开卷菜单应 2 项且首项为新游历（实际 %d 项）" % title.rows.size())
+	await process_frame  # 让 _process 推进展卷时钟
+	failed += _check(title._t > 0.0 and not title.done, "展卷动画应推进且未完成（t=%.2f）" % title._t)
+	title.handle_key(KEY_ENTER)  # 动画中：任意键 = 快进，不确认
+	failed += _check(not title.done and title._t >= title.total_time() - 0.001, "动画中按键应快进不确认")
+	title.handle_key(KEY_ENTER)  # 完成态：回车确认游标项
+	failed += _check(title.done and title.action == "new", "回车应确认开始新游历")
+	title.open()  # 重开验证鼠标路径
+	title.click_at(Vector2(10, 10))  # 动画中背景点击：仅快进
+	failed += _check(not title.done, "背景点击不应确认菜单")
+	title.click_at(title.rows[1]["rect"].get_center())
+	failed += _check(title.done and title.action == "quit", "点击第二行应选择离开")
+
+	# ---- 开局两步：氏族选择 → 职业过滤 + 被动展示 ----
+	var clan_menu = load("res://scripts/view/ui/menu_clan_select.gd").new()
+	root.add_child.call_deferred(clan_menu)
+	await process_frame
+	clan_menu.setup_menu(content)
+	clan_menu.open()
+	failed += _check(clan_menu.rows.size() == 4, "氏族菜单应 4 行（实际 %d）" % clan_menu.rows.size())
+	failed += _check(
+		String(clan_menu.rows[0]["text"]).contains(content.localize(content.clans["chiyou"]["name"])),
+		"首行为蚩尤氏（%s）" % clan_menu.rows[0]["text"]
+	)
+	clan_menu.handle_key(KEY_ENTER)
+	failed += _check(clan_menu.done and clan_menu.picked == "chiyou", "确认默认游标=蚩尤氏")
+	var class_menu = load("res://scripts/view/ui/menu_class_select.gd").new()
+	root.add_child.call_deferred(class_menu)
+	await process_frame
+	class_menu.setup_menu(content, clan_menu.picked)
+	class_menu.open()
+	failed += _check(class_menu.rows.size() == content.classes.size(),
+		"氏族已定后职业应全列（自由组合，实际 %d/%d）" % [class_menu.rows.size(), content.classes.size()])
+	var jianke_row := -1
+	for i in range(class_menu.rows.size()):
+		if String(class_menu.rows[i]["meta"]) == "jianke":
+			jianke_row = i
+	failed += _check(jianke_row >= 0, "职业页应含剑士")
+	failed += _check(
+		String(class_menu.rows[jianke_row]["text"]).contains(content.localize(content.classes["jianke"]["passive"]["name"])),
+		"职业行应含职业被动名（%s）" % class_menu.rows[jianke_row]["text"]
+	)
+	class_menu.handle_key(KEY_ESCAPE)
+	failed += _check(not class_menu.visible, "Esc 应收起职业页（主流程据此退回氏族页）")
+
 	# ---- 参悟菜单（技能树）：单职业一页 8 节点，页眉含职业名，深度分列 + 前置连线 ----
 	var learn = load("res://scripts/view/ui/menu_learn.gd").new()
 	root.add_child.call_deferred(learn)  # 挂树获得 viewport（headless 回退基准尺寸）

@@ -36,6 +36,7 @@ static func _ensure_registry() -> void:
 		preload("res://scripts/core/skill_effects/stun_aoe.gd"),
 		preload("res://scripts/core/skill_effects/knockback_aoe.gd"),
 		preload("res://scripts/core/skill_effects/mp_restore.gd"),
+		preload("res://scripts/core/skill_effects/dash_strike.gd"),
 	]:
 		var effect = script.new()
 		EFFECTS[effect.TYPE] = effect
@@ -260,4 +261,6 @@ static func summary(engine, actor: Actor, skill: Dictionary) -> String:
 		return engine.content.text("summ_stun").format({"v": int(eff.get("turns", 1))})
 	if etype == "knockback_aoe":
 		return engine.content.text("summ_knockback_aoe").format({"d": int(eff.get("push", 1))})
+	if etype == "dash_strike":
+		return engine.content.text("summ_dash").format({"v": int(eff.get("range", 3)), "d": compute_damage(actor, skill)})
 	return ""

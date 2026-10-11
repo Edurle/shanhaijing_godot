@@ -7,7 +7,7 @@ const ContentDbScript := preload("res://scripts/core/content_db.gd")
 
 ## 实体类型（物品按 equipment/consumable/material 分三个子型；技能按归属分职业/怪物两型）。
 const TYPES: PackedStringArray = [
-	"monster", "class", "player", "skill", "skill_monster",
+	"monster", "class", "clan", "player", "skill", "skill_monster",
 	"item_weapon", "item_gear", "item_consumable", "item_material", "set",
 ]
 
@@ -20,7 +20,8 @@ const ENUM_LABELS := {
 	"damage_nearest": "单体伤害", "damage_aoe_self": "自身周围",
 	"buff_defense": "御守", "buff_power": "蓄力", "teleport_step": "疾步",
 	"heal_self": "自愈", "element_dot": "持续伤", "summon": "召唤",
-	"stun_aoe": "眩晕阵", "knockback_aoe": "击退阵", "mp_restore": "回气",
+	"stun_aoe": "眩晕阵", "knockback_aoe": "击退阵", "mp_restore": "回气", "dash_strike": "冲锋斩",
+	"stat_aura": "常驻属性", "melee_lifesteal": "普攻吸血", "kill_rally": "击杀增益",
 	"heal": "疗伤", "heal_mp": "回气", "cleanse": "解毒", "buff_item": "药力",
 	"lightning": "天雷", "stun_area": "定身", "smoke": "烟障", "tianshu": "天书",
 	"metal_damage": "金系伤害", "wood_damage": "木系伤害", "water_damage": "水系伤害",
@@ -52,6 +53,8 @@ static func fields_for(entity_type: String) -> Array:
 			return monster_fields()
 		"class":
 			return class_fields()
+		"clan":
+			return clan_fields()
 		"player":
 			return player_fields()
 		"skill":
@@ -109,7 +112,8 @@ static func element_fields() -> Array:
 	return fields
 
 
-# ---- 职业 / 玩家 ----
+# ---- 职业 / 氏族 / 玩家 ----
+## 职业字段表：氏族由玩家开局自择（自由组合），不落在职业数据里。
 static func class_fields() -> Array:
 	return [
 		f("name", "名称", "localized", "基础"),
@@ -119,7 +123,25 @@ static func class_fields() -> Array:
 		f("defense", "防御", "int", "数值", {"min": 0, "max": 99}),
 		f("mp", "真气", "int", "数值", {"min": 0, "max": 999}),
 		f("sp", "灵力", "int", "数值", {"min": 0, "max": 999}),
+	] + passive_fields()
+
+
+## 职业被动与氏族被动共用字段（passive.* 平铺，写路径自动建嵌套）。
+static func passive_fields() -> Array:
+	return [
+		f("passive.name", "被动名称", "localized", "被动"),
+		f("passive.desc", "被动描述", "localized", "被动"),
+		f("passive.effect.type", "被动类型", "enum", "被动", {
+			"enum_values": Array(ContentDbScript.PASSIVE_TYPES).duplicate(), "shape": true,
+		}),
 	]
+
+
+static func clan_fields() -> Array:
+	return [
+		f("name", "名称", "localized", "基础"),
+		f("desc", "氏族渊源", "localized", "基础"),
+	] + passive_fields()
 
 
 static func player_fields() -> Array:
@@ -255,7 +277,44 @@ const EFFECT_PARAMS := {
 	"mp_restore": [
 		{"key": "amount", "label": "回气量", "kind": "int", "min": 1, "max": 99},
 	],
+	"dash_strike": [
+		{"key": "range", "label": "冲锋格数", "kind": "int", "min": 1, "max": 9},
+		{"key": "power", "label": "主强度", "kind": "int", "min": 1, "max": 99},
+		{"key": "scale", "label": "强度系数", "kind": "float", "min": 0.0, "max": 10.0, "step": 0.1},
+	],
 }
+
+
+## 被动效果参数表：key=被动类型，值为 passive.effect.* 下的字段描述符（消费点见 passives.gd）。
+## const 初始化不能调用函数，stat_aura 的常驻键表在函数体内拼装。
+static func passive_params() -> Dictionary:
+	return {
+		"stat_aura": _stat_aura_params(),
+		"melee_lifesteal": [
+			{"key": "amount", "label": "回血量", "kind": "int", "min": 1, "max": 99},
+		],
+		"kill_rally": [
+			{"key": "stat", "label": "增益属性", "kind": "enum", "enum_values": ["power", "defense"]},
+			{"key": "amount", "label": "加值", "kind": "int", "min": 1, "max": 99},
+			{"key": "turns", "label": "回合数", "kind": "int", "min": 1, "max": 30},
+		],
+	}
+
+
+## stat_aura 常驻键：五属性 + 全抗性（键须与 ContentDb 校验白名单一致）。
+static func _stat_aura_params() -> Array:
+	var fields: Array = []
+	var labels := {
+		"power": "攻", "defense": "防", "max_hp": "血", "max_mp": "息", "max_sp": "灵",
+		"metal": "金抗", "wood": "木抗", "water": "水抗", "fire": "火抗", "earth": "土抗",
+		"stun": "定力", "root": "身法", "sunder": "甲坚", "daunt": "心志", "knockback": "沉劲",
+	}
+	for key in ["power", "defense", "max_hp", "max_mp", "max_sp"] + Array(ContentDbScript.RESIST_KINDS):
+		fields.append({
+			"key": "stats.%s" % key, "label": "常驻·%s" % String(labels.get(key, key)),
+			"kind": "int", "min": 0, "max": 80, "optional": true, "omit_zero": true,
+		})
+	return fields
 
 
 ## 消耗品效果参数表：key=type，值为 consumable.* 下的字段描述符（消费点见 consumables.gd）。
@@ -306,6 +365,48 @@ static func effect_param_fields(prefix: String, effect_type: String) -> Array:
 				child["key"] = "%s.%s" % [copy["key"], child["key"]]
 		out.append(copy)
 	return out
+
+
+## 被动的动态参数字段（前缀 passive.effect.，职业/氏族表单共用）。
+static func passive_param_fields(passive_type: String) -> Array:
+	var raw: Array = passive_params().get(passive_type, [])
+	var out: Array = []
+	for field in raw:
+		var copy: Dictionary = (field as Dictionary).duplicate(true)
+		copy["key"] = "passive.effect.%s" % copy["key"]
+		out.append(copy)
+	return out
+
+
+## 被动类型切换：丢弃新参数表不认识的键（stats 子字典按键清理）。
+static func normalize_passive_params(entity: Dictionary) -> void:
+	if not entity.has("passive"):
+		return
+	var passive: Dictionary = entity["passive"]
+	var eff: Dictionary = passive.get("effect", {})
+	var ptype := String(eff.get("type", ""))
+	var allowed_plain := {"type": true}
+	var allowed_stats := {}
+	for field in passive_params().get(ptype, []):
+		var key := String(field["key"])
+		if key.begins_with("stats."):
+			allowed_stats[key.substr("stats.".length())] = true
+		else:
+			allowed_plain[key] = true
+	var cleaned := {}
+	for key in eff:
+		if String(key) == "stats":
+			continue
+		if allowed_plain.has(String(key)):
+			cleaned[key] = eff[key]
+	if not allowed_stats.is_empty():
+		var stats_cleaned := {}
+		for skey in eff.get("stats", {}):
+			if allowed_stats.has(String(skey)):
+				stats_cleaned[skey] = eff["stats"][skey]
+		if not stats_cleaned.is_empty():
+			cleaned["stats"] = stats_cleaned
+	passive["effect"] = cleaned
 
 
 # ---- 物品 ----
@@ -584,7 +685,14 @@ static func new_entity_template(entity_type: String, ctx := {}) -> Dictionary:
 		"class":
 			return {
 				"name": {"zh_CN": "新职业", "en_US": ""}, "desc": blank_name.duplicate(),
+				"clan": ctx.get("clan_id", ""),
+				"passive": _blank_passive("新职业被动"),
 				"hp": 30, "power": 5, "defense": 1, "mp": 10, "sp": 8,
+			}
+		"clan":
+			return {
+				"name": {"zh_CN": "新氏族", "en_US": ""}, "desc": blank_name.duplicate(),
+				"passive": _blank_passive("新氏族被动"),
 			}
 		"skill":
 			return {
@@ -626,3 +734,12 @@ static func _item_blank(extra: Dictionary) -> Dictionary:
 	}
 	base.merge(extra, true)
 	return base
+
+
+## 最小合法被动骨架（常驻属性型，数值占位）。
+static func _blank_passive(label: String) -> Dictionary:
+	return {
+		"name": {"zh_CN": label, "en_US": ""},
+		"desc": {"zh_CN": "", "en_US": ""},
+		"effect": {"type": "stat_aura", "stats": {"max_hp": 2}},
+	}

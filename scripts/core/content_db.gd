@@ -18,8 +18,10 @@ const RESIST_KINDS: PackedStringArray = [
 const SKILL_EFFECT_TYPES: PackedStringArray = [
 	"damage_nearest", "damage_aoe_self", "buff_defense", "buff_power",
 	"teleport_step", "heal_self", "element_dot", "summon",
-	"stun_aoe", "knockback_aoe", "mp_restore",
+	"stun_aoe", "knockback_aoe", "mp_restore", "dash_strike",
 ]
+## 被动效果类型（实现见 Passives；数据校验用注册表）
+const PASSIVE_TYPES: PackedStringArray = ["stat_aura", "melee_lifesteal", "kill_rally"]
 const VALID_BONUS_KEYS: PackedStringArray = ["power", "defense", "max_hp", "max_mp", "max_sp"]
 const VALID_AFFIX_IDS: PackedStringArray = [
 	"metal_damage", "wood_damage", "water_damage", "fire_damage", "earth_damage",
@@ -41,6 +43,7 @@ var monsters: Dictionary = {}
 var items: Dictionary = {}
 var sets: Dictionary = {}
 var classes: Dictionary = {}
+var clans: Dictionary = {}
 var skills: Dictionary = {}
 var spawn_monsters: Array = []
 var spawn_items: Array = []
@@ -64,6 +67,7 @@ func load_all(dir_path: String, p_lang := "zh_CN") -> PackedStringArray:
 	_load_json_or_error(dir_path.path_join("items.json"), "items", errors)
 	_load_json_or_error(dir_path.path_join("sets.json"), "sets", errors)
 	_load_json_or_error(dir_path.path_join("classes.json"), "classes", errors)
+	_load_json_or_error(dir_path.path_join("clans.json"), "clans", errors)
 	_load_json_or_error(dir_path.path_join("skills.json"), "skills", errors)
 	_load_json_or_error(dir_path.path_join("player.json"), "player_def", errors)
 	_load_json_or_error(dir_path.path_join("theme.json"), "theme", errors)
@@ -151,6 +155,7 @@ func localize(value) -> String:
 
 func _validate(errors: PackedStringArray) -> void:
 	_validate_classes(errors)
+	_validate_clans(errors)
 	_validate_skills(errors)
 	_validate_monsters(errors)
 	_validate_items(errors)
@@ -169,6 +174,57 @@ func _validate_classes(errors: PackedStringArray) -> void:
 			var value = cdef.get(field_name)
 			if value == null or not (value is float) or value < 0:
 				errors.append("职业 %s 的 %s 必须是非负数" % [cid, field_name])
+
+
+## 氏族与被动不变式：氏族非空；双方被动必填且效果类型/字段合法（stat_aura 键走白名单）。
+## 氏族与职业自由组合（先择氏族后择职业，无归属约束）。
+func _validate_clans(errors: PackedStringArray) -> void:
+	if clans.is_empty():
+		errors.append("clans.json 至少需要一个氏族")
+		return
+	for clid in clans:
+		var cdef: Dictionary = clans[clid]
+		if not cdef.has("name"):
+			errors.append("氏族 %s 缺少 name" % clid)
+		_validate_passive(errors, "氏族 %s" % clid, cdef.get("passive"))
+	for cid in classes:
+		_validate_passive(errors, "职业 %s" % cid, classes[cid].get("passive"))
+
+
+## 单条被动校验：name 必填；effect.type 须注册；按类型校验数值域。
+func _validate_passive(errors: PackedStringArray, owner_label: String, passive) -> void:
+	if not (passive is Dictionary) or passive.is_empty():
+		errors.append("%s 缺少 passive 被动定义" % owner_label)
+		return
+	if not passive.has("name"):
+		errors.append("%s 的被动缺少 name" % owner_label)
+	var eff = passive.get("effect")
+	if not (eff is Dictionary) or not PASSIVE_TYPES.has(String(eff.get("type", ""))):
+		errors.append("%s 的被动效果类型未注册（须为 %s 之一）" % [owner_label, "、".join(PASSIVE_TYPES)])
+		return
+	match String(eff["type"]):
+		"stat_aura":
+			var stats: Dictionary = eff.get("stats", {})
+			if stats.is_empty():
+				errors.append("%s 被动 stat_aura 的 stats 为空" % owner_label)
+			for key in stats:
+				var key_text := String(key)
+				var key_ok: bool = VALID_BONUS_KEYS.has(key_text) \
+					or (key_text.begins_with("resist_") and RESIST_KINDS.has(key_text.substr("resist_".length())))
+				if not key_ok or not (stats[key] is float) or stats[key] < 0:
+					errors.append("%s 被动 stat_aura 的加成键 %s 非法（键须白名单，值须非负数）" % [owner_label, key])
+		"melee_lifesteal":
+			var amount = eff.get("amount")
+			if not (amount is float) or amount < 1:
+				errors.append("%s 被动 melee_lifesteal 的 amount 须为 ≥1 的整数" % owner_label)
+		"kill_rally":
+			var stat := String(eff.get("stat", ""))
+			if not ["power", "defense"].has(stat):
+				errors.append("%s 被动 kill_rally 的 stat 只能是 power/defense" % owner_label)
+			for field_name in ["amount", "turns"]:
+				var value = eff.get(field_name)
+				if not (value is float) or value < 1:
+					errors.append("%s 被动 kill_rally 的 %s 须为 ≥1 的整数" % [owner_label, field_name])
 
 
 func _validate_skills(errors: PackedStringArray) -> void:
@@ -387,8 +443,9 @@ func build_item(iid: String, x := -1, y := -1) -> Dictionary:
 	return item
 
 
-## 行者实体：单职业（属性全量）。
-func build_player(class_id: String, x: int, y: int) -> Actor:
+## 行者实体：单职业（属性全量）+ 自选氏族与双被动（常驻型开局并入基础值）。
+## clan_id 为空 = 未择氏族（仅职业被动；兼容旧调用）。
+func build_player(class_id: String, x: int, y: int, clan_id := "") -> Actor:
 	var primary: Dictionary = classes[class_id]
 	var hp := int(primary["hp"])
 	var mp := int(primary["mp"])
@@ -396,6 +453,8 @@ func build_player(class_id: String, x: int, y: int) -> Actor:
 	var player := Actor.new(x, y, localize(player_def["name"]))
 	player.team = "player"
 	player.class_ids = [class_id]
+	player.clan_id = clan_id
+	player.passives = Passives.collect(self, class_id, clan_id)
 	player.skill_points = 2
 	# 初始 16 槽全空：学习了技能并拖入槽位才绑定（图标/悬浮/施法随绑定出现）
 	player.skill_bar.resize(16)
@@ -403,6 +462,7 @@ func build_player(class_id: String, x: int, y: int) -> Actor:
 		player.skill_bar[i] = ""
 	player.fighter = Fighter.new(hp, int(primary["power"]), int(primary["defense"]), 0, mp, sp)
 	player.fighter.owner = player
+	Passives.apply_permanent(player)
 	player.equipment = Equipment.new()
 	player.equipment.set_defs = sets  # 成套加成聚合依赖的套装登记表
 	var level_data: Dictionary = player_def["level"]
@@ -558,3 +618,10 @@ func class_display_name(class_id: String) -> String:
 	if not classes.has(class_id):
 		return class_id
 	return localize(classes[class_id]["name"])
+
+
+## 氏族显示名（本地化）；未注册回退 id 本身。
+func clan_display_name(clan_id: String) -> String:
+	if not clans.has(clan_id):
+		return clan_id
+	return localize(clans[clan_id]["name"])

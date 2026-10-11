@@ -86,6 +86,34 @@ func _init() -> void:
 		"绑定职业技能应报错: %s" % str(probe_errors)
 	)
 
+	# 6.5 氏族体系：四大氏族、自由组合（无归属约束）、双方被动必填、缺被动被校验拒绝
+	failed += _check(content.clans.size() == 4, "四大氏族（实际 %d）" % content.clans.size())
+	for clid in content.clans:
+		failed += _check(
+			(content.clans[clid].get("passive", {}) as Dictionary).has("effect"),
+			"氏族 %s 应有被动定义" % clid
+		)
+		failed += _check(
+			not content.clans[clid].has("classes"),
+			"氏族 %s 不应有门下职业名单（氏族与职业自由组合）" % clid
+		)
+	for cid in content.classes:
+		failed += _check(
+			(content.classes[cid].get("passive", {}) as Dictionary).has("effect"),
+			"职业 %s 应有被动定义" % cid
+		)
+		failed += _check(
+			not content.classes[cid].has("clan"),
+			"职业 %s 不应有 clan 归属字段（氏族由玩家自择）" % cid
+		)
+	probe.classes["jianke"].erase("passive")
+	probe_errors.clear()
+	probe._validate(probe_errors)
+	failed += _check(
+		_probe_errors_has(probe_errors, "passive"),
+		"职业缺被动应报错: %s" % str(probe_errors)
+	)
+
 	# 7. 地图模型：FOV 对称性冒烟
 	var map = load("res://scripts/core/game_map.gd").new(21, 21, 8)
 	for x in range(21):

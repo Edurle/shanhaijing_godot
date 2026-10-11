@@ -54,13 +54,13 @@ func _make_sandbox() -> void:
 ## 序列化不弄脏 diff：未改动时输出应与原文件字节一致（crafting 源含 1.0 写法，允许文本差异但语义等价）。
 func _test_round_trip(store) -> void:
 	var byte_perfect := 0
-	for file_key in ["monsters", "items", "sets", "classes", "skills", "player", "spawn_tables"]:
+	for file_key in ["monsters", "items", "sets", "classes", "clans", "skills", "player", "spawn_tables"]:
 		var original := FileAccess.get_file_as_string(SANDBOX.path_join("%s.json" % file_key))
 		if store.serialize(file_key) == original:
 			byte_perfect += 1
 		else:
 			print("FAIL round-trip 不一致: %s" % file_key)
-	failed += _check(byte_perfect == 7, "7 个数据文件 round-trip 字节一致（实际 %d）" % byte_perfect)
+	failed += _check(byte_perfect == 8, "8 个数据文件 round-trip 字节一致（实际 %d）" % byte_perfect)
 	failed += _check(not store.is_file_changed("crafting"), "crafting 未改动时语义等价")
 	failed += _check(not store.is_dirty(), "刚加载完不应有未保存修改")
 
@@ -149,6 +149,13 @@ func _test_spec_registry(store) -> void:
 			EntitySpec.EFFECT_PARAMS.has(eff_type),
 			"技能效果 %s 应有参数表" % eff_type
 		)
+	# 被动参数表覆盖全部已注册被动类型
+	var passive_types: PackedStringArray = preload("res://scripts/core/content_db.gd").PASSIVE_TYPES
+	for ptype in passive_types:
+		failed += _check(
+			EntitySpec.passive_params().has(ptype),
+			"被动类型 %s 应有参数表" % ptype
+		)
 	var consumable_types := [
 		"heal", "heal_mp", "cleanse", "buff_item", "lightning",
 		"knockback", "stun_area", "smoke", "tianshu",
@@ -215,6 +222,9 @@ func _sample_entities(store, entity_type: String) -> Array:
 		"class":
 			for id in JsonStore.entity_ids(store.file_data("classes")):
 				out.append(store.file_data("classes")[id])
+		"clan":
+			for id in JsonStore.entity_ids(store.file_data("clans")):
+				out.append(store.file_data("clans")[id])
 		"player":
 			out.append(store.file_data("player"))
 		"skill":
@@ -275,9 +285,9 @@ func _test_editor_scene(_store) -> void:
 		editor._ready()
 	# 页签逐一构建（怪物页签在 _ready 里已建）
 	var tab_expectations := {
-		0: "怪物", 1: "物品", 2: "套装", 3: "技能", 4: "职业·玩家", 5: "投放", 6: "炼制",
+		0: "怪物", 1: "物品", 2: "套装", 3: "技能", 4: "职业·玩家", 5: "氏族", 6: "投放", 7: "炼制",
 	}
-	for tab_index in [1, 2, 3, 4, 5, 6, 0]:
+	for tab_index in [1, 2, 3, 4, 5, 6, 7, 0]:
 		editor._select_tab(tab_index)
 		var kind_name: String = tab_expectations[tab_index]
 		var has_content: bool = editor.form_box.get_child_count() > 0
@@ -310,7 +320,7 @@ func _test_editor_scene(_store) -> void:
 		editor.view_toggle.button_pressed = false
 		editor._on_toggle_grid()
 	# 炼制页选中第一个配方 → 配方表单生成（含 struct_list 行与引用下拉）
-	editor._select_tab(6)
+	editor._select_tab(7)
 	if editor.spawn_craft.recipe_list.item_count > 0:
 		editor.spawn_craft.recipe_list.select(0)
 		editor.spawn_craft.recipe_list.item_selected.emit(0)

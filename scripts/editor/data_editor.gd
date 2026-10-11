@@ -15,8 +15,9 @@ const TAB_ITEM := 1
 const TAB_SET := 2
 const TAB_SKILL := 3
 const TAB_CLASS := 4
-const TAB_SPAWN := 5
-const TAB_CRAFT := 6
+const TAB_CLAN := 5
+const TAB_SPAWN := 6
+const TAB_CRAFT := 7
 
 const PAPER := Color("EFE8D6")
 const PAPER_DIM := Color("E4DBC6")
@@ -114,7 +115,7 @@ func _build_layout() -> void:
 	# 页签
 	tab_bar = TabBar.new()
 	tab_bar.tab_close_display_policy = TabBar.CLOSE_BUTTON_SHOW_NEVER
-	for tab_name in ["怪物", "物品", "套装", "技能", "职业·玩家", "投放", "炼制"]:
+	for tab_name in ["怪物", "物品", "套装", "技能", "职业·玩家", "氏族", "投放", "炼制"]:
 		tab_bar.add_tab(tab_name)
 	tab_bar.tab_changed.connect(_select_tab)
 	root.add_child(tab_bar)
@@ -209,9 +210,9 @@ func _select_tab(index: int) -> void:
 	grid_mode = false
 	view_toggle.button_pressed = false
 	view_toggle.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SKILL]
-	action_new.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS]
-	action_dup.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS]
-	action_del.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS]
+	action_new.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS, TAB_CLAN]
+	action_dup.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS, TAB_CLAN]
+	action_del.visible = index in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS, TAB_CLAN]
 	_rebuild_enum_context()
 	_rebuild_entity_list()
 	if index == TAB_SPAWN:
@@ -234,6 +235,7 @@ func _tab_file() -> String:
 		TAB_SET: return "sets"
 		TAB_SKILL: return "skills"
 		TAB_CLASS: return "classes"
+		TAB_CLAN: return "clans"
 	return ""
 
 
@@ -242,7 +244,7 @@ func _tab_entries() -> Array:
 	var entries: Array = []
 	var filter_text := search_input.text.strip_edges().to_lower()
 	match current_tab:
-		TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS:
+		TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS, TAB_CLAN:
 			pass
 		_:
 			return entries
@@ -301,7 +303,7 @@ func _rebuild_entity_list() -> void:
 	if entity_list.item_count > 0 and current_tab != TAB_SPAWN and current_tab != TAB_CRAFT:
 		entity_list.select(0)
 		current_id = String(entries[0]["id"])
-	if current_tab in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS]:
+	if current_tab in [TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLASS, TAB_CLAN]:
 		_show_current_form()
 
 
@@ -319,7 +321,7 @@ func _current_entity() -> Dictionary:
 	if current_id == "":
 		return {}
 	match current_tab:
-		TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL:
+		TAB_MONSTER, TAB_ITEM, TAB_SET, TAB_SKILL, TAB_CLAN:
 			return store.file_data(_tab_file()).get(current_id, {})
 		TAB_CLASS:
 			if current_id == "player":
@@ -331,6 +333,8 @@ func _current_entity() -> Dictionary:
 func _current_entity_type() -> String:
 	if current_tab == TAB_ITEM:
 		return Spec.item_kind(_current_entity())
+	if current_tab == TAB_CLAN:
+		return "clan"
 	if current_tab == TAB_CLASS:
 		return "player" if current_id == "player" else "class"
 	var entity_type := _tab_entity_type()
@@ -345,6 +349,8 @@ func _fields_for_current(entity: Dictionary, entity_type: String) -> Array:
 		fields += Spec.effect_param_fields("effect", String(entity["effect"].get("type", "")))
 	elif entity_type == "item_consumable" and entity.has("consumable"):
 		fields += Spec.effect_param_fields("consumable", String(entity["consumable"].get("type", "")))
+	elif entity_type in ["class", "clan"] and entity.has("passive"):
+		fields += Spec.passive_param_fields(String(entity["passive"].get("effect", {}).get("type", "")))
 	return fields
 
 
@@ -369,6 +375,8 @@ func _on_form_change(field: Dictionary) -> void:
 		var entity := _current_entity()
 		if String(field["key"]) == "effect.type" or String(field["key"]) == "consumable.type":
 			Spec.normalize_effect_params(entity, String(field["key"]).split(".")[0])
+		elif String(field["key"]) == "passive.effect.type":
+			Spec.normalize_passive_params(entity)
 		elif String(field["key"]) == "equipment.slot":
 			Spec.normalize_item_equipment(entity)
 		_show_current_form()
@@ -420,6 +428,8 @@ func _on_new_entity() -> void:
 			_prompt_choose_skill_kind()
 		TAB_CLASS:
 			_prompt_new("新建职业", "class", {})
+		TAB_CLAN:
+			_prompt_new("新建氏族", "clan", {})
 
 
 func _on_duplicate_entity() -> void:
@@ -441,6 +451,8 @@ func _on_duplicate_entity() -> void:
 				_prompt_new_skill({"template": entity.duplicate(true)})
 		TAB_CLASS:
 			_prompt_new("复制职业（源自 %s）" % current_id, "class", {"template": entity.duplicate(true)})
+		TAB_CLAN:
+			_prompt_new("复制氏族（源自 %s）" % current_id, "clan", {"template": entity.duplicate(true)})
 
 
 ## 新建技能先选归属：职业技能（需职业+空槽）/ 怪物专属（免槽位）。
@@ -526,7 +538,7 @@ func _on_delete_entity() -> void:
 
 
 func _id_exists(candidate: String) -> bool:
-	for file_key in ["monsters", "items", "sets", "skills", "classes"]:
+	for file_key in ["monsters", "items", "sets", "skills", "classes", "clans"]:
 		if store.file_data(file_key).has(candidate):
 			return true
 	return false
@@ -815,6 +827,7 @@ func _locate_error(message: String) -> void:
 	var targets := [
 		["monsters", TAB_MONSTER], ["items", TAB_ITEM], ["sets", TAB_SET],
 		["skills", TAB_SKILL], ["classes", TAB_CLASS], ["player", TAB_CLASS],
+		["clans", TAB_CLAN],
 	]
 	for pair in targets:
 		var file_key: String = pair[0]
@@ -836,7 +849,7 @@ func _locate_error(message: String) -> void:
 
 func _rebuild_enum_context() -> void:
 	var context := {}
-	for ref_name in ["classes", "skills", "monsters", "items"]:
+	for ref_name in ["classes", "clans", "skills", "monsters", "items"]:
 		var file_key := String(ref_name)
 		var options: Array = []
 		var table: Dictionary = store.file_data(file_key)

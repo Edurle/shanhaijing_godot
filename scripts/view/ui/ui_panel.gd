@@ -50,6 +50,24 @@ func draw_text_line(pos: Vector2, text: String, color: Color, size := 0) -> void
 	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
+## 按像素宽自动换行绘制（CJK 逐字断行）；返回下一行基线 y。
+func draw_wrapped(pos: Vector2, text: String, color: Color, size := 13, width := 400.0) -> float:
+	var font := get_theme_default_font()
+	var line_y := pos.y
+	var line := ""
+	for ch in text:
+		if line != "" and font.get_string_size(line + ch, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > width:
+			draw_text_line(Vector2(pos.x, line_y), line, color, size)
+			line_y += size + 6.0
+			line = ch
+		else:
+			line += ch
+	if line != "":
+		draw_text_line(Vector2(pos.x, line_y), line, color, size)
+		line_y += size + 6.0
+	return line_y
+
+
 func draw_bar(pos: Vector2, width: float, ratio: float, fill: Color, height := 10.0) -> void:
 	draw_rect(Rect2(pos, Vector2(width, height)), InkPalette.PAPER_SHADOW)
 	draw_rect(Rect2(pos, Vector2(width * clampf(ratio, 0.0, 1.0), height)), fill)

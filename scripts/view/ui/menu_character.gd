@@ -155,6 +155,20 @@ func _draw() -> void:
 	var x := panel_rect.position.x + 30
 	var y := panel_rect.position.y + 46
 
+	# ---- 身份行（标题下方通栏）：氏族 · 职业 + 双被动名 ----
+	var identity := "%s · %s" % [
+		engine.content.clan_display_name(player.clan_id),
+		engine.content.class_display_name(String(player.class_ids[0])),
+	]
+	draw_text_line(Vector2(x, panel_rect.position.y + 34), identity, InkPalette.INK, 13)
+	var passive_names: Array = []
+	for passive in player.passives:
+		passive_names.append(engine.content.localize(passive["name"]))
+	if not passive_names.is_empty():
+		var passive_text := "／".join(passive_names)
+		draw_text_line(Vector2(panel_rect.end.x - 30 - passive_text.length() * 13, panel_rect.position.y + 34),
+			"被动 " + passive_text, InkPalette.INK_SOFT, 13)
+
 	# ---- 左列：立绘 + 装备纸娃娃 ----
 	_draw_portrait(Vector2(x, y))
 	y += 184

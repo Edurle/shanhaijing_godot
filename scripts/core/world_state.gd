@@ -18,13 +18,14 @@ var on_floor_generated: Callable  # 引擎注入（秘境层生成后投放怪�
 
 
 ## 生成大世界（不变量失败自动换种子，至多 3 次）；返回错误串（空 = 成功）。
-func generate_new_world(class_id: String = "leifa") -> String:
+## clan_id：玩家自选氏族（空 = 无氏族被动）。
+func generate_new_world(class_id: String = "leifa", clan_id := "") -> String:
 	for _attempt in range(3):
 		rng.randomize()
 		var result: Variant = WorldGen.generate_world(content, rng)
 		if result is GameMap:
 			world = result
-			player = content.build_player(class_id, world.spawn_xy.x, world.spawn_xy.y)
+			player = content.build_player(class_id, world.spawn_xy.x, world.spawn_xy.y, clan_id)
 			Populate.populate_world(world, content, rng, player)
 			switch_to(world, world.spawn_xy)
 			current_realm = ""

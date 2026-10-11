@@ -59,7 +59,8 @@ func _rebuild() -> void:
 	var class_id := String(player.class_ids[page])
 	var essence: int = player.inventory.count_material("mat_elite_essence")
 	var core: int = player.inventory.count_material("mat_demon_core")
-	header_extra = "%s · 技能点 %d · 精魄×%d 魔核×%d" % [
+	header_extra = "%s · %s · 技能点 %d · 精魄×%d 魔核×%d" % [
+		engine.content.clan_display_name(player.clan_id),
 		engine.content.class_display_name(class_id), player.skill_points, essence, core,
 	]
 	nodes.clear()

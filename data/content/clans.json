@@ -1,0 +1,109 @@
+{
+  "_schema": "氏族：先择氏族后择职业；classes 为门下职业 id（须与职业 clan 字段双向一致）；passive 为氏族被动（全族共享）。被动 effect.type 见 ContentDb.PASSIVE_TYPES。",
+  "chiyou": {
+    "name": {
+      "zh_CN": "蚩尤氏",
+      "en_US": "Clan Chiyou"
+    },
+    "desc": {
+      "zh_CN": "蚩尤作兵伐黄帝，兵主一脉淬体砺锋。承此血脉者，血勇过人，愈战愈锐。",
+      "en_US": "Chiyou forged arms to war on the Yellow Emperor. Those of the Warmaster's blood fight ever fiercer as battle drags on."
+    },
+    "passive": {
+      "name": {
+        "zh_CN": "兵主血勇",
+        "en_US": "Warmaster's Fervor"
+      },
+      "desc": {
+        "zh_CN": "血脉被动：每诛一兽，血勇愈盛——3 回合内攻+2，连杀刷新。",
+        "en_US": "Bloodline: each kill stokes fervor — Power +2 for 3 turns, refreshed on every kill."
+      },
+      "effect": {
+        "type": "kill_rally",
+        "stat": "power",
+        "amount": 2,
+        "turns": 3
+      }
+    }
+  },
+  "nuwa": {
+    "name": {
+      "zh_CN": "女娲氏",
+      "en_US": "Clan Nuwa"
+    },
+    "desc": {
+      "zh_CN": "女娲之肠化为神，处栗广之野。承造化之泽，生生不息。",
+      "en_US": "Nuwa's bowels became ten gods in the wilds of Liguang. Her legacy is creation itself, ever renewing."
+    },
+    "passive": {
+      "name": {
+        "zh_CN": "补天遗泽",
+        "en_US": "Legacy of Mending"
+      },
+      "desc": {
+        "zh_CN": "血脉被动：补天五色石之余泽护体——气血上限+4，木抗+8。",
+        "en_US": "Bloodline: the five-colored stones' residue guards the flesh — Max HP +4, Wood resist +8."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "max_hp": 4,
+          "resist_wood": 8
+        }
+      }
+    }
+  },
+  "fuxi": {
+    "name": {
+      "zh_CN": "伏羲氏",
+      "en_US": "Clan Fuxi"
+    },
+    "desc": {
+      "zh_CN": "雷泽有雷神，龙身而人头，鼓其腹。羲皇履大迹而生，先天画卦，气脉通神。",
+      "en_US": "In Leize dwells the thunder god, dragon-bodied and man-headed. Fuxi was there begotten and drew the first trigrams; his bloodline breathes with primal qi."
+    },
+    "passive": {
+      "name": {
+        "zh_CN": "先天卦气",
+        "en_US": "Primordial Hexagram"
+      },
+      "desc": {
+        "zh_CN": "血脉被动：先天卦气养息——真气上限+3，灵力上限+3。",
+        "en_US": "Bloodline: the primal hexagram feeds breath — Max MP +3, Max SP +3."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "max_mp": 3,
+          "max_sp": 3
+        }
+      }
+    }
+  },
+  "yi": {
+    "name": {
+      "zh_CN": "羿氏",
+      "en_US": "Clan Yi"
+    },
+    "desc": {
+      "zh_CN": "帝俊赐羿彤弓素矰，以扶下国。羿氏血脉目灼如炬，见微知著。",
+      "en_US": "DiJun gave Yi the vermilion bow and white arrows to aid the lands below. Yi's bloodline sees the vital mark from afar."
+    },
+    "passive": {
+      "name": {
+        "zh_CN": "彤弓之瞳",
+        "en_US": "Eye of the Vermilion Bow"
+      },
+      "desc": {
+        "zh_CN": "血脉被动：羿之瞳锁定要害——攻+1。",
+        "en_US": "Bloodline: Yi's eye finds the vital mark — Power +1."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "power": 1
+        }
+      }
+    }
+  }
+}

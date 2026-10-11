@@ -21,8 +21,10 @@ var summon_ttl := -1  # -1 = 非召唤
 var elite := false
 var gender := "male"  # 玩家形象用（male/female；异兽不用）
 var tags: Array = []  # 风味/投放标签（dragon/boss/elite/serpent/bird/beast/shanhaijing）
-# 玩家专用：双职业与技能（skill_levels：1-10，0=未学）
+# 玩家专用：氏族与职业（先择氏族后择职业）、双被动与技能（skill_levels：1-10，0=未学）
 var class_ids: Array = []
+var clan_id := ""
+var passives: Array = []  # [职业被动, 氏族被动]（{name, desc, effect}；怪物为空）
 var skill_points := 0
 var skill_levels := {}
 var skill_bar: Array = []  # 16 槽动作条绑定（技能 id 或 ""；玩家自由编排）

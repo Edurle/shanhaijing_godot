@@ -8,6 +8,22 @@
       "zh_CN": "役使天雷的方士，杀伐凌厉，气海充盈。",
       "en_US": "A tactician wielding heaven's thunder; devastating and deep of breath."
     },
+    "passive": {
+      "name": {
+        "zh_CN": "雷泽听涛",
+        "en_US": "Echo of Leize"
+      },
+      "desc": {
+        "zh_CN": "职业被动：于雷泽涛声中蓄养气海——真气上限+3。",
+        "en_US": "Class passive: breath pooled like thunder-tide — Max MP +3."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "max_mp": 3
+        }
+      }
+    },
     "hp": 26,
     "power": 4,
     "defense": 1,
@@ -16,14 +32,28 @@
   },
   "jianke": {
     "name": {
-      "zh_CN": "剑客",
-      "en_US": "Sword Saint"
+      "zh_CN": "剑士",
+      "en_US": "Swordsman"
     },
     "desc": {
-      "zh_CN": "以剑证道的游侠，气血雄厚，攻守兼备。",
-      "en_US": "A wandering sword saint; hardy, balanced in blade and guard."
+      "zh_CN": "以剑证道的武者，贴身缠斗，愈战愈韧。",
+      "en_US": "A swordsman who proves the Way through the blade; close-quarters, enduring, ever keener mid-battle."
     },
-    "hp": 34,
+    "passive": {
+      "name": {
+        "zh_CN": "剑锋饮血",
+        "en_US": "Blooddrawing Edge"
+      },
+      "desc": {
+        "zh_CN": "职业被动：剑锋饮血——普通攻击命中回复 2 点气血。",
+        "en_US": "Class passive: the edge drinks blood — melee hits restore 2 HP."
+      },
+      "effect": {
+        "type": "melee_lifesteal",
+        "amount": 2
+      }
+    },
+    "hp": 36,
     "power": 6,
     "defense": 2,
     "mp": 8,
@@ -37,6 +67,22 @@
     "desc": {
       "zh_CN": "沟通山川精魅的巫祝，能医能蛊。",
       "en_US": "A shaman who bargains with spirits; heals as readily as hexes."
+    },
+    "passive": {
+      "name": {
+        "zh_CN": "祝由回春",
+        "en_US": "Zhuyou Renewal"
+      },
+      "desc": {
+        "zh_CN": "职业被动：祝由之术温养血脉——气血上限+3。",
+        "en_US": "Class passive: zhuyou rites warm the blood — Max HP +3."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "max_hp": 3
+        }
+      }
     },
     "hp": 30,
     "power": 4,
@@ -53,6 +99,22 @@
       "zh_CN": "承羿之风的射手，箭出如虹。",
       "en_US": "An archer of Yi's lineage; arrows fly like falling suns."
     },
+    "passive": {
+      "name": {
+        "zh_CN": "引弓贯革",
+        "en_US": "Bow-Span Pierce"
+      },
+      "desc": {
+        "zh_CN": "职业被动：满引之弓贯穿甲革——攻+1。",
+        "en_US": "Class passive: a full draw punches armor — Power +1."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "power": 1
+        }
+      }
+    },
     "hp": 28,
     "power": 6,
     "defense": 1,
@@ -67,6 +129,22 @@
     "desc": {
       "zh_CN": "逐日巨人的后裔，筋骨如铁。",
       "en_US": "Descendant of the sun-chaser; sinew like iron."
+    },
+    "passive": {
+      "name": {
+        "zh_CN": "邓林遗泽",
+        "en_US": "Legacy of Denglin"
+      },
+      "desc": {
+        "zh_CN": "职业被动：夸父弃杖化邓林，荫及后裔——气血上限+5。",
+        "en_US": "Class passive: Kuafa's cast staff became Denglin wood, sheltering his kin — Max HP +5."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "max_hp": 5
+        }
+      }
     },
     "hp": 42,
     "power": 5,
@@ -83,6 +161,22 @@
       "zh_CN": "藏身于影的卫士，一击致命。",
       "en_US": "A guard of shadows; one strike, one death."
     },
+    "passive": {
+      "name": {
+        "zh_CN": "合围潜刺",
+        "en_US": "Ambush Lunge"
+      },
+      "desc": {
+        "zh_CN": "职业被动：潜影近身，刺出要害——攻+1。",
+        "en_US": "Class passive: strike unseen from the flank — Power +1."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "power": 1
+        }
+      }
+    },
     "hp": 26,
     "power": 8,
     "defense": 0,
@@ -97,6 +191,22 @@
     "desc": {
       "zh_CN": "豢养百蛊的驭毒者，缠绵致命。",
       "en_US": "A breeder of hundred gu; a slow, certain death."
+    },
+    "passive": {
+      "name": {
+        "zh_CN": "百蛊不侵",
+        "en_US": "Gu-Proofed"
+      },
+      "desc": {
+        "zh_CN": "职业被动：日与百蛊为伴，百毒不侵——木抗+10。",
+        "en_US": "Class passive: living among gu, immune to their like — Wood resist +10."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "resist_wood": 10
+        }
+      }
     },
     "hp": 28,
     "power": 4,
@@ -113,6 +223,22 @@
       "zh_CN": "与百兽立契的驭者，呼朋引伴。",
       "en_US": "A caller bonded with beasts; never fights alone."
     },
+    "passive": {
+      "name": {
+        "zh_CN": "百兽同心",
+        "en_US": "Beast-Bonded Heart"
+      },
+      "desc": {
+        "zh_CN": "职业被动：与百兽心意相通，气脉互济——灵力上限+4。",
+        "en_US": "Class passive: hearts shared with the beasts — Max SP +4."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "max_sp": 4
+        }
+      }
+    },
     "hp": 30,
     "power": 4,
     "defense": 1,
@@ -128,6 +254,23 @@
       "zh_CN": "以符箓载道的术士，气脉绵长。",
       "en_US": "A scribe of sigils; endless breath, endless fire."
     },
+    "passive": {
+      "name": {
+        "zh_CN": "符骨绵长",
+        "en_US": "Sigil-Graven Bones"
+      },
+      "desc": {
+        "zh_CN": "职业被动：符文入骨，气脉绵长——真气上限+3，灵力上限+3。",
+        "en_US": "Class passive: sigils etched into bone — Max MP +3, Max SP +3."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "max_mp": 3,
+          "max_sp": 3
+        }
+      }
+    },
     "hp": 26,
     "power": 4,
     "defense": 1,
@@ -142,6 +285,23 @@
     "desc": {
       "zh_CN": "以音律扰神夺魄的乐师。",
       "en_US": "A musician whose notes unravel the mind."
+    },
+    "passive": {
+      "name": {
+        "zh_CN": "余音绕梁",
+        "en_US": "Lingering Notes"
+      },
+      "desc": {
+        "zh_CN": "职业被动：琴瑟之音自养气脉——真气上限+2，灵力上限+2。",
+        "en_US": "Class passive: zither notes feed the breath — Max MP +2, Max SP +2."
+      },
+      "effect": {
+        "type": "stat_aura",
+        "stats": {
+          "max_mp": 2,
+          "max_sp": 2
+        }
+      }
     },
     "hp": 28,
     "power": 3,

@@ -203,6 +203,7 @@
   "title_menu_settings": "Settings",
   "title_menu_quit": "Quit",
   "title_menu_hint": "Arrows to choose · Enter to confirm",
+  "title_menu_skip": "(any key to unroll)",
   "settings_title": "Settings (Left/Right to adjust · Esc to go back)",
   "settings_lang": "Language",
   "settings_map": "Display",
@@ -316,5 +317,11 @@
   "char_bag": "Bag",
   "slot_empty_skill": "Slot unbound (drag from the learn menu, K)",
   "assign_bound": "{skill} bound to {slot}.",
-  "slot_unbound": "Slot {slot} unbound."
+  "slot_unbound": "Slot {slot} unbound.",
+  "summ_dash": "Dash {v} · DMG {d}",
+  "dash_blocked": "No room to charge that way.",
+  "cast_dash": "{skill}: dashing forth.",
+  "passive_rally_log": "\"{passive}\" ignites: {bonus} for {turns} turns.",
+  "passive_sum_lifesteal": "melee hits restore {v} HP",
+  "passive_sum_rally": "on kill: {bonus} for {turns} turns"
 }
