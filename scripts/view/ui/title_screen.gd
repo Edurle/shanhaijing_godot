@@ -154,11 +154,10 @@ func _draw() -> void:
 		_draw_ink()
 	# 展卷中的呼吸提示（题字起即隐，让位给菜单键提示）
 	if not done and _t < UNROLL_TIME:
-		var font := get_theme_default_font()
 		var skip := content.text("title_menu_skip")
-		var sw: float = font.get_string_size(skip, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
-		draw_string(font, Vector2((view.x - sw) / 2.0, _scroll.end.y + 52.0), skip,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, _subtext_color(0.4 + 0.25 * sin(_t * 4.0)))
+		var sw: float = get_theme_default_font().get_string_size(skip, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+		_draw_subtext(Vector2((view.x - sw) / 2.0, _scroll.end.y + 52.0), skip,
+			0.5 + 0.25 * sin(_t * 4.0))
 
 
 ## 背景：贴图按 cover 取域铺满；无图回退宣纸底+远山+朱日。
@@ -318,10 +317,21 @@ func _draw_ink() -> void:
 	var ink_t := clampf((_t - UNROLL_TIME) / INK_TIME, 0.0, 1.0)
 	var menu_t := clampf((_t - UNROLL_TIME - INK_TIME) / MENU_TIME, 0.0, 1.0)
 	var font := get_theme_default_font()
-	# 竖排题字（右侧题签位）
-	var fsize := int(minf(_scroll.size.y * 0.23, 84.0))
-	var col_x := _scroll.end.x - fsize * 1.05
-	var y := _scroll.position.y + fsize * 0.72
+	# 竖排题字（右侧题签位）：素笺衬底 + 逐字落墨 + 朱印压脚
+	var fsize := int(minf(_scroll.size.y * 0.205, 84.0))
+	var col_x := _scroll.end.x - fsize * 1.30
+	var y0 := _scroll.position.y + fsize * 0.85
+	var chars_bottom := y0 + (GAME_TITLE.length() - 1) * fsize * 1.02
+	var seal_center := Vector2(col_x + fsize * 0.5, chars_bottom + fsize * 0.10 + 52.0)
+	var slip_a := clampf(ink_t / 0.42, 0.0, 1.0)
+	var slip := Rect2(
+		col_x - fsize * 0.22,
+		_scroll.position.y + fsize * 0.28,
+		fsize * 1.44,
+		seal_center.y + fsize * 0.30 - (_scroll.position.y + fsize * 0.28))
+	draw_rect(slip, Color(InkPalette.PAPER_UI, 0.78 * slip_a))
+	draw_rect(slip, Color(InkPalette.INK, 0.35 * slip_a), false, 1.5)
+	var y := y0
 	for i in range(GAME_TITLE.length()):
 		var li := clampf((ink_t - 0.22 * i) / 0.42, 0.0, 1.0)
 		if li <= 0.0:
@@ -333,7 +343,7 @@ func _draw_ink() -> void:
 	var sp := clampf((ink_t - 0.72) / 0.28, 0.0, 1.0)
 	if sp > 0.0:
 		var seal_scale := 1.0 + (1.0 - sp) * 0.55
-		draw_set_transform(Vector2(col_x - fsize * 0.24, y + 26.0), 0.0, Vector2(seal_scale, seal_scale))
+		draw_set_transform(seal_center, 0.0, Vector2(seal_scale, seal_scale))
 		draw_rect(Rect2(-19, -19, 38, 38), Color(InkPalette.VERMILION, sp))
 		draw_rect(Rect2(-19, -19, 38, 38), Color(InkPalette.PAPER_UI, sp), false, 1.5)
 		draw_string(font, Vector2(-13, 9), "行",
@@ -348,19 +358,20 @@ func _draw_ink() -> void:
 			var center: Vector2 = rows[i]["rect"].get_center() if rows[i].has("rect") else _scroll.get_center()
 			var by := center.y + 7.0 + rise
 			if i == _cursor:
-				draw_string(font, Vector2(center.x - tw / 2.0 - 32.0, by), "►",
+				# 选中项：金色底带 + 朱红►（与列表菜单惯例一致，墨字保对比）
+				draw_rect(Rect2(center.x - tw / 2.0 - 30.0, by - 21.0, tw + 60.0, 30.0),
+					Color(InkPalette.GOLD, 0.30 * menu_t))
+				draw_string(font, Vector2(center.x - tw / 2.0 - 24.0, by), "►",
 					HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(InkPalette.VERMILION, menu_t))
-			var row_color := InkPalette.GOLD if i == _cursor else InkPalette.INK
 			draw_string(font, Vector2(center.x - tw / 2.0, by), text,
-				HORIZONTAL_ALIGNMENT_LEFT, -1, ROW_FONT, Color(row_color, menu_t))
+				HORIZONTAL_ALIGNMENT_LEFT, -1, ROW_FONT, Color(InkPalette.INK, menu_t))
 		var tag := content.text("title_menu_tagline")
 		var tagw: float = font.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 		draw_string(font, Vector2(_scroll.get_center().x - tagw / 2.0 + 24.0, _scroll.end.y - 28.0), tag,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(InkPalette.INK_SOFT, menu_t))
 		var hint := content.text("title_menu_hint")
-		var hintw: float = font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
-		draw_string(font, Vector2((_view.x - hintw) / 2.0, _scroll.end.y + 52.0), hint,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, _subtext_color(menu_t))
+		var hintw: float = font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+		_draw_subtext(Vector2((_view.x - hintw) / 2.0, _scroll.end.y + 52.0), hint, menu_t)
 
 
 ## 卷外提示字色：深色背景贴图上用亮纸色，程序宣纸底上用中墨。
@@ -369,6 +380,14 @@ func _subtext_color(alpha: float) -> Color:
 		return Color(InkPalette.PAPER, alpha)
 	var base: Color = InkPalette.INK_SOFT
 	return Color(base, alpha)
+
+
+## 卷外提示：深色投影 + 本色字，深背景上保可读。
+func _draw_subtext(pos: Vector2, text: String, alpha: float) -> void:
+	var font := get_theme_default_font()
+	draw_string(font, pos + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14,
+		Color(InkPalette.INK, 0.55 * alpha))
+	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, _subtext_color(alpha))
 
 
 func _quad(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2,
